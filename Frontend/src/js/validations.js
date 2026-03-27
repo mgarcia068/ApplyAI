@@ -84,21 +84,8 @@
         return;
       }
 
-      // Demo/estático: evitamos submit real.
       e.preventDefault();
       if (alertEl) alertEl.hidden = true;
-    });
-
-    [fullName, email, password, confirmPassword].forEach((el) => {
-      if (!el) return;
-
-      el.addEventListener('input', function () {
-        if (hasAttemptedSubmit) validate({ showAlert: true });
-      });
-
-      el.addEventListener('blur', function () {
-        validate({ showAlert: false });
-      });
     });
   }
 
