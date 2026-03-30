@@ -1,0 +1,62 @@
+/* Estilos específicos del proyecto (mantenerlos mínimos).
+	 Esta hoja complementa `base.css` sin redefinir el design system. */
+
+.auth-page {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+}
+
+.auth-container {
+	width: 100%;
+	padding-top: var(--space-12);
+	padding-bottom: var(--space-12);
+}
+
+.auth-card {
+	max-width: 480px;
+	margin: 0 auto;
+}
+
+.auth-header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	margin-bottom: var(--space-6);
+}
+
+.auth-title--nowrap {
+	white-space: nowrap;
+	text-wrap: nowrap;
+}
+
+.auth-form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+}
+
+.auth-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-4);
+}
+
+.auth-link {
+	color: var(--color-accent);
+	font-weight: var(--weight-medium);
+}
+
+.auth-link:hover {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.auth-footer {
+	margin-top: var(--space-6);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-3);
+}
