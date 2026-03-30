@@ -28,7 +28,7 @@
   --color-info-soft:    #3b82f618;
 
   /* Tipografía */
-  --font-display:  'Syne', sans-serif;
+  --font-display:  'Roboto Mono', 'Syne', monospace;
   --font-body:     'DM Sans', sans-serif;
 
   --text-xs:    0.75rem;    /*  12px */
