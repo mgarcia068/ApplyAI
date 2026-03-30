@@ -1,7 +1,7 @@
 // USO: agregar en cada HTML, antes del cierre de </body>:
 //   <div id="navbar-placeholder"></div>   ← al inicio del body
 //   <div id="footer-placeholder"></div>   ← al final del body
-//   <script src="/js/components.js"></script>
+//   <script src="js/components.js"></script>
 
 const isLanding =
   window.location.pathname === "/" ||
@@ -16,7 +16,7 @@ async function loadComponent(url, placeholderId) {
     if (!res.ok) throw new Error(`No se pudo cargar ${url}`);
     placeholder.outerHTML = await res.text();
   } catch (err) {
-    console.warn("[TalentIQ] componente no encontrado:", url, err);
+    console.warn("[ApplyAI] componente no encontrado:", url, err);
   }
 }
 
@@ -50,8 +50,8 @@ function markActiveLink() {
 }
 
 async function init() {
-  await loadComponent("../src/components/navbar.html", "navbar-placeholder");
-  await loadComponent("../src/components/footer.html", "footer-placeholder");
+  await loadComponent("components/navbar.html", "navbar-placeholder");
+  await loadComponent("components/footer.html", "footer-placeholder");
 
   initNavbar();
   markActiveLink();

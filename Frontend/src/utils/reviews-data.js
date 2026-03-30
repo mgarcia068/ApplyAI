@@ -14,7 +14,7 @@ const REVIEWS = [
     initials: 'LF',
   },
   {
-    text: 'Como startup no teniamos tiempo ni recursos para un proceso de seleccion largo. TalentIQ nos simplifico todo el flujo de principio a fin.',
+    text: 'Como startup no teniamos tiempo ni recursos para un proceso de seleccion largo. ApplyAI nos simplifico todo el flujo de principio a fin.',
     name: 'Agustina Molina',
     role: 'CEO — Innova Labs',
     initials: 'AM',
