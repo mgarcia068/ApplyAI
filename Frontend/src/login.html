@@ -11,6 +11,8 @@
 
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/auth.css" />
+
+    <script src="js/validations.js" defer></script>
   </head>
   <body>
     <main class="auth-page">
@@ -22,7 +24,11 @@
             <p class="text-muted">Accedé con tu correo y contraseña.</p>
           </header>
 
-          <form class="auth-form" action="#" method="post">
+          <form class="auth-form" id="loginForm" action="#" method="post" novalidate>
+            <div class="alert alert--error" id="loginAlert" role="alert" hidden>
+              Correo o contraseña incorrectos.
+            </div>
+
             <div class="form-group">
               <label class="form-label" for="email">Correo</label>
               <input
@@ -34,6 +40,7 @@
                 autocomplete="email"
                 required
               />
+              <p class="form-error" id="emailError" aria-live="polite"></p>
             </div>
 
             <div class="form-group">
@@ -50,6 +57,7 @@
                 autocomplete="current-password"
                 required
               />
+              <p class="form-error" id="passwordError" aria-live="polite"></p>
             </div>
 
             <button class="btn btn--primary btn--full" type="submit">Entrar</button>
@@ -59,6 +67,10 @@
             <p class="text-sm text-muted">¿No tenés cuenta?</p>
             <a class="btn btn--secondary btn--sm" href="register.html">Crear cuenta</a>
           </footer>
+
+          <div class="mt-4 text-center">
+            <a class="text-sm auth-link" href="index.html">Volver al inicio</a>
+          </div>
         </section>
       </div>
     </main>
