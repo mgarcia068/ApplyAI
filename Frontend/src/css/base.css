@@ -1,12 +1,3 @@
-/* 
-   Para usarlas, pegá esto en el <head> de cada HTML:
-   <link rel="preconnect" href="https://fonts.googleapis.com">
-   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-
-
-   ============================================================ */
 /* ── 1. VARIABLES ─────────────────────────────────────────── */
 :root {
 
@@ -37,7 +28,7 @@
   --color-info-soft:    #3b82f618;
 
   /* Tipografía */
-  --font-display:  'Syne', sans-serif;
+  --font-display:  'Roboto Mono', 'Syne', monospace;
   --font-body:     'DM Sans', sans-serif;
 
   --text-xs:    0.75rem;    /*  12px */
@@ -113,6 +104,12 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* Asegura que el atributo HTML `hidden` siempre oculte elementos,
+   incluso si hay reglas de display en estilos de autor (ej. .alert). */
+[hidden] {
+  display: none !important;
 }
 
 html {
