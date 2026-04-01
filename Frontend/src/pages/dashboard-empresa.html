@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TalentIQ &mdash; Dashboard Empresa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../src/css/base.css">
+  <link rel="stylesheet" href="../../src/css/components.css">
+  <link rel="stylesheet" href="../../src/css/dashboard/dashboard.css">
+  <link rel="stylesheet" href="../../src/css/dashboard/dashboard-sidebar.css">
+</head>
+<body class="dashboard-page">
+
+  <div class="db-layout">
+
+    <aside class="sidebar" id="sidebar">
+
+      <a href="../index.html" class="sidebar__logo">Talent<span>IQ</span></a>
+
+      <div class="sidebar__empresa">
+        <div class="avatar avatar--md">TC</div>
+        <div class="sidebar__empresa-info">
+          <div class="sidebar__empresa-nombre">TechCorp Argentina</div>
+          <div class="sidebar__empresa-rubro">Empresa</div>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav">
+        <span class="sidebar__nav-label">Principal</span>
+
+        <button class="sidebar__link active" onclick="navigateTo('resumen')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Resumen
+        </button>
+
+        <button class="sidebar__link" onclick="navigateTo('ofertas')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          Mis ofertas
+        </button>
+
+        <button class="sidebar__link" onclick="navigateTo('postulantes')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Postulantes
+        </button>
+
+        <button class="sidebar__link" onclick="navigateTo('nueva-oferta')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Publicar oferta
+        </button>
+
+        <span class="sidebar__nav-label">Cuenta</span>
+
+        <button class="sidebar__link" onclick="navigateTo('perfil')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Perfil empresa
+        </button>
+      </nav>
+
+      <div class="sidebar__bottom">
+        <button class="sidebar__link" onclick="window.location.href='../index.html'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Cerrar sesion
+        </button>
+      </div>
+
+    </aside>
+    <main class="db-main">
+
+      <div class="db-topbar">
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <span class="db-topbar__title" id="topbar-title">Resumen</span>
+        </div>
+        <div class="db-topbar__actions">
+          <button class="btn btn--primary btn--sm" onclick="navigateTo('nueva-oferta')">+ Nueva oferta</button>
+          <div class="avatar avatar--sm">TC</div>
+        </div>
+      </div>
+
+      <div class="db-content" id="db-content">
+        <!-- contenido inyectado por JS -->
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../js/dashboard/dashboard.js"></script>
+  <script src="../js/dashboard/dashboard-sidebar.js"></script>
+
+</body>
+</html>
