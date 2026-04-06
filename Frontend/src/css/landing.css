@@ -63,8 +63,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(249, 115, 22, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(249, 115, 22, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(74, 127, 165, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 127, 165, 0.06) 1px, transparent 1px);
   background-size: 60px 60px;
   mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 80%);
   -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 80%);
@@ -88,7 +88,7 @@
 .hero__orb--1 {
   width: 500px;
   height: 500px;
-  background: rgba(249, 115, 22, 0.12);
+  background: rgba(74, 127, 165, 0.12);
   top: -100px;
   right: -80px;
   animation-delay: 0s;
@@ -127,7 +127,7 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   background: var(--color-accent-soft);
-  border: 1px solid rgba(249, 115, 22, 0.3);
+  border: 1px solid rgba(74, 127, 165, 0.3);
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
@@ -207,13 +207,13 @@
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   border-radius: var(--radius-lg);
-  box-shadow: 0 0 32px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 0 32px rgba(74, 127, 165, 0.3);
   transition: all var(--transition-base);
 }
 
 .btn--hero-primary:hover {
   background: var(--color-accent-hover);
-  box-shadow: 0 0 48px rgba(249, 115, 22, 0.45);
+  box-shadow: 0 0 48px rgba(74, 127, 165, 0.45);
   transform: translateY(-2px);
 }
 
@@ -375,7 +375,7 @@
 }
 
 .review-card:hover {
-  border-color: rgba(249, 115, 22, 0.3);
+  border-color: rgba(74, 127, 165, 0.3);
   transform: translateY(-3px);
 }
 
@@ -418,7 +418,7 @@
   flex-shrink: 0;
   color: var(--color-accent);
   background: var(--color-accent-soft);
-  border: 1px solid rgba(249, 115, 22, 0.2);
+  border: 1px solid rgba(74, 127, 165, 0.2);
 }
 
 .review-card__name {

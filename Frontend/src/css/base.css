@@ -7,10 +7,10 @@
   --color-bg-3:         #1e2333;   /* Fondo de inputs, hover de cards           */
   --color-surface:      #252b3b;   /* Bordes, separadores, elementos de UI      */
 
-  /* Acento principal — Ember (naranja-ámbar) */
-  --color-accent:       #f97316;   /* ← CAMBIÁ ESTE si querés otro color        */
-  --color-accent-soft:  #f9731620; /* Versión translúcida del acento (fondos)   */
-  --color-accent-hover: #ea6608;   /* Acento en hover                           */
+  /* Acento principal — Steel Blue */
+  --color-accent:       #4a7fa5;   /* ← CAMBIÁ ESTE si querés otro color        */
+  --color-accent-soft:  #4a7fa520; /* Versión translúcida del acento (fondos)   */
+  --color-accent-hover: #3a6a8e;   /* Acento en hover                           */
 
   /* Texto */
   --color-text:         #e8eaf0;   /* Texto principal                           */
@@ -81,7 +81,7 @@
   --shadow-md:  0 4px 12px rgba(0,0,0,0.35);
   --shadow-lg:  0 8px 24px rgba(0,0,0,0.4);
   --shadow-xl:  0 16px 48px rgba(0,0,0,0.5);
-  --shadow-accent: 0 0 24px rgba(249, 115, 22, 0.25);
+  --shadow-accent: 0 0 24px rgba(74, 127, 165, 0.25);
 
   /* Transiciones */
   --transition-fast:   150ms ease;
