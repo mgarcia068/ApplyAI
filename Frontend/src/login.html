@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Iniciar sesión</title>
 
+    <meta name="google-client-id" content="918106144440-gkli1488vh96c8krpf83v9vo930v605q.apps.googleusercontent.com" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -12,6 +14,7 @@
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/auth.css" />
 
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="js/validations.js" defer></script>
   </head>
   <body>
@@ -61,6 +64,16 @@
             </div>
 
             <button class="btn btn--primary btn--full" type="submit">Entrar</button>
+
+            <div style="margin-top: var(--space-5)">
+              <p class="text-sm text-muted" style="text-align: center; margin-bottom: var(--space-3)">
+                o continuá con
+              </p>
+              <div id="googleLoginButton" style="display: flex; justify-content: center"></div>
+              <p class="text-xs text-muted" id="googleLoginHint" style="text-align: center; margin-top: var(--space-2)" hidden>
+                Falta configurar el Client ID de Google.
+              </p>
+            </div>
           </form>
 
           <footer class="auth-footer">
