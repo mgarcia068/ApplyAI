@@ -1,11 +1,14 @@
 /* ── 1. VARIABLES ─────────────────────────────────────────── */
 :root {
 
-  /* Colores principales */
+  /* Colores principales (Tema Oscuro por defecto) */
   --color-bg:           #0f1117;   /* Fondo principal — azul pizarra oscuro     */
   --color-bg-2:         #171b26;   /* Fondo de cards / paneles                  */
   --color-bg-3:         #1e2333;   /* Fondo de inputs, hover de cards           */
   --color-surface:      #252b3b;   /* Bordes, separadores, elementos de UI      */
+
+  /* Fondo especial para la Navbar con Scroll */
+  --color-bg-nav-scrolled: rgba(15, 17, 23, 0.88);
 
   /* Acento principal — Steel Blue */
   --color-accent:       #4a7fa5;   /* ← CAMBIÁ ESTE si querés otro color        */
@@ -26,6 +29,7 @@
   --color-error-soft:   #ef444418;
   --color-info:         #3b82f6;
   --color-info-soft:    #3b82f618;
+
 
   /* Tipografía */
   --font-display:  'Roboto Mono', 'Syne', monospace;
@@ -96,6 +100,24 @@
   --container-2xl: 1440px;
 
   --navbar-height: 64px;
+}
+
+/* ── TEMA CLARO ───────────────────────────────────────────── */
+[data-theme="light"] {
+  /* Fondo principal crema / blanco tenue para evitar brillo excesivo */
+  --color-bg:           #f6f4ee;   
+  --color-bg-2:         #fcfcfa;   
+  --color-bg-3:         #f0f1f4;   
+  --color-surface:      #e2dccf;   
+  --color-bg-nav-scrolled: rgba(246, 244, 238, 0.65);
+
+  /* Textos para modo claro */
+  --color-text:         #1a1d24;   
+  --color-text-muted:   #5a6474;   
+  --color-text-faint:   #9aa4b5;   
+
+  /* Modificadores de acento (hacemos el fondo translúcido un toque más visible) */
+  --color-accent-soft:  #4a7fa51a; 
 }
 
 
@@ -644,6 +666,59 @@ h6 { font-size: var(--text-md);  font-weight: var(--weight-medium); }
 .alert--warning { background: var(--color-warning-soft); color: var(--color-warning); border-color: var(--color-warning); }
 .alert--error   { background: var(--color-error-soft);   color: var(--color-error);   border-color: var(--color-error); }
 .alert--info    { background: var(--color-info-soft);    color: var(--color-info);    border-color: var(--color-info); }
+
+/* --- Switch de Tema --- */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+  user-select: none;
+}
+
+.theme-switch-wrapper .theme-switch__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.theme-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: var(--color-bg-3);
+  border: 1px solid var(--color-surface);
+  border-radius: var(--radius-full);
+  transition: background-color var(--transition-base), border-color var(--transition-base);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.theme-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background-color: var(--color-text-muted);
+  border-radius: 50%;
+  transition: transform var(--transition-base), background-color var(--transition-base);
+}
+
+/* Estado activo del switch (Modo Claro) */
+[data-theme="light"] .theme-switch {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+[data-theme="light"] .theme-switch::after {
+  transform: translateX(22px);
+  background-color: #fff;
+}
 
 /* --- Spinner de carga --- */
 .spinner {

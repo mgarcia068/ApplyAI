@@ -58,8 +58,16 @@ function updateNavbarActions() {
   if (!actions) return;
 
   const user = getCurrentUser();
+  const themeSwitchHtml = `
+    <!-- BOTÓN CAMBIAR TEMA (SLIDE - SIN TEXTO) -->
+    <label class="theme-switch-wrapper" onclick="toggleTheme()" style="width: auto; margin-right: var(--space-4); display: flex; align-items: center; cursor: pointer;">
+      <div class="theme-switch" id="navbar-theme-switch-btn"></div>
+    </label>
+  `;
+
   if (!user) {
     actions.innerHTML = `
+      ${themeSwitchHtml}
       <a href="${resolvePathForContext("login.html")}" class="btn btn--ghost btn--sm">Iniciar sesion</a>
       <a href="${resolvePathForContext("register.html")}" class="btn btn--primary btn--sm">Registrarse</a>
     `;
@@ -68,6 +76,7 @@ function updateNavbarActions() {
 
   if (user.role === "candidato") {
     actions.innerHTML = `
+      ${themeSwitchHtml}
       <a href="${resolvePagePath("dashboard-candidato.html")}" class="btn btn--ghost btn--sm">Postulaciones</a>
       <a href="${resolvePathForContext("perfil-candidato.html")}" class="btn btn--primary btn--sm">Mi perfil</a>
     `;
@@ -76,6 +85,7 @@ function updateNavbarActions() {
 
   // empresa
   actions.innerHTML = `
+    ${themeSwitchHtml}
     <a href="${resolvePagePath("dashboard-empresa.html")}" class="btn btn--primary btn--sm">Mi panel</a>
   `;
 }
