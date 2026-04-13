@@ -1,4 +1,9 @@
 (function () {
+  const STORAGE_KEYS = {
+    users: 'ApplyAI.users',
+    currentUser: 'ApplyAI.currentUser',
+  };
+
   function normalizeRole(value) {
     const normalized = String(value || '').trim().toLowerCase();
     if (normalized === 'candidato' || normalized === 'cliente') return 'candidato';
@@ -15,18 +20,16 @@
   }
 
   function getUsers() {
-    const key = 'talentiq.users';
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(STORAGE_KEYS.users);
     const parsed = raw ? safeJsonParse(raw, []) : [];
     return Array.isArray(parsed) ? parsed : [];
   }
 
   function upsertUser(user) {
-    const key = 'talentiq.users';
     const users = getUsers();
     const nextUsers = users.filter((u) => (u?.email || '').toLowerCase() !== user.email);
     nextUsers.push(user);
-    localStorage.setItem(key, JSON.stringify(nextUsers));
+    localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(nextUsers));
   }
 
   function initSignupValidation() {
@@ -239,7 +242,9 @@
     }
 
     function getDashboardForRole(role) {
-      return role === 'empresa' ? 'dashboard-empresa.html' : 'dashboard-candidato.html';
+      return role === 'empresa'
+        ? 'pages/dashboard-empresa.html'
+        : 'pages/dashboard-candidato.html';
     }
 
     form.addEventListener('submit', function (e) {
@@ -281,7 +286,7 @@
 
       try {
         localStorage.setItem(
-          'talentiq.currentUser',
+          STORAGE_KEYS.currentUser,
           JSON.stringify({
             email: user.email,
             role: normalizeRole(user.role),

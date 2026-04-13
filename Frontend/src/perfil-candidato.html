@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mi perfil (Candidato)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/profile.css" />
+
+    <script src="js/components.js" defer></script>
+    <script src="js/profile-candidato.js" defer></script>
+  </head>
+
+  <body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="page-wrapper">
+      <section class="section section--sm">
+        <div class="container">
+          <div class="card">
+            <header class="card__header">
+              <div>
+                <div class="label">Candidato</div>
+                <h1 class="card__title" style="font-size: var(--text-2xl)">Mi perfil</h1>
+              </div>
+              <div class="flex items-center gap-3">
+                <a class="btn btn--ghost btn--sm" href="pages/dashboard-candidato.html">Volver al panel</a>
+                <button class="btn btn--secondary btn--sm" type="button" id="logoutBtn">Cerrar sesión</button>
+              </div>
+            </header>
+
+            <div class="card__body">
+              <p class="text-sm text-muted">
+                Completá tu información básica.
+              </p>
+
+              <div id="profileAlert" class="alert alert--info flex-col" hidden style="margin-top: var(--space-4)">
+                <strong>Necesitás iniciar sesión.</strong>
+                <span class="text-sm text-muted">Tu perfil se guarda por usuario.</span>
+                <div style="margin-top: var(--space-3)">
+                  <a class="btn btn--primary btn--sm" href="login.html">Ir a login</a>
+                </div>
+              </div>
+
+              <form id="candidateProfileForm" class="profile-form" novalidate style="margin-top: var(--space-8)">
+                <div class="grid grid-2">
+                  <section class="profile-card">
+                    <div id="profileAvatar" class="profile-avatar" role="img" aria-label="Foto de perfil">
+                      <img
+                        id="avatarPreview"
+                        class="profile-avatar__img"
+                        alt="Foto de perfil"
+                        src=""
+                        draggable="false"
+                        hidden
+                      />
+                      <div id="avatarFallback" class="profile-avatar__fallback">
+                        <span id="avatarInitials">?</span>
+                      </div>
+                    </div>
+
+                    <div class="profile-avatar__meta">
+                      <div class="text-display" id="profileName" style="font-size: var(--text-lg)">—</div>
+                      <div class="text-xs text-muted" id="profileEmail">—</div>
+                    </div>
+
+                    <label class="form-file" for="profilePhoto">
+                      <div class="text-sm">Subir foto</div>
+                      <div class="text-xs text-muted">JPG/PNG/WebP (máx. 2MB)</div>
+                      <input id="profilePhoto" name="profilePhoto" type="file" accept="image/*" />
+                    </label>
+                    <div class="form-error" id="profilePhotoError"></div>
+
+                    <button class="btn btn--secondary btn--sm" type="button" id="removePhotoBtn">
+                      Quitar foto
+                    </button>
+                  </section>
+
+                  <section class="profile-fields">
+                    <div class="grid" style="grid-template-columns: 1fr; gap: var(--space-4)">
+                      <div class="form-group">
+                        <label class="form-label" for="fullName">Nombre completo</label>
+                        <input
+                          class="form-input"
+                          id="fullName"
+                          name="fullName"
+                          type="text"
+                          placeholder="Tu nombre y apellido"
+                          autocomplete="name"
+                          required
+                        />
+                        <div class="form-error" id="fullNameError"></div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label" for="headline">Título profesional</label>
+                        <input
+                          class="form-input"
+                          id="headline"
+                          name="headline"
+                          type="text"
+                          placeholder="Ej: Desarrollador Frontend"
+                          autocomplete="organization-title"
+                        />
+                      </div>
+
+                      <div class="grid grid-2">
+                        <div class="form-group">
+                          <label class="form-label" for="location">Ubicación</label>
+                          <input
+                            class="form-input"
+                            id="location"
+                            name="location"
+                            type="text"
+                            placeholder="Ej: Córdoba, AR"
+                            autocomplete="address-level2"
+                          />
+                        </div>
+
+                        <div class="form-group">
+                          <label class="form-label" for="phone">Teléfono</label>
+                          <input
+                            class="form-input"
+                            id="phone"
+                            name="phone"
+                            type="tel"
+                            placeholder="Ej: +54 351 ..."
+                            autocomplete="tel"
+                          />
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label" for="email">Correo</label>
+                        <input
+                          class="form-input"
+                          id="email"
+                          name="email"
+                          type="email"
+                          placeholder="tu@email.com"
+                          autocomplete="email"
+                          readonly
+                        />
+                        <div class="form-hint">Se toma del usuario logueado.</div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label" for="about">Sobre mí</label>
+                        <textarea
+                          class="form-textarea"
+                          id="about"
+                          name="about"
+                          placeholder="Contá brevemente tu experiencia, stack y objetivos"
+                        ></textarea>
+                      </div>
+
+                      <div class="divider" style="margin: var(--space-2) 0">Curriculum</div>
+
+                      <div class="form-group">
+                        <label class="form-label" for="cvFile">Curriculum (PDF)</label>
+
+                        <label class="form-file" for="cvFile">
+                          <div class="text-sm">Subir CV</div>
+                          <div class="text-xs text-muted">PDF (máx. 3MB)</div>
+                          <input id="cvFile" name="cvFile" type="file" accept="application/pdf" />
+                        </label>
+
+                        <div class="form-error" id="cvFileError"></div>
+
+                        <div id="cvInfo" class="flex items-center justify-between" hidden>
+                          <div class="flex flex-col" style="gap: var(--space-1)">
+                            <div class="flex items-center gap-2">
+                              <span class="badge badge--neutral">PDF</span>
+                              <span class="text-sm" id="cvFileName">—</span>
+                            </div>
+                            <div class="text-xs text-muted" id="cvUpdatedAt">—</div>
+                          </div>
+
+                          <div class="flex items-center gap-3">
+                            <a class="btn btn--ghost btn--sm" id="cvViewLink" href="#" target="_blank" rel="noopener" hidden>Ver CV</a>
+                            <button class="btn btn--secondary btn--sm" type="button" id="removeCvBtn">Quitar CV</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="card__footer" style="justify-content: flex-end">
+                      <button class="btn btn--primary" type="submit">Guardar cambios</button>
+                    </div>
+                  </section>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="photoCropModal" class="modal" hidden aria-hidden="true">
+      <div class="modal__overlay"></div>
+      <div class="modal__panel card" role="dialog" aria-modal="true" aria-labelledby="photoCropTitle">
+        <header class="card__header">
+          <div>
+            <div class="label">Foto de perfil</div>
+            <h2 class="card__title" id="photoCropTitle" style="font-size: var(--text-xl)">Ajustar encuadre</h2>
+          </div>
+        </header>
+
+        <div class="card__body">
+          <p class="text-sm text-muted">Arrastrá la imagen para centrarla dentro del círculo.</p>
+
+          <div class="photo-editor" style="margin-top: var(--space-4)">
+            <div id="photoEditorViewport" class="photo-editor__viewport" aria-label="Editor de foto">
+              <img id="photoEditorImg" class="photo-editor__img" alt="Previsualización" src="" draggable="false" />
+            </div>
+          </div>
+        </div>
+
+        <footer class="card__footer" style="justify-content: flex-end">
+          <button class="btn btn--secondary btn--sm" type="button" id="photoCropCancelBtn">Cancelar</button>
+          <button class="btn btn--primary btn--sm" type="button" id="photoCropSaveBtn">Guardar</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+  </body>
+</html>

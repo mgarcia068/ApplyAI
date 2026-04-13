@@ -9,10 +9,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-    <link rel="stylesheet" href="css/base.css" />
-    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/components.css" />
 
-    <script src="js/components.js" defer></script>
+    <script src="../js/components.js" defer></script>
+    <script src="../js/candidato-postulaciones.js" defer></script>
   </head>
   <body>
     <div id="navbar-placeholder"></div>
@@ -21,20 +22,47 @@
       <section class="section section--sm">
         <div class="container">
           <div class="card">
-            <header class="card__header">
-              <h1 class="card__title">Panel de candidato</h1>
-              <a class="btn btn--secondary btn--sm" href="index.html">Ir al inicio</a>
-            </header>
-
             <div class="card__body">
+              <div class="flex items-center justify-between" style="margin-bottom: var(--space-4)">
+                <h1 class="card__title">Panel de candidato</h1>
+              </div>
               <p>
                 Este perfil está pensado para candidatos: subir tu currículum y postularte a
                 trabajos.
               </p>
-              <p class="text-sm text-muted" style="margin-top: var(--space-3)">
-                (Por ahora es un panel base: el rol viene del registro y se usa para la
-                redirección al iniciar sesión.)
-              </p>
+
+              <div id="candidateDashboardAlert" class="alert alert--info flex-col" hidden style="margin-top: var(--space-6)">
+                <strong>Necesitás iniciar sesión como candidato.</strong>
+                <span class="text-sm text-muted">Para postularte, primero iniciá sesión.</span>
+                <div style="margin-top: var(--space-3)">
+                  <a class="btn btn--primary btn--sm" href="../login.html">Ir a login</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid" style="margin-top: var(--space-6); grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); align-items: start">
+            <div class="card" style="padding: var(--space-4); min-width: 0">
+              <div class="card__body">
+                <div class="flex items-center justify-between" style="margin-bottom: var(--space-3)">
+                  <h2 class="card__title" style="font-size: var(--text-base)">Mis postulaciones</h2>
+                  <span class="badge badge--neutral" id="applicationsCount">0</span>
+                </div>
+                <div id="applicationsList"></div>
+              </div>
+            </div>
+
+            <div class="card" style="min-width: 0">
+              <header class="card__header">
+                <div class="flex flex-col" style="gap: var(--space-1)">
+                  <span class="label">Explorá</span>
+                  <h2 class="card__title" style="font-size: var(--text-xl)">Ofertas disponibles</h2>
+                </div>
+                <span class="badge badge--accent" id="offersCount">0</span>
+              </header>
+              <div class="card__body">
+                <div id="offersList"></div>
+              </div>
             </div>
           </div>
         </div>

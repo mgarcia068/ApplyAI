@@ -53,9 +53,35 @@
   gap: var(--space-3);
 }
 
-
-.navbar__actions a.active {
+.navbar__actions a.active:not(.btn--primary) {
   color: var(--color-accent);
+}
+
+/* Estado "activo" (página actual): que se note más y parezca presionado */
+.navbar__actions .btn.active {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 2px var(--color-surface);
+}
+
+.navbar__actions .btn.btn--ghost.active {
+  background-color: var(--color-bg-3);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-soft);
+}
+
+.navbar__actions .btn.btn--secondary.active {
+  background-color: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-soft);
+}
+
+.navbar__actions .btn.btn--primary.active {
+  /* Mantener contraste: el texto no debe volverse color acento */
+  color: #fff;
+  border-color: var(--color-bg);
+  box-shadow: 0 0 0 2px var(--color-bg);
 }
 
 
