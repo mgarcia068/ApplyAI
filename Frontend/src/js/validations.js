@@ -242,7 +242,9 @@
     }
 
     function getDashboardForRole(role) {
-      return role === 'empresa' ? 'dashboard-empresa.html' : 'dashboard-candidato.html';
+      return role === 'empresa'
+        ? 'pages/dashboard-empresa.html'
+        : 'pages/dashboard-candidato.html';
     }
 
     form.addEventListener('submit', function (e) {

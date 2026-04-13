@@ -7,6 +7,23 @@ const isLanding =
   window.location.pathname === "/" ||
   window.location.pathname.endsWith("index.html");
 
+function isInPagesDir() {
+  return window.location.pathname.includes("/pages/");
+}
+
+function resolvePathForContext(pathFromRoot) {
+  // pathFromRoot is relative to Frontend/src (e.g. 'login.html', 'pages/dashboard-candidato.html')
+  // If we're currently inside Frontend/src/pages, we need to go up one level.
+  return isInPagesDir() ? `../${pathFromRoot}` : pathFromRoot;
+}
+
+function resolvePagePath(pageFileName) {
+  // For pages that live inside Frontend/src/pages/
+  // - from root pages: 'pages/<file>'
+  // - from pages dir: '<file>'
+  return isInPagesDir() ? pageFileName : `pages/${pageFileName}`;
+}
+
 function safeJsonParse(value, fallback) {
   try {
     return JSON.parse(value);
@@ -43,23 +60,23 @@ function updateNavbarActions() {
   const user = getCurrentUser();
   if (!user) {
     actions.innerHTML = `
-      <a href="login.html" class="btn btn--ghost btn--sm">Iniciar sesion</a>
-      <a href="register.html" class="btn btn--primary btn--sm">Registrarse</a>
+      <a href="${resolvePathForContext("login.html")}" class="btn btn--ghost btn--sm">Iniciar sesion</a>
+      <a href="${resolvePathForContext("register.html")}" class="btn btn--primary btn--sm">Registrarse</a>
     `;
     return;
   }
 
   if (user.role === "candidato") {
     actions.innerHTML = `
-      <a href="dashboard-candidato.html" class="btn btn--ghost btn--sm">Postulaciones</a>
-      <a href="perfil-candidato.html" class="btn btn--primary btn--sm">Mi perfil</a>
+      <a href="${resolvePagePath("dashboard-candidato.html")}" class="btn btn--ghost btn--sm">Postulaciones</a>
+      <a href="${resolvePathForContext("perfil-candidato.html")}" class="btn btn--primary btn--sm">Mi perfil</a>
     `;
     return;
   }
 
   // empresa
   actions.innerHTML = `
-    <a href="dashboard-empresa.html" class="btn btn--primary btn--sm">Mi panel</a>
+    <a href="${resolvePagePath("dashboard-empresa.html")}" class="btn btn--primary btn--sm">Mi panel</a>
   `;
 }
 
@@ -105,11 +122,43 @@ function markActiveLink() {
   });
 }
 
+function rewriteInjectedComponentLinks() {
+  if (!isInPagesDir()) return;
+
+  const anchors = document.querySelectorAll('#navbar a[href], .footer a[href]');
+
+  anchors.forEach((a) => {
+    const href = a.getAttribute('href');
+    if (!href) return;
+
+    const trimmed = href.trim();
+    if (!trimmed) return;
+
+    // Ignore external/special links.
+    if (
+      trimmed.startsWith('#') ||
+      trimmed.startsWith('/') ||
+      trimmed.startsWith('./') ||
+      trimmed.startsWith('../') ||
+      trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://') ||
+      trimmed.startsWith('mailto:') ||
+      trimmed.startsWith('tel:')
+    ) {
+      return;
+    }
+
+    // For pages under /pages/, make relative routes point one level up.
+    a.setAttribute('href', resolvePathForContext(trimmed));
+  });
+}
+
 async function init() {
-  await loadComponent("components/navbar.html", "navbar-placeholder");
-  await loadComponent("components/footer.html", "footer-placeholder");
+  await loadComponent(resolvePathForContext("components/navbar.html"), "navbar-placeholder");
+  await loadComponent(resolvePathForContext("components/footer.html"), "footer-placeholder");
 
   initNavbar();
+  rewriteInjectedComponentLinks();
   updateNavbarActions();
   markActiveLink();
 }

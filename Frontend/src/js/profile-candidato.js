@@ -136,11 +136,26 @@
   function init() {
     const alertEl = document.getElementById('profileAlert');
 
+    const logoutBtn = document.getElementById('logoutBtn');
+
     const form = document.getElementById('candidateProfileForm');
     if (!form) return;
 
     const currentUser = getCurrentUser();
     const isAllowed = Boolean(currentUser && currentUser.email && currentUser.role === 'candidato');
+
+    if (logoutBtn) {
+      logoutBtn.hidden = !isAllowed;
+      logoutBtn.addEventListener('click', function () {
+        try {
+          localStorage.removeItem(STORAGE_KEYS.currentUser);
+        } catch (_) {
+          // ignore
+        }
+
+        window.location.href = 'index.html';
+      });
+    }
 
     if (alertEl) alertEl.hidden = isAllowed;
 
