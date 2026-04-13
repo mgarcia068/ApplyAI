@@ -208,19 +208,21 @@
 
 .sidebar.collapsed .sidebar__link {
   display: flex;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   padding: 0;
   margin: 0 auto;
+  gap: 0;
   justify-content: center;
   align-items: center;
   border-radius: var(--radius-md);
 }
 
 .sidebar.collapsed .sidebar__link svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  margin: 0;
 }
 
 .sidebar.collapsed .sidebar__collapse-btn svg {

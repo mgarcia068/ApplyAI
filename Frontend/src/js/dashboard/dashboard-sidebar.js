@@ -65,6 +65,29 @@ function renderOfertas() {
       </div>
       <button class="btn btn--primary btn--sm" onclick="navigateTo('nueva-oferta')">+ Nueva oferta</button>
     </div>
+
+    <div class="filters-bar">
+      <div class="form-group" style="flex: 1; margin-bottom: 0;">
+        <input type="text" id="filter-search" class="form-input" placeholder="Buscar por puesto o área..." oninput="filtrarOfertas()">
+      </div>
+      <div class="form-group" style="width: 180px; margin-bottom: 0;">
+        <select id="filter-estado" class="form-select" onchange="filtrarOfertas()">
+          <option value="">Todos los estados</option>
+          <option value="activa">Activas</option>
+          <option value="pausada">Pausadas</option>
+          <option value="cerrada">Cerradas</option>
+        </select>
+      </div>
+      <div class="form-group" style="width: 180px; margin-bottom: 0;">
+        <select id="filter-modalidad" class="form-select" onchange="filtrarOfertas()">
+          <option value="">Todas las modalidades</option>
+          <option value="Remoto">Remoto</option>
+          <option value="Hibrido">Híbrido</option>
+          <option value="Presencial">Presencial</option>
+        </select>
+      </div>
+    </div>
+
     <div class="card" style="padding:0;overflow:hidden">
       <div id="ofertas-container"></div>
     </div>
