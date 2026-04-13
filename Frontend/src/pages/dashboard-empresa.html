@@ -27,13 +27,13 @@
         </button>
       </div>
 
-      <div class="sidebar__empresa">
+      <a href="perfil-empresa-publico.html" class="sidebar__empresa sidebar__empresa--link" title="Ver perfil público">
         <div class="avatar avatar--md" style="flex-shrink:0">TC</div>
         <div class="sidebar__empresa-info">
           <div class="sidebar__empresa-nombre">TechCorp Argentina</div>
           <div class="sidebar__empresa-rubro">Empresa</div>
         </div>
-      </div>
+      </a>
 
       <nav class="sidebar__nav">
         <span class="sidebar__nav-label">Principal</span>
@@ -58,6 +58,11 @@
           <span class="sidebar__link-text">Publicar oferta</span>
         </button>
 
+        <button class="sidebar__link" onclick="window.location.href='dashboard-candidato.html'" title="Ver todas las ofertas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span class="sidebar__link-text">Ver todas las ofertas</span>
+        </button>
+
         <span class="sidebar__nav-label">Cuenta</span>
 
         <button class="sidebar__link" onclick="navigateTo('perfil')" title="Perfil empresa">
@@ -65,13 +70,6 @@
           <span class="sidebar__link-text">Perfil empresa</span>
         </button>
       </nav>
-
-      <div class="sidebar__bottom">
-        <button class="sidebar__link" onclick="window.location.href='../index.html'" title="Cerrar sesion">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          <span class="sidebar__link-text">Cerrar sesion</span>
-        </button>
-      </div>
 
     </aside>
 
@@ -90,9 +88,30 @@
           </button>
           <span class="db-topbar__title" id="topbar-title">Resumen</span>
         </div>
-        <div class="db-topbar__actions">
-          <button class="btn btn--primary btn--sm" onclick="navigateTo('nueva-oferta')">+ Nueva oferta</button>
-          <div class="avatar avatar--sm">TC</div>
+        <div class="db-topbar__actions relative">
+          <!-- Modificado para que el avatar sea un poco más grande (avatar--md) -->
+          <button class="avatar avatar--md cursor-pointer" id="topbar-user-btn" aria-haspopup="true" aria-expanded="false" style="border: none; outline: none;">TC</button>
+
+          <div class="user-dropdown" id="topbar-user-dropdown">
+            <div class="user-dropdown__header">
+              <div class="user-dropdown__name">TechCorp Argentina</div>
+              <div class="user-dropdown__email">contacto@techcorp.com</div>
+            </div>
+            <div class="divider"></div>
+            <button class="user-dropdown__item" onclick="navigateTo('perfil')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Perfil Empresa
+            </button>
+            <button class="user-dropdown__item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+              Cambiar tema
+            </button>
+            <div class="divider"></div>
+            <button class="user-dropdown__item text-error" onclick="window.location.href='../index.html'">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Cerrar sesión
+            </button>
+          </div>
         </div>
       </div>
 
@@ -102,6 +121,7 @@
 
   </div>
 
+  <script src="../../src/utils/geo-api.js"></script>
   <script src="../../src/utils/dashboard-data.js"></script>
   <script src="../../src/js/dashboard/dashboard.js"></script>
   <script src="../../src/js/dashboard/dashboard-sidebar.js"></script>

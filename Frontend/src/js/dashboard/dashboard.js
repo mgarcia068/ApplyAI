@@ -252,7 +252,7 @@ function renderFormOferta(containerId) {
         </div>
         <div class="form-group">
           <label class="form-label">Ubicacion</label>
-          <input class="form-input" type="text" placeholder="ej: Buenos Aires, Argentina" id="oferta-ubicacion">
+          <input class="form-input" type="text" placeholder="ej: Rosario, Cordoba, etc" id="oferta-ubicacion" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">Habilidades requeridas</label>
@@ -269,6 +269,10 @@ function renderFormOferta(containerId) {
       </div>
     </div>
   `;
+
+  if (typeof geoService !== 'undefined') {
+    geoService.setupAutocomplete('#oferta-ubicacion');
+  }
 }
 
 let ofertaActivaId = null;
@@ -282,25 +286,38 @@ function verPostulantes(ofertaId) {
 function publicarOferta() {
   const tituloEl = document.getElementById('oferta-titulo');
   const descEl   = document.getElementById('oferta-desc');
-  
+  const areaEl   = document.getElementById('oferta-area');
+  const modEl    = document.getElementById('oferta-modalidad');
+  const expEl    = document.getElementById('oferta-exp');
+  const ubicEl   = document.getElementById('oferta-ubicacion');
+  const skillsEl = document.getElementById('oferta-skills');
+
   const titulo = tituloEl?.value.trim();
   const desc   = descEl?.value.trim();
 
-  if (tituloEl) tituloEl.classList.remove('input-error');
-  if (descEl) descEl.classList.remove('input-error');
+  if (tituloEl) tituloEl.classList.remove('form-input--error');
+  if (descEl) descEl.classList.remove('form-input--error');
 
   if (!titulo || !desc) {
-    if (!titulo && tituloEl) tituloEl.classList.add('input-error');
-    if (!desc && descEl) descEl.classList.add('input-error');
-    alert('Por favor, completa los campos marcados en rojo (Título y Descripción).');
+    if (!titulo && tituloEl) tituloEl.classList.add('form-input--error');
+    if (!desc && descEl) descEl.classList.add('form-input--error');
+    alert('Por favor, completa los campos obligatorios (Título y Descripción).');
     return;
   }
+
+  // Parsear skills (separadas por coma)
+  const skillsRaw = skillsEl?.value || '';
+  const parsedSkills = skillsRaw.split(',').map(s => s.trim()).filter(s => s);
 
   OFERTAS.unshift({
     id: OFERTAS.length + 1,
     titulo,
-    area:        document.getElementById('oferta-area')?.value || 'Otro',
-    modalidad:   document.getElementById('oferta-modalidad')?.value || 'Remoto',
+    descripcion: desc,
+    area:        areaEl?.value || 'Otro',
+    modalidad:   modEl?.value || 'Remoto',
+    experiencia: expEl?.value || 'Sin experiencia',
+    ubicacion:   ubicEl?.value.trim() || 'No especificada',
+    skills:      parsedSkills,
     estado:      'activa',
     postulantes: 0,
     fecha:       new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -328,13 +345,39 @@ function filtrarOfertas() {
 }
 
 function eliminarOferta(id) {
-  if (confirm('¿Estás seguro de que deseas eliminar esta oferta?')) {
+  // Crear modal de confirmación personalizado en vez de confirm()
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop modal-backdrop--visible';
+  modal.innerHTML = `
+    <div class="modal-panel modal-panel--visible" style="width: 400px; max-width: calc(100vw - 32px);">
+      <div class="modal-panel__header">
+        <div class="modal-panel__title" style="color: var(--color-error)">Eliminar Oferta</div>
+      </div>
+      <div class="modal-panel__body">
+        ¿Estás seguro de que deseás eliminar permanentemente esta oferta? Esta acción no se puede deshacer y borrará a los postulantes asociados.
+      </div>
+      <div class="modal-panel__footer">
+        <button class="btn btn--ghost" id="conf-cancelar">Cancelar</button>
+        <button class="btn btn--danger" id="conf-eliminar">Sí, eliminar</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Funciones de limpiar
+  const cleanup = () => modal.remove();
+
+  modal.querySelector('#conf-cancelar').addEventListener('click', cleanup);
+  
+  modal.querySelector('#conf-eliminar').addEventListener('click', () => {
     const index = OFERTAS.findIndex(o => o.id === id);
     if (index > -1) {
       OFERTAS.splice(index, 1);
       filtrarOfertas();
     }
-  }
+    cleanup();
+  });
 }
 
 // ── MODAL EDITAR OFERTA ───────────────────────────────────────
@@ -393,7 +436,7 @@ function abrirModalEditarOferta(ofertaId) {
           </div>
           <div class="form-group">
             <label class="form-label">Ubicacion</label>
-            <input class="form-input" type="text" id="edit-oferta-ubicacion" value="${oferta.ubicacion || ''}">
+            <input class="form-input" type="text" id="edit-oferta-ubicacion" placeholder="ej: Rosario, Cordoba, etc" autocomplete="off" value="${oferta.ubicacion || ''}">
           </div>
           <div class="form-group">
             <label class="form-label">Habilidades requeridas</label>
@@ -413,6 +456,10 @@ function abrirModalEditarOferta(ofertaId) {
   `;
 
   document.body.appendChild(modal);
+
+  if (typeof geoService !== 'undefined') {
+    geoService.setupAutocomplete('#edit-oferta-ubicacion');
+  }
 
   requestAnimationFrame(() => {
     modal.querySelector('.modal-backdrop').classList.add('modal-backdrop--visible');
@@ -464,3 +511,24 @@ function guardarOferta(ofertaId) {
     filtrarOfertas();
   }
 }
+
+// User Dropdown toggle
+document.addEventListener("DOMContentLoaded", () => {
+    const userBtn = document.getElementById("topbar-user-btn");
+    const userDropdown = document.getElementById("topbar-user-dropdown");
+
+    if (userBtn && userDropdown) {
+        userBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            userDropdown.classList.toggle("show");
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!userDropdown.contains(e.target)) {
+                userDropdown.classList.remove("show");
+            }
+        });
+    }
+});
+

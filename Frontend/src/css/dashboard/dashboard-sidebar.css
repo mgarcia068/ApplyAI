@@ -83,6 +83,12 @@
   flex-shrink: 0;
   overflow: hidden;
   min-height: 60px;
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+
+.sidebar__empresa--link:hover {
+  background: var(--color-bg-3);
 }
 
 .sidebar__empresa-info {
@@ -168,12 +174,6 @@
 .sidebar__link-text {
   overflow: hidden;
   transition: opacity var(--transition-base), width var(--transition-base);
-}
-
-.sidebar__bottom {
-  padding: var(--space-4) var(--space-3);
-  border-top: 1px solid var(--color-surface);
-  flex-shrink: 0;
 }
 
 .sidebar.collapsed {
