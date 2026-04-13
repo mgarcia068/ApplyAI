@@ -232,6 +232,27 @@
       </div>
     </div>
 
+    <div id="confirmModal" class="modal" hidden aria-hidden="true">
+      <div class="modal__overlay" id="confirmModalOverlay"></div>
+      <div class="modal__panel card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <header class="card__header">
+          <div>
+            <div class="label">Confirmación</div>
+            <h2 class="card__title" id="confirmTitle" style="font-size: var(--text-xl)">¿Estás seguro?</h2>
+          </div>
+        </header>
+
+        <div class="card__body">
+          <p class="text-sm text-muted" id="confirmMessage">Esta acción no se puede deshacer.</p>
+        </div>
+
+        <footer class="card__footer" style="justify-content: flex-end">
+          <button class="btn btn--secondary btn--sm" type="button" id="confirmCancelBtn">Cancelar</button>
+          <button class="btn btn--primary btn--sm" type="button" id="confirmOkBtn">Confirmar</button>
+        </footer>
+      </div>
+    </div>
+
     <div id="footer-placeholder"></div>
   </body>
 </html>

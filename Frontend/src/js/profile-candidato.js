@@ -138,6 +138,102 @@
 
     const logoutBtn = document.getElementById('logoutBtn');
 
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmMessage = document.getElementById('confirmMessage');
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+    const confirmOkBtn = document.getElementById('confirmOkBtn');
+    const confirmModalOverlay = document.getElementById('confirmModalOverlay');
+
+    let confirmResolve = null;
+    let confirmLastActiveEl = null;
+
+    function isConfirmOpen() {
+      return Boolean(confirmModal && !confirmModal.hidden);
+    }
+
+    function closeConfirmModal(result) {
+      if (!confirmModal) return;
+
+      confirmModal.hidden = true;
+      confirmModal.setAttribute('aria-hidden', 'true');
+
+      const resolve = confirmResolve;
+      confirmResolve = null;
+
+      if (confirmLastActiveEl && typeof confirmLastActiveEl.focus === 'function') {
+        confirmLastActiveEl.focus();
+      }
+      confirmLastActiveEl = null;
+
+      if (typeof resolve === 'function') {
+        resolve(Boolean(result));
+      }
+    }
+
+    function confirmWithModal(options) {
+      const title = String(options?.title || '¿Estás seguro?');
+      const message = String(options?.message || 'Esta acción no se puede deshacer.');
+      const confirmText = String(options?.confirmText || 'Confirmar');
+
+      if (!confirmModal || !confirmOkBtn || !confirmCancelBtn) {
+        return Promise.resolve(window.confirm(message));
+      }
+
+      if (isConfirmOpen()) {
+        // Si hay una confirmación abierta, cancelarla y abrir la nueva.
+        closeConfirmModal(false);
+      }
+
+      confirmLastActiveEl = document.activeElement;
+
+      if (confirmTitle) confirmTitle.textContent = title;
+      if (confirmMessage) confirmMessage.textContent = message;
+      confirmOkBtn.textContent = confirmText;
+
+      confirmModal.hidden = false;
+      confirmModal.setAttribute('aria-hidden', 'false');
+
+      // Focus inicial
+      confirmCancelBtn.focus();
+
+      return new Promise((resolve) => {
+        confirmResolve = resolve;
+      });
+    }
+
+    function initConfirmModalOnce() {
+      if (!confirmModal) return;
+      if (confirmModal.dataset.initialized === 'true') return;
+      confirmModal.dataset.initialized = 'true';
+
+      if (confirmCancelBtn) {
+        confirmCancelBtn.addEventListener('click', function () {
+          closeConfirmModal(false);
+        });
+      }
+
+      if (confirmOkBtn) {
+        confirmOkBtn.addEventListener('click', function () {
+          closeConfirmModal(true);
+        });
+      }
+
+      if (confirmModalOverlay) {
+        confirmModalOverlay.addEventListener('click', function () {
+          closeConfirmModal(false);
+        });
+      }
+
+      window.addEventListener('keydown', function (e) {
+        if (!isConfirmOpen()) return;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeConfirmModal(false);
+        }
+      });
+    }
+
     const form = document.getElementById('candidateProfileForm');
     if (!form) return;
 
@@ -193,6 +289,31 @@
     const photoCropCancelBtn = document.getElementById('photoCropCancelBtn');
     const photoCropSaveBtn = document.getElementById('photoCropSaveBtn');
 
+    const photoUploadLabel = photoInput ? photoInput.closest('label.form-file') : null;
+    const cvUploadLabel = cvInput ? cvInput.closest('label.form-file') : null;
+
+    function hasPhoto(profile) {
+      return Boolean(profile && String(profile.photoDataUrl || '').trim());
+    }
+
+    function hasCv(profile) {
+      return Boolean(profile && String(profile.cvDataUrl || '').trim());
+    }
+
+    function syncPhotoUi(profile) {
+      const available = hasPhoto(profile);
+      if (removePhotoBtn) removePhotoBtn.hidden = !available;
+      // No other restriction on re-uploading photo.
+      if (photoUploadLabel) photoUploadLabel.hidden = false;
+    }
+
+    function syncCvUi(profile) {
+      const uploaded = hasCv(profile);
+
+      if (cvUploadLabel) cvUploadLabel.hidden = uploaded;
+      if (cvInput) cvInput.disabled = uploaded;
+    }
+
     let pendingPhotoDataUrl = '';
     let pendingPanX = 0;
     let pendingPanY = 0;
@@ -216,6 +337,7 @@
       });
       if (removePhotoBtn) removePhotoBtn.disabled = true;
       if (removeCvBtn) removeCvBtn.disabled = true;
+      if (removePhotoBtn) removePhotoBtn.hidden = true;
       return;
     }
 
@@ -257,6 +379,11 @@
       setText('profileName', nameForHeader || '—');
       if (avatarInitials) avatarInitials.textContent = initialsFromName(nameForHeader);
     }
+
+    syncPhotoUi(storedProfile);
+    syncCvUi(storedProfile);
+
+    initConfirmModalOnce();
 
     function updateHeaderFromFullName() {
       const value = String(fullName?.value || '').trim();
@@ -350,6 +477,15 @@
       clearCvError();
 
       if (!file) return;
+
+      const existingProfile = getCandidateProfile(userEmail) || {};
+      if (hasCv(existingProfile)) {
+        showCvError('Ya tenés un CV subido. Primero quitá el CV actual para subir otro.');
+        if (cvInput) cvInput.value = '';
+        syncCvUi(existingProfile);
+        return;
+      }
+
       if (file.type !== 'application/pdf') {
         showCvError('Seleccioná un archivo PDF.');
         return;
@@ -373,7 +509,7 @@
         return;
       }
 
-      const existing = getCandidateProfile(userEmail) || {};
+      const existing = existingProfile;
       const nowIso = new Date().toISOString();
       saveCandidateProfile(userEmail, {
         version: PROFILE_VERSION,
@@ -400,6 +536,9 @@
         cvViewLink.hidden = false;
         cvViewLink.setAttribute('download', file.name || 'CV.pdf');
       }
+
+      if (cvInput) cvInput.value = '';
+      syncCvUi({ ...existing, cvDataUrl: dataUrl });
     }
 
     if (photoInput) {
@@ -413,31 +552,46 @@
       removePhotoBtn.addEventListener('click', function () {
         clearPhotoError();
 
-        if (isModalOpen()) closePhotoModal();
-
-        if (photoInput) photoInput.value = '';
-
-        if (avatarPreview && avatarFallback) {
-          avatarPreview.src = '';
-          clearPhotoPan(avatarPreview);
-          avatarPreview.hidden = true;
-          avatarFallback.hidden = false;
+        const existing = getCandidateProfile(userEmail) || {};
+        if (!hasPhoto(existing)) {
+          syncPhotoUi(existing);
+          return;
         }
 
-        const existing = getCandidateProfile(userEmail) || {};
-        saveCandidateProfile(userEmail, {
-          ...existing,
-          version: PROFILE_VERSION,
-          email: userEmail,
-          photoDataUrl: '',
-          photoPanX: 0,
-          photoPanY: 0,
-          cvDataUrl: String(existing.cvDataUrl || ''),
-          cvFileName: String(existing.cvFileName || ''),
-          cvSize: Number(existing.cvSize || 0),
-          cvUpdatedAt: String(existing.cvUpdatedAt || ''),
-          updatedAt: new Date().toISOString(),
-          createdAt: existing.createdAt || new Date().toISOString(),
+        void confirmWithModal({
+          title: 'Quitar foto',
+          message: '¿Estás seguro que querés quitar la foto?',
+          confirmText: 'Quitar',
+        }).then((ok) => {
+          if (!ok) return;
+
+          if (isModalOpen()) closePhotoModal();
+
+          if (photoInput) photoInput.value = '';
+
+          if (avatarPreview && avatarFallback) {
+            avatarPreview.src = '';
+            clearPhotoPan(avatarPreview);
+            avatarPreview.hidden = true;
+            avatarFallback.hidden = false;
+          }
+
+          saveCandidateProfile(userEmail, {
+            ...existing,
+            version: PROFILE_VERSION,
+            email: userEmail,
+            photoDataUrl: '',
+            photoPanX: 0,
+            photoPanY: 0,
+            cvDataUrl: String(existing.cvDataUrl || ''),
+            cvFileName: String(existing.cvFileName || ''),
+            cvSize: Number(existing.cvSize || 0),
+            cvUpdatedAt: String(existing.cvUpdatedAt || ''),
+            updatedAt: new Date().toISOString(),
+            createdAt: existing.createdAt || new Date().toISOString(),
+          });
+
+          syncPhotoUi({ ...existing, photoDataUrl: '' });
         });
       });
     }
@@ -525,12 +679,14 @@
           return;
         }
 
+        const savedPhotoDataUrl = pendingPhotoDataUrl;
+
         const profile = getCandidateProfile(userEmail) || {};
         const nowIso = new Date().toISOString();
 
         // Aplicar al avatar y persistir.
         if (avatarPreview && avatarFallback) {
-          avatarPreview.src = pendingPhotoDataUrl;
+          avatarPreview.src = savedPhotoDataUrl;
           avatarPreview.hidden = false;
           avatarFallback.hidden = true;
           if (avatarContainer) {
@@ -551,7 +707,7 @@
           location: String(location?.value || '').trim(),
           phone: String(phone?.value || '').trim(),
           about: String(about?.value || '').trim(),
-          photoDataUrl: pendingPhotoDataUrl,
+          photoDataUrl: savedPhotoDataUrl,
           photoPanX: clampNumber(pendingPanX, -1, 1),
           photoPanY: clampNumber(pendingPanY, -1, 1),
           cvDataUrl: String(profile.cvDataUrl || ''),
@@ -564,6 +720,9 @@
 
         if (photoInput) photoInput.value = '';
         closePhotoModal();
+
+        const next = { ...profile, photoDataUrl: savedPhotoDataUrl };
+        syncPhotoUi(next);
       });
     }
 
@@ -577,28 +736,44 @@
     if (removeCvBtn) {
       removeCvBtn.addEventListener('click', function () {
         clearCvError();
-        if (cvInput) cvInput.value = '';
-
-        if (cvInfo) cvInfo.hidden = true;
-        if (cvFileName) cvFileName.textContent = '—';
-        if (cvUpdatedAt) cvUpdatedAt.textContent = '';
-        if (cvViewLink) {
-          cvViewLink.href = '#';
-          cvViewLink.hidden = true;
-          cvViewLink.removeAttribute('download');
-        }
 
         const existing = getCandidateProfile(userEmail) || {};
-        saveCandidateProfile(userEmail, {
-          ...existing,
-          version: PROFILE_VERSION,
-          email: userEmail,
-          cvDataUrl: '',
-          cvFileName: '',
-          cvSize: 0,
-          cvUpdatedAt: '',
-          updatedAt: new Date().toISOString(),
-          createdAt: existing.createdAt || new Date().toISOString(),
+        if (!hasCv(existing)) {
+          syncCvUi(existing);
+          return;
+        }
+
+        void confirmWithModal({
+          title: 'Quitar CV',
+          message: '¿Estás seguro que querés quitar el CV?',
+          confirmText: 'Quitar',
+        }).then((ok) => {
+          if (!ok) return;
+
+          if (cvInput) cvInput.value = '';
+
+          if (cvInfo) cvInfo.hidden = true;
+          if (cvFileName) cvFileName.textContent = '—';
+          if (cvUpdatedAt) cvUpdatedAt.textContent = '';
+          if (cvViewLink) {
+            cvViewLink.href = '#';
+            cvViewLink.hidden = true;
+            cvViewLink.removeAttribute('download');
+          }
+
+          saveCandidateProfile(userEmail, {
+            ...existing,
+            version: PROFILE_VERSION,
+            email: userEmail,
+            cvDataUrl: '',
+            cvFileName: '',
+            cvSize: 0,
+            cvUpdatedAt: '',
+            updatedAt: new Date().toISOString(),
+            createdAt: existing.createdAt || new Date().toISOString(),
+          });
+
+          syncCvUi({ ...existing, cvDataUrl: '' });
         });
       });
     }
