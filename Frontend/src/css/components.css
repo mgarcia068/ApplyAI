@@ -53,6 +53,128 @@
   gap: var(--space-3);
 }
 
+/* ── NAVBAR: USER DROPDOWN ─────────────────────────────────── */
+.navbar-user-menu {
+  position: relative;
+}
+
+.navbar-user-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.navbar-user-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-accent-soft);
+  border-radius: var(--radius-full);
+}
+
+/*
+  The candidate navbar dropdown is intentionally aligned with the company dashboard
+  dropdown markup (`.user-dropdown`). We keep the legacy `.navbar-user-dropdown`
+  selectors for compatibility in case an old cached navbar.html is injected.
+*/
+.navbar-user-dropdown,
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  width: 220px;
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-2) 0;
+  z-index: 120;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all var(--transition-fast);
+}
+
+.navbar-user-dropdown.show,
+.user-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.navbar-user-dropdown__header,
+.user-dropdown__header {
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navbar-user-dropdown__name,
+.user-dropdown__name {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navbar-user-dropdown__email,
+.user-dropdown__email {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navbar-user-dropdown .divider,
+.user-dropdown .divider {
+  margin: var(--space-2) 0;
+}
+
+.navbar-user-dropdown__item,
+.user-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: none;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.navbar-user-dropdown__item svg,
+.user-dropdown__item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.navbar-user-dropdown__item:hover svg,
+.user-dropdown__item:hover svg {
+  opacity: 1;
+}
+
+.navbar-user-dropdown__item:hover,
+.user-dropdown__item:hover {
+  background: var(--color-bg-3);
+  color: var(--color-text);
+}
+
+/* Avatar img pan support (same crop model as profile editor) */
+#navbar-user-avatar-img {
+  transform: translate(var(--photo-pan-x, 0px), var(--photo-pan-y, 0px)) scale(var(--photo-pan-scale, 1));
+  transform-origin: center;
+}
+
 .navbar__actions a.active:not(.btn--primary) {
   color: var(--color-accent);
 }
