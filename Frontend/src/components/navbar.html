@@ -3,13 +3,55 @@
     <a href="index.html" class="navbar__logo">Apply<span>AI</span></a>
 
     <div class="navbar__actions">
-      <!-- BOTÓN CAMBIAR TEMA (SLIDE - SIN TEXTO) -->
-      <label class="theme-switch-wrapper" onclick="toggleTheme()" style="width: auto; margin-right: var(--space-4); display: flex; align-items: center; cursor: pointer;">
+      <!-- Cambiar tema (disponible aun sin login) -->
+      <label class="theme-switch-wrapper" id="navbar-public-theme-toggle" onclick="toggleTheme()" style="width: auto; display: flex; align-items: center; cursor: pointer;">
         <div class="theme-switch" id="navbar-theme-switch-btn"></div>
       </label>
 
-      <a href="login.html" class="btn btn--ghost btn--sm">Iniciar sesion</a>
-      <a href="register.html" class="btn btn--primary btn--sm">Registrarse</a>
+      <a href="login.html" class="btn btn--ghost btn--sm" id="navbar-login-btn">Iniciar sesion</a>
+      <a href="register.html" class="btn btn--primary btn--sm" id="navbar-register-btn">Registrarse</a>
+
+      <button class="btn btn--primary btn--sm" type="button" id="navbar-dashboard-btn" hidden>Mi panel</button>
+
+      <!-- USER DROPDOWN (for logged in users) - Hidden by default -->
+      <div class="navbar-user-menu" id="navbar-user-menu" hidden>
+        <button class="navbar-user-btn" id="navbar-user-btn" aria-haspopup="true" aria-expanded="false">
+          <div class="avatar avatar--sm" id="navbar-user-avatar" aria-hidden="true">
+            <img id="navbar-user-avatar-img" alt="" hidden />
+            <span id="navbar-user-avatar-fallback">?</span>
+          </div>
+        </button>
+
+        <div class="user-dropdown" id="navbar-user-dropdown">
+          <div class="user-dropdown__header">
+            <div class="user-dropdown__name" id="navbar-user-name">—</div>
+            <div class="user-dropdown__email" id="navbar-user-email">—</div>
+          </div>
+          <div class="divider"></div>
+          <button class="user-dropdown__item" id="navbar-profile-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Mi perfil</span>
+          </button>
+          <button class="user-dropdown__item" id="navbar-applications-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            <span>Mis postulaciones</span>
+          </button>
+          <div class="user-dropdown__item" id="navbar-theme-toggle-btn" style="padding: var(--space-2) var(--space-4);">
+            <label class="theme-switch-wrapper" style="gap: var(--space-2);">
+              <div class="theme-switch__label">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                Cambiar tema
+              </div>
+              <div class="theme-switch" id="navbar-theme-switch-btn-2" aria-hidden="true"></div>
+            </label>
+          </div>
+          <div class="divider"></div>
+          <button class="user-dropdown__item text-error" id="navbar-logout-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span>Cerrar sesión</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
