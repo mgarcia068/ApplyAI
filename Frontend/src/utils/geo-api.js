@@ -65,34 +65,38 @@ class GeoAPI {
         const resultados = await this.searchLocalidades(query);
         
         list.innerHTML = '';
-        
+
+        // Opción estándar (siempre disponible)
+        const liRemoto = document.createElement('li');
+        liRemoto.className = 'autocomplete-item';
+        liRemoto.innerHTML = `<strong>Remoto (Toda Argentina)</strong>`;
+        liRemoto.addEventListener('mousedown', () => {
+          input.value = 'Remoto (Toda Argentina)';
+          list.classList.remove('show');
+        });
+        list.appendChild(liRemoto);
+
         if (resultados.length === 0) {
-          list.innerHTML = '<li class="autocomplete-item text-muted">No se encontraron resultados</li>';
-        } else {
-          // Agregar opción estándar
-          const liRemoto = document.createElement('li');
-          liRemoto.className = 'autocomplete-item';
-          liRemoto.innerHTML = `<strong>Remoto (Toda Argentina)</strong>`;
-          liRemoto.addEventListener('mousedown', () => {
-            input.value = 'Remoto (Toda Argentina)';
+          const liEmpty = document.createElement('li');
+          liEmpty.className = 'autocomplete-item text-muted';
+          liEmpty.textContent = 'No se encontraron resultados';
+          list.appendChild(liEmpty);
+          return;
+        }
+
+        // Resultados de la API
+        resultados.forEach(loc => {
+          const li = document.createElement('li');
+          li.className = 'autocomplete-item';
+          const locationText = `${loc.nombre}, ${loc.provincia.nombre}`;
+          li.innerHTML = `<strong>${loc.nombre}</strong> <span class="text-muted text-xs">, ${loc.provincia.nombre}</span>`;
+
+          li.addEventListener('mousedown', () => {
+            input.value = locationText;
             list.classList.remove('show');
           });
-          list.appendChild(liRemoto);
-
-          // Resultados de la API
-          resultados.forEach(loc => {
-            const li = document.createElement('li');
-            li.className = 'autocomplete-item';
-            const locationText = `${loc.nombre}, ${loc.provincia.nombre}`;
-            li.innerHTML = `<strong>${loc.nombre}</strong> <span class="text-muted text-xs">, ${loc.provincia.nombre}</span>`;
-            
-            li.addEventListener('mousedown', () => {
-              input.value = locationText;
-              list.classList.remove('show');
-            });
-            list.appendChild(li);
-          });
-        }
+          list.appendChild(li);
+        });
       }, 400); // 400ms debounce
     });
 

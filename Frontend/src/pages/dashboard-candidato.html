@@ -7,64 +7,386 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <link rel="stylesheet" href="../css/base.css?v=1.1" />
     <link rel="stylesheet" href="../css/components.css?v=1.1" />
 
+    <style>
+      .employee-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 2.2fr);
+        gap: var(--space-6);
+        align-items: start;
+        margin-top: var(--space-6);
+      }
+
+      .offer-list {
+        display: grid;
+        gap: var(--space-3);
+      }
+
+      .offer-list__item {
+        width: 100%;
+        text-align: left;
+        border: 1px solid var(--color-surface);
+        border-radius: var(--radius-lg);
+        background: var(--color-bg-3);
+        padding: var(--space-4);
+        cursor: pointer;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+      }
+
+      .offer-list__item:hover {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-soft);
+        transform: translateY(-1px);
+      }
+
+      .offer-list__item:focus-visible {
+        outline: none;
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-soft);
+      }
+
+      .offer-list__item[aria-selected="true"] {
+        border-color: var(--color-accent);
+        box-shadow: var(--shadow-accent);
+      }
+
+      .offer-list__title {
+        font-family: var(--font-display);
+        font-weight: var(--weight-semibold);
+        font-size: var(--text-base);
+        color: var(--color-text);
+      }
+
+      .offer-list__meta {
+        margin-top: var(--space-1);
+        display: grid;
+        gap: 2px;
+        font-size: var(--text-xs);
+        color: var(--color-text-muted);
+      }
+
+      .offer-detail__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-4);
+        margin-top: var(--space-4);
+      }
+
+      .offer-detail__kv {
+        padding: var(--space-4);
+        border: 1px solid var(--color-surface);
+        border-radius: var(--radius-lg);
+        background: var(--color-bg-3);
+      }
+
+      .offer-detail__k {
+        font-size: var(--text-xs);
+        color: var(--color-text-muted);
+        margin-bottom: 2px;
+      }
+
+      .offer-detail__v {
+        font-size: var(--text-sm);
+        color: var(--color-text);
+        font-weight: var(--weight-medium);
+      }
+
+      /* ── HEADER + FILTROS (compacto) ──────────────────────── */
+      .candidate-panel-card {
+        padding: var(--space-5);
+        border-color: var(--color-surface);
+        background:
+          linear-gradient(180deg, var(--color-accent-soft), transparent 55%),
+          var(--color-bg-2);
+      }
+
+      .candidate-panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--space-6);
+        flex-wrap: wrap;
+      }
+
+      .candidate-panel-title {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-family: var(--font-display);
+        font-size: var(--text-md);
+        font-weight: var(--weight-semibold);
+        color: var(--color-text);
+        line-height: var(--leading-snug);
+      }
+
+      .candidate-panel-title svg {
+        flex-shrink: 0;
+        opacity: 0.9;
+      }
+
+      .candidate-panel-subtitle {
+        margin: var(--space-2) 0 0;
+        font-size: var(--text-sm);
+        color: var(--color-text-muted);
+        max-width: 70ch;
+      }
+
+      .candidate-panel-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--space-1);
+      }
+
+      .candidate-filters {
+        margin-top: var(--space-4);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--color-surface);
+      }
+
+      .candidate-filters__label {
+        margin-bottom: var(--space-3);
+      }
+
+      .candidate-filters__grid {
+        gap: var(--space-3);
+      }
+
+      .candidate-filters .form-group {
+        gap: var(--space-1);
+      }
+
+      .candidate-filters .form-label {
+        font-size: var(--text-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .candidate-filters .form-input,
+      .candidate-filters .form-select {
+        padding: var(--space-2) var(--space-3);
+      }
+
+      @media (max-width: 900px) {
+        .employee-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ── AUTOCOMPLETADO (Georef) ───────────────────────────── */
+      .autocomplete-wrapper {
+        width: 100%;
+      }
+
+      .autocomplete-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: var(--color-bg-2);
+        border: 1px solid var(--color-surface);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 1050;
+        display: none;
+        list-style: none;
+        padding: var(--space-2) 0;
+        margin: 0;
+      }
+
+      .autocomplete-list.show {
+        display: block;
+      }
+
+      .autocomplete-item {
+        padding: var(--space-2) var(--space-4);
+        cursor: pointer;
+        font-size: var(--text-sm);
+        color: var(--color-text);
+        border-bottom: 1px solid var(--color-surface);
+        transition: background var(--transition-fast);
+      }
+
+      .autocomplete-item:last-child {
+        border-bottom: none;
+      }
+
+      .autocomplete-item:hover,
+      .autocomplete-item.active {
+        background: var(--color-bg-3);
+        color: var(--color-accent);
+      }
+    </style>
+
     <script src="../utils/theme.js?v=1.1"></script>
     <script src="../js/components.js?v=1.2" defer></script>
-    <script src="../js/candidato-postulaciones.js" defer></script>
+    <script src="../utils/geo-api.js?v=1.1" defer></script>
+    <script src="../js/dashboard-candidato.js?v=1.0" defer></script>
   </head>
+
   <body>
     <div id="navbar-placeholder"></div>
 
     <main class="page-wrapper">
       <section class="section section--sm">
         <div class="container">
-          <div class="card">
-            <div class="card__body">
-              <div class="flex items-center justify-between" style="margin-bottom: var(--space-4)">
-                <h1 class="card__title">Panel de candidato</h1>
+          <div class="card candidate-panel-card">
+            <header class="candidate-panel-header">
+              <div>
+                <h1 class="candidate-panel-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="2" y="7" width="20" height="14" rx="2" />
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                  </svg>
+                  Panel de candidato
+                </h1>
+                <p class="candidate-panel-subtitle">Seleccioná una oferta del listado para ver su información completa.</p>
               </div>
-              <p>
-                Este perfil está pensado para candidatos: subir tu currículum y postularte a
-                trabajos.
-              </p>
 
-              <div id="candidateDashboardAlert" class="alert alert--info flex-col" hidden style="margin-top: var(--space-6)">
-                <strong>Necesitás iniciar sesión como candidato.</strong>
-                <span class="text-sm text-muted">Para postularte, primero iniciá sesión.</span>
-                <div style="margin-top: var(--space-3)">
-                  <a class="btn btn--primary btn--sm" href="../login.html">Ir a login</a>
+              <div class="candidate-panel-meta">
+                <span class="label">Ofertas</span>
+                <span class="badge badge--neutral" id="employeeOffersCount">0</span>
+              </div>
+            </header>
+
+            <div class="candidate-filters">
+              <div class="candidate-filters__label">
+                <span class="label">Filtros</span>
+              </div>
+
+              <div class="grid grid-4 candidate-filters__grid">
+                <div class="form-group">
+                  <label class="form-label" for="filterOfferName">Nombre de oferta</label>
+                  <input
+                    class="form-input"
+                    id="filterOfferName"
+                    type="text"
+                    placeholder="Ej: Trainee"
+                    autocomplete="off"
+                  />
                 </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="filterRole">Puesto</label>
+                  <input
+                    class="form-input"
+                    id="filterRole"
+                    type="text"
+                    placeholder="Ej: Frontend"
+                    autocomplete="off"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="filterLocation">Ubicación</label>
+                  <input
+                    class="form-input"
+                    id="filterLocation"
+                    type="text"
+                    placeholder="Ej: Córdoba"
+                    autocomplete="off"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="filterPublishedDays">Duración publicado</label>
+                  <select class="form-select" id="filterPublishedDays">
+                    <option value="">Cualquiera</option>
+                    <option value="7">Últimos 7 días</option>
+                    <option value="30">Últimos 30 días</option>
+                    <option value="90">Últimos 90 días</option>
+                    <option value="180">Últimos 180 días</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div id="employeeDashboardAlert" class="alert alert--info flex-col" hidden style="margin-top: var(--space-4)">
+              <strong>Necesitás iniciar sesión como candidato.</strong>
+              <span class="text-sm text-muted">Para ver las ofertas, primero iniciá sesión.</span>
+              <div style="margin-top: var(--space-3)">
+                <a class="btn btn--primary btn--sm" href="../login.html">Ir a login</a>
               </div>
             </div>
           </div>
 
-          <div class="grid" style="margin-top: var(--space-6); grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); align-items: start">
-            <div class="card" style="padding: var(--space-4); min-width: 0">
-              <div class="card__body">
-                <div class="flex items-center justify-between" style="margin-bottom: var(--space-3)">
-                  <h2 class="card__title" style="font-size: var(--text-base)">Mis postulaciones</h2>
-                  <span class="badge badge--neutral" id="applicationsCount">0</span>
+          <div class="employee-grid">
+            <aside class="card" style="padding: var(--space-4); min-width: 0">
+              <header class="card__header" style="margin-bottom: var(--space-3)">
+                <div class="flex flex-col" style="gap: var(--space-1)">
+                  <span class="label">Ofertas</span>
+                  <h2 class="card__title" style="font-size: var(--text-base)">Listado</h2>
                 </div>
-                <div id="applicationsList"></div>
-              </div>
-            </div>
+              </header>
 
-            <div class="card" style="min-width: 0">
+              <div id="employeeOffersList" class="offer-list" role="listbox" aria-label="Listado de ofertas"></div>
+            </aside>
+
+            <section class="card" style="min-width: 0">
               <header class="card__header">
                 <div class="flex flex-col" style="gap: var(--space-1)">
-                  <span class="label">Explorá</span>
-                  <h2 class="card__title" style="font-size: var(--text-xl)">Ofertas disponibles</h2>
+                  <span class="label">Detalle</span>
+                  <h2 class="card__title" style="font-size: var(--text-xl)" id="offerDetailTitle">Oferta</h2>
                 </div>
-                <span class="badge badge--accent" id="offersCount">0</span>
+
+                <div class="flex items-center" style="gap: var(--space-3)">
+                  <span class="badge badge--info" id="offerDetailStatusBadge" hidden>—</span>
+                  <button class="btn btn--primary btn--sm" type="button" id="applyOfferBtn" hidden>
+                    Postularme
+                  </button>
+                </div>
               </header>
-              <div class="card__body">
-                <div id="offersList"></div>
+
+              <div class="card__body" style="color: var(--color-text);">
+                <div id="offerDetailEmpty" class="empty-state" style="padding: var(--space-10) var(--space-6)">
+                  <div class="empty-state__icon">✦</div>
+                  <div class="empty-state__title">Seleccioná una oferta</div>
+                  <div class="empty-state__text">Hacé click en una oferta del listado para ver su información completa.</div>
+                </div>
+
+                <div id="offerDetail" hidden>
+                  <div class="text-xs text-muted" id="offerDetailCompany">—</div>
+                  <p class="text-sm" id="offerDetailDescription" style="margin-top: var(--space-4)"></p>
+
+                  <div class="offer-detail__grid" aria-label="Datos de la oferta">
+                    <div class="offer-detail__kv">
+                      <div class="offer-detail__k">Nombre de oferta</div>
+                      <div class="offer-detail__v" id="offerDetailName">—</div>
+                    </div>
+                    <div class="offer-detail__kv">
+                      <div class="offer-detail__k">Puesto</div>
+                      <div class="offer-detail__v" id="offerDetailRole">—</div>
+                    </div>
+                    <div class="offer-detail__kv">
+                      <div class="offer-detail__k">Ubicación</div>
+                      <div class="offer-detail__v" id="offerDetailLocation">—</div>
+                    </div>
+                    <div class="offer-detail__kv">
+                      <div class="offer-detail__k">Publicada</div>
+                      <div class="offer-detail__v" id="offerDetailPublished">—</div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top: var(--space-6)">
+                    <div class="divider" style="margin: var(--space-2) 0">Responsabilidades</div>
+                    <ul id="offerDetailResponsibilities" class="text-sm" style="margin: 0; padding-left: 18px"></ul>
+
+                    <div class="divider" style="margin: var(--space-6) 0 var(--space-2)">Requisitos</div>
+                    <ul id="offerDetailRequirements" class="text-sm" style="margin: 0; padding-left: 18px"></ul>
+                  </div>
+                </div>
               </div>
-            </div>
+            </section>
           </div>
         </div>
       </section>

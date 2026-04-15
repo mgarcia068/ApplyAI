@@ -192,6 +192,10 @@ function ensureNavbarDom() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span>Mi perfil</span>
         </button>
+        <button class="user-dropdown__item" id="navbar-offers-btn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Ofertas laborales</span>
+        </button>
         <button class="user-dropdown__item" id="navbar-applications-btn" type="button">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           <span>Mis postulaciones</span>
@@ -269,9 +273,24 @@ function ensureNavbarDom() {
   const profileBtn = ensureElementId(document.getElementById("navbar-profile-btn") || userMenu.querySelector("#navbar-profile-btn") || userMenu.querySelector("button"), "navbar-profile-btn");
   ensureButtonLabel(profileBtn, "Mi perfil");
 
+  let offersBtn = document.getElementById("navbar-offers-btn") || userMenu.querySelector("#navbar-offers-btn");
+  if (!offersBtn && userDropdown) {
+    // Insert after profile.
+    offersBtn = document.createElement("button");
+    offersBtn.type = "button";
+    offersBtn.className = "user-dropdown__item";
+    offersBtn.id = "navbar-offers-btn";
+    offersBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Ofertas laborales</span>
+    `;
+    profileBtn?.insertAdjacentElement("afterend", offersBtn);
+  }
+  ensureButtonLabel(offersBtn, "Ofertas laborales");
+
   let applicationsBtn = document.getElementById("navbar-applications-btn") || userMenu.querySelector("#navbar-applications-btn");
   if (!applicationsBtn && userDropdown) {
-    // Insert after profile.
+    // Insert after offers.
     applicationsBtn = document.createElement("button");
     applicationsBtn.type = "button";
     applicationsBtn.className = "user-dropdown__item";
@@ -280,9 +299,16 @@ function ensureNavbarDom() {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
       <span>Mis postulaciones</span>
     `;
-    profileBtn?.insertAdjacentElement("afterend", applicationsBtn);
+    (offersBtn || profileBtn)?.insertAdjacentElement("afterend", applicationsBtn);
   }
   ensureButtonLabel(applicationsBtn, "Mis postulaciones");
+
+  if (applicationsBtn && !applicationsBtn.querySelector("svg")) {
+    applicationsBtn.insertAdjacentHTML(
+      "afterbegin",
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>'
+    );
+  }
 
   let themeToggleBtn = document.getElementById("navbar-theme-toggle-btn") || userMenu.querySelector("#navbar-theme-toggle-btn");
   if (!themeToggleBtn && userDropdown) {
@@ -480,6 +506,7 @@ function initNavbarUserDropdown() {
   const userBtn = document.getElementById("navbar-user-btn");
   const userDropdown = document.getElementById("navbar-user-dropdown");
   const profileBtn = document.getElementById("navbar-profile-btn");
+  const offersBtn = document.getElementById("navbar-offers-btn");
   const applicationsBtn = document.getElementById("navbar-applications-btn");
   const themeToggleBtn = document.getElementById("navbar-theme-toggle-btn");
   const logoutBtn = document.getElementById("navbar-logout-btn");
@@ -511,10 +538,17 @@ function initNavbarUserDropdown() {
     });
   }
 
-  // Applications button
+  // Ofertas laborales
+  if (offersBtn) {
+    offersBtn.addEventListener("click", () => {
+      window.location.href = resolvePagePath("dashboard-candidato.html");
+    });
+  }
+
+  // Mis postulaciones
   if (applicationsBtn) {
     applicationsBtn.addEventListener("click", () => {
-      window.location.href = resolvePagePath("dashboard-candidato.html");
+      window.location.href = resolvePagePath("mis-postulaciones.html");
     });
   }
 
