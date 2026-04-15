@@ -383,6 +383,10 @@
     syncPhotoUi(storedProfile);
     syncCvUi(storedProfile);
 
+    if (typeof geoService !== 'undefined') {
+      geoService.setupAutocomplete('#location');
+    }
+
     initConfirmModalOnce();
 
     function updateHeaderFromFullName() {
@@ -821,6 +825,10 @@
 
       setText('profileName', nextProfile.fullName || '—');
       if (avatarInitials) avatarInitials.textContent = initialsFromName(nextProfile.fullName);
+
+      if (typeof updateNavbarActions === 'function') {
+        updateNavbarActions();
+      }
 
       // Feedback simple usando el title del documento.
       const originalTitle = document.title;
