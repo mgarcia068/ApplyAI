@@ -184,6 +184,7 @@ function ensureNavbarDom() {
       <div class="user-dropdown" id="navbar-user-dropdown">
         <div class="user-dropdown__header">
           <div class="user-dropdown__name" id="navbar-user-name">—</div>
+          <div class="user-dropdown__email" id="navbar-user-location" hidden>—</div>
           <div class="user-dropdown__email" id="navbar-user-email">—</div>
         </div>
         <div class="divider"></div>
@@ -225,7 +226,21 @@ function ensureNavbarDom() {
   const nameEl = document.getElementById("navbar-user-name") || userMenu.querySelector(".user-dropdown__name") || userMenu.querySelector(".navbar-user-dropdown__name");
   ensureElementId(nameEl, "navbar-user-name");
 
-  const emailEl = document.getElementById("navbar-user-email") || userMenu.querySelector(".user-dropdown__email") || userMenu.querySelector(".navbar-user-dropdown__email");
+  let locationEl = document.getElementById("navbar-user-location") || userMenu.querySelector("#navbar-user-location");
+  if (!locationEl && nameEl) {
+    locationEl = document.createElement("div");
+    locationEl.className = "user-dropdown__email";
+    locationEl.id = "navbar-user-location";
+    locationEl.hidden = true;
+    locationEl.textContent = "—";
+    nameEl.insertAdjacentElement("afterend", locationEl);
+  }
+  ensureElementId(locationEl, "navbar-user-location");
+
+  const emailEl =
+    document.getElementById("navbar-user-email") ||
+    userMenu.querySelector('.user-dropdown__email:not(#navbar-user-location)') ||
+    userMenu.querySelector('.navbar-user-dropdown__email:not(#navbar-user-location)');
   ensureElementId(emailEl, "navbar-user-email");
 
   // Ensure avatar structure.
@@ -358,12 +373,25 @@ function updateNavbarActions() {
       const initials = initialsFromName(displayName);
       
       const nameEl = document.getElementById("navbar-user-name");
+      const locationEl = document.getElementById("navbar-user-location");
       const emailEl = document.getElementById("navbar-user-email");
       const avatarEl = document.getElementById("navbar-user-avatar");
       const avatarImgEl = document.getElementById("navbar-user-avatar-img");
       const avatarFallbackEl = document.getElementById("navbar-user-avatar-fallback");
       
       if (nameEl) nameEl.textContent = displayName;
+
+      const locationText = String(profile?.location || "").trim();
+      if (locationEl) {
+        if (locationText) {
+          locationEl.textContent = locationText;
+          locationEl.hidden = false;
+        } else {
+          locationEl.textContent = "—";
+          locationEl.hidden = true;
+        }
+      }
+
       if (emailEl) emailEl.textContent = user.email;
 
       if (avatarFallbackEl) avatarFallbackEl.textContent = initials;
