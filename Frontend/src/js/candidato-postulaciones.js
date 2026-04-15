@@ -203,7 +203,9 @@
           <header class="flex items-start justify-between" style="gap: var(--space-4)">
             <div class="flex flex-col" style="gap: var(--space-1)">
               <div class="text-display" style="font-size: var(--text-md)">${offer.title}</div>
-              <div class="text-xs text-muted">${offer.company} • ${offer.location}</div>
+              <div class="text-xs text-muted flex items-center gap-1">
+                <a href="perfil-empresa-publico.html" class="text-primary" style="text-decoration: underline; color: var(--color-primary);">${offer.company}</a> • ${offer.location}
+              </div>
             </div>
             ${statusBadge}
           </header>
@@ -254,7 +256,10 @@
             const badgeClass = badgeClassForStatus(app.status);
             const canWithdraw = canWithdrawApplication(app);
 
-            const companyLine = [app.company, app.location].filter(Boolean).join(' • ') || '—';
+            const companyLink = app.company 
+              ? `<a href="perfil-empresa-publico.html" class="text-primary" style="text-decoration: underline; color: var(--color-primary);">${app.company}</a>`
+              : '';
+            const locationPart = app.location ? ` • ${app.location}` : '';
 
             const withdrawBtnHtml = canWithdraw
               ? `
@@ -271,7 +276,7 @@
                 <div class="applications-list__top">
                   <div class="applications-list__meta">
                     <div class="applications-list__title truncate">${app.offerTitle || 'Oferta'}</div>
-                    <div class="text-xs text-muted truncate">${companyLine}</div>
+                    <div class="text-xs text-muted truncate">${companyLink}${locationPart}</div>
                   </div>
                   <span class="badge ${badgeClass}">${app.status || '—'}</span>
                 </div>
