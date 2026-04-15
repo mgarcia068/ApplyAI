@@ -14,10 +14,10 @@ const OFERTAS = [
 ];
 
 const POSTULANTES = [
-  { id: 1, nombre: 'Lucas Fernandez',   rol: 'Frontend Developer', iniciales: 'LF', skills: ['React', 'TypeScript', 'CSS'],      match: 92, ofertaId: 1 },
-  { id: 2, nombre: 'Valentina Cruz',    rol: 'Frontend Developer', iniciales: 'VC', skills: ['Vue', 'JavaScript', 'Tailwind'],   match: 85, ofertaId: 1 },
-  { id: 3, nombre: 'Mateo Gonzalez',    rol: 'Frontend Developer', iniciales: 'MG', skills: ['React', 'Next.js', 'GraphQL'],     match: 78, ofertaId: 1 },
-  { id: 4, nombre: 'Sofia Herrera',     rol: 'UX/UI Designer',     iniciales: 'SH', skills: ['Figma', 'Prototyping', 'CSS'],     match: 90, ofertaId: 2 },
-  { id: 5, nombre: 'Agustin Molina',    rol: 'Backend Developer',  iniciales: 'AM', skills: ['Node.js', 'Express', 'MongoDB'],   match: 88, ofertaId: 3 },
-  { id: 6, nombre: 'Camila Perez',      rol: 'Backend Developer',  iniciales: 'CP', skills: ['Node.js', 'PostgreSQL', 'Docker'], match: 81, ofertaId: 3 },
+  { id: 1, nombre: 'Lucas Fernandez',   rol: 'Frontend Developer', iniciales: 'LF', skills: ['React', 'TypeScript', 'CSS'],       match: 92, ofertaId: 1, experiencia: '3 años', estudio: 'Ingeniería', favorito: false, estado: 'Revisión', rating: '9.2' },
+  { id: 2, nombre: 'Valentina Cruz',    rol: 'Frontend Developer', iniciales: 'VC', skills: ['Vue', 'JavaScript', 'Tailwind'],   match: 85, ofertaId: 1, experiencia: '1 año',  estudio: 'Terciario',  favorito: true, estado: 'Entrevista', rating: '8.5' },
+  { id: 3, nombre: 'Mateo Gonzalez',    rol: 'Frontend Developer', iniciales: 'MG', skills: ['React', 'Next.js', 'GraphQL'],     match: 78, ofertaId: 1, experiencia: 'Sin experiencia', estudio: 'Bootcamp', favorito: false, estado: 'Revisión', rating: '7.8' },
+  { id: 4, nombre: 'Sofia Herrera',     rol: 'UX/UI Designer',     iniciales: 'SH', skills: ['Figma', 'Prototyping', 'CSS'],     match: 90, ofertaId: 2, experiencia: '5+ años', estudio: 'Licenciatura', favorito: false, estado: 'Revisión', rating: '9.0' },
+  { id: 5, nombre: 'Agustin Molina',    rol: 'Backend Developer',  iniciales: 'AM', skills: ['Node.js', 'Express', 'MongoDB'],   match: 88, ofertaId: 3, experiencia: '2 años', estudio: 'Ingeniería', favorito: false, estado: 'Entrevista', rating: '8.8' },
+  { id: 6, nombre: 'Camila Perez',      rol: 'Backend Developer',  iniciales: 'CP', skills: ['Node.js', 'PostgreSQL', 'Docker'], match: 81, ofertaId: 3, experiencia: '5+ años', estudio: 'Terciario', favorito: false, estado: 'Revisión', rating: '8.1' },
 ];

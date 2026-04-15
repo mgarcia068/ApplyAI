@@ -161,47 +161,151 @@ function renderOfertasTable(containerId, ofertasList = OFERTAS) {
   `;
 }
 
-function renderPostulantes(containerId, ofertaId) {
+function renderPostulantes(containerId, ofertaId, finalLista = null) {
   const el = document.getElementById(containerId);
   if (!el) return;
 
-  const lista = ofertaId
+  const baseLista = ofertaId
     ? POSTULANTES.filter(p => p.ofertaId === ofertaId)
     : POSTULANTES;
+
+  const lista = finalLista || baseLista;
 
   if (lista.length === 0) {
     el.innerHTML = `
       <div class="empty-box">
         <svg class="empty-box__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         <div class="empty-box__title">Sin postulantes todavia</div>
-        <p class="empty-box__text">Cuando alguien se postule a esta oferta aparecera aqui.</p>
+        <p class="empty-box__text">No hay candidatos o no coinciden con tus filtros.</p>
       </div>
     `;
     return;
   }
 
   el.innerHTML = `
-    <div class="applicants-grid">
-      ${lista.map(p => `
-        <div class="applicant-card">
+    <div class="applicants-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); align-items: stretch;">
+      ${lista.map(p => {
+        // Calcular color según rating
+        const ratingNum = parseFloat(p.rating);
+        let ratingColor = 'var(--color-primary)';
+        let ratingBg = 'rgba(76, 175, 80, 0.1)';
+        
+        if (ratingNum >= 8.5) {
+          ratingColor = '#10B981'; // Verde
+          ratingBg = 'rgba(16, 185, 129, 0.1)';
+        } else if (ratingNum >= 7.0) {
+          ratingColor = '#F59E0B'; // Naranja/Amarillo
+          ratingBg = 'rgba(245, 158, 11, 0.1)';
+        } else {
+          ratingColor = '#EF4444'; // Rojo
+          ratingBg = 'rgba(239, 68, 68, 0.1)';
+        }
+
+        return `
+        <div class="applicant-card" style="position: relative; display: flex; flex-direction: column; height: 100%;">
+          <div style="position: absolute; top: var(--space-4); right: var(--space-4); z-index: 10; display: flex; align-items: center; gap: var(--space-2);">
+            <div style="display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: ${ratingBg}; border: 2px solid ${ratingColor}; font-size: 11px; font-weight: 700; color: ${ratingColor};" title="Valoración de la IA para el puesto">
+              ${p.rating}
+            </div>
+            <button class="btn btn--ghost btn--sm cursor-pointer" 
+               style="padding: var(--space-1); width: 32px; height: 32px; color: ${p.favorito ? 'var(--color-primary)' : 'var(--color-text-muted)'}" 
+               onclick="toggleCandidatoFavorito(${p.id})" title="${p.favorito ? 'Quitar de favoritos' : 'Añadir a favoritos'}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="${p.favorito ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </button>
+          </div>
           <div class="applicant-card__header">
             ${buildAvatarInitials(p.iniciales)}
-            <div class="applicant-card__info">
-              <div class="applicant-card__name">${p.nombre}</div>
-              <div class="applicant-card__role">${p.rol}</div>
+            <div class="applicant-card__info" style="padding-right: var(--space-12);">
+              <div class="applicant-card__name" style="font-weight: 600;">${p.nombre}</div>
+              <div class="applicant-card__role text-xs text-muted mb-1">${p.rol}</div>
+              <div class="flex items-center gap-2" style="font-size: var(--text-xs); color: var(--color-text-muted); flex-wrap: wrap;">
+                ${p.experiencia ? `<span style="background:var(--color-bg-3); padding:2px 6px; border-radius:4px;">${p.experiencia}</span>` : ''}
+                ${p.estudio ? `<span style="background:var(--color-bg-3); padding:2px 6px; border-radius:4px;">${p.estudio}</span>` : ''}
+              </div>
             </div>
           </div>
-          <div class="applicant-card__skills">
+          <div class="applicant-card__skills" style="margin-top: var(--space-2); margin-bottom: var(--space-4);">
             ${buildSkillChips(p.skills)}
           </div>
-          <div class="applicant-card__footer">
-            ${buildMatchBar(p.match)}
-            <button class="btn btn--primary btn--sm">Ver CV</button>
+          <div class="applicant-card__footer" style="margin-top: auto; border-top: 1px solid var(--color-surface); padding-top: var(--space-4); display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3);">
+            <div class="flex items-center gap-2">
+              <button class="btn btn--secondary cursor-pointer" style="height: 32px; font-size: var(--text-xs); padding: 0 var(--space-3);" onclick="alert('Descargando o Visualizando CV de ${p.nombre}...')">Ver CV</button>
+              <select class="form-select cursor-pointer" style="padding: 4px 28px 4px 8px; font-size: var(--text-xs); height: 32px; min-width: 120px; background-color: var(--color-bg-3);" onchange="cambiarEstadoCandidato(${p.id}, this.value)">
+                <option value="Revisión" ${p.estado === 'Revisión' ? 'selected' : ''}>En revisión</option>
+                <option value="Entrevista" ${p.estado === 'Entrevista' ? 'selected' : ''}>Entrevista</option>
+                <option value="Aceptado" ${p.estado === 'Aceptado' ? 'selected' : ''}>Aceptado</option>
+                <option value="Rechazado" ${p.estado === 'Rechazado' ? 'selected' : ''}>Rechazado</option>
+              </select>
+            </div>
           </div>
         </div>
-      `).join('')}
+      `;
+      }).join('')}
     </div>
   `;
+}
+
+function toggleCandidatoFavorito(id) {
+  const candidato = POSTULANTES.find(p => p.id === id);
+  if (candidato) candidato.favorito = !candidato.favorito;
+  applyPostulantesFilters(); // recarga la grilla según el último filtro
+}
+
+function cambiarEstadoCandidato(id, nuevoEstado) {
+  const candidato = POSTULANTES.find(p => p.id === id);
+  if (candidato) candidato.estado = nuevoEstado;
+  applyPostulantesFilters(); // recarga
+}
+
+function togglePostulantesFilters() {
+  const f = document.getElementById('postulantes-filters');
+  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+function limpiarPostulantesFilters() {
+  ['filter-tech', 'filter-exp', 'filter-estudios', 'filter-estado'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  applyPostulantesFilters();
+}
+
+function applyPostulantesFilters() {
+  const tech = document.getElementById('filter-tech')?.value.toLowerCase().trim() || '';
+  const exp = document.getElementById('filter-exp')?.value || '';
+  const estudios = document.getElementById('filter-estudios')?.value || '';
+  const estado = document.getElementById('filter-estado')?.value || '';
+
+  const baseLista = ofertaActivaId
+    ? POSTULANTES.filter(p => p.ofertaId === ofertaActivaId)
+    : POSTULANTES;
+
+  const filtered = baseLista.filter(p => {
+    // Skills / Tool search
+    let matchesTech = true;
+    if (tech) {
+      matchesTech = p.skills.some(s => s.toLowerCase().includes(tech));
+    }
+    
+    // Exact match para select de exp
+    let matchesExp = true;
+    if (exp) matchesExp = p.experiencia === exp;
+    
+    // Exact match para estudios
+    let matchesEstudios = true;
+    if (estudios) matchesEstudios = p.estudio === estudios;
+
+    // Filtros de estado
+    let matchesEstado = true;
+    if (estado === 'favorito') matchesEstado = p.favorito === true;
+    else if (estado) matchesEstado = p.estado === estado;
+
+    return matchesTech && matchesExp && matchesEstudios && matchesEstado;
+  });
+
+  renderPostulantes('postulantes-container', ofertaActivaId, filtered);
 }
 
 function renderFormOferta(containerId) {

@@ -98,15 +98,62 @@ function renderOfertas() {
 function renderPostulantesView() {
   const oferta = ofertaActivaId ? OFERTAS.find(o => o.id === ofertaActivaId) : null;
   document.getElementById('db-content').innerHTML = `
-    <div class="section-header">
+    <div class="section-header" style="margin-bottom: var(--space-4);">
       <div>
         <div class="section-header__title">
           ${oferta ? `Postulantes — ${oferta.titulo}` : 'Todos los postulantes'}
         </div>
         <div class="section-header__sub">Ordenados por compatibilidad segun IA</div>
       </div>
-      ${ofertaActivaId ? `<button class="btn btn--ghost btn--sm" onclick="ofertaActivaId=null;navigateTo('postulantes')">Ver todos</button>` : ''}
+      <div style="display:flex; gap:var(--space-2)">
+        ${ofertaActivaId ? `<button class="btn btn--ghost btn--sm" onclick="ofertaActivaId=null;navigateTo('postulantes')">Ver todos</button>` : ''}
+      </div>
     </div>
+    
+    <div id="postulantes-filters" style="margin-bottom: var(--space-6);">
+      <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label text-xs">Tecnologías (ej: React, Node)</label>
+          <input type="text" class="form-input" id="filter-tech" placeholder="Buscar por skill..." onkeyup="applyPostulantesFilters()">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label text-xs">Años de experiencia</label>
+          <select class="form-select" id="filter-exp" onchange="applyPostulantesFilters()">
+            <option value="">Todas</option>
+            <option value="Sin experiencia">Sin experiencia</option>
+            <option value="1 año">1 año</option>
+            <option value="2 años">2 años</option>
+            <option value="3 años">3 años</option>
+            <option value="5+ años">5+ años</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label text-xs">Estudios</label>
+          <select class="form-select" id="filter-estudios" onchange="applyPostulantesFilters()">
+            <option value="">Todos</option>
+            <option value="Bootcamp">Bootcamp</option>
+            <option value="Terciario">Terciario</option>
+            <option value="Licenciatura">Licenciatura</option>
+            <option value="Ingeniería">Ingeniería</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label text-xs">Estado</label>
+          <select class="form-select" id="filter-estado" onchange="applyPostulantesFilters()">
+            <option value="">Todos los estados</option>
+            <option value="favorito">Solo Favoritos</option>
+            <option value="Entrevista">Solamente Entrevistas</option>
+            <option value="Revisión">En revisión</option>
+            <option value="Aceptado">Aceptados</option>
+            <option value="Rechazado">Rechazados</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end" style="margin-top: var(--space-3);">
+         <button class="btn btn--ghost btn--sm cursor-pointer" onclick="limpiarPostulantesFilters()">Limpiar filtros</button>
+      </div>
+    </div>
+
     <div id="postulantes-container"></div>
   `;
   renderPostulantes('postulantes-container', ofertaActivaId);
