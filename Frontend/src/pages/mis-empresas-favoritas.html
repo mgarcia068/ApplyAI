@@ -3,66 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mis empresas favoritas</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-
-    <link rel="stylesheet" href="../css/base.css?v=1.1" />
-    <link rel="stylesheet" href="../css/components.css?v=1.1" />
-    <link rel="stylesheet" href="../css/candidate-pages.css?v=1.0" />
-
-    <script src="../utils/theme.js?v=1.1"></script>
-    <script src="../utils/followed-companies.js?v=1.0" defer></script>
-    <script src="../js/components.js?v=1.2" defer></script>
-    <script src="../js/mis-empresas-favoritas.js?v=1.0" defer></script>
+    <title>Redireccionando...</title>
+    <script>
+      (function () {
+        const target = new URL("candidato/mis-empresas-favoritas.html", window.location.href);
+        target.search = window.location.search;
+        target.hash = window.location.hash;
+        window.location.replace(target.href);
+      })();
+    </script>
   </head>
-
-  <body class="candidate-page candidate-page--favorites">
-    <div id="navbar-placeholder"></div>
-
-    <main class="page-wrapper">
-      <section class="section section--sm">
-        <div class="container">
-          <div class="card candidate-hub candidate-hub--favorites">
-            <div class="card__body">
-              <div class="candidate-hub__top">
-                <div class="candidate-hub__title-wrap">
-                  <div class="label">Candidato</div>
-                  <h1 class="card__title candidate-hub__title">Mis empresas favoritas</h1>
-                </div>
-                <span class="badge badge--neutral candidate-hub__count" id="favoritesCount">0</span>
-              </div>
-
-              <p class="text-sm text-muted candidate-hub__intro">Empresas que seguís desde el perfil público para volver rápido a sus vacantes y novedades.</p>
-
-              <div class="candidate-hub__panel">
-                <div id="favoritesAlert" class="alert alert--info flex-col" hidden>
-                  <strong>Necesitás iniciar sesión como candidato.</strong>
-                  <span class="text-sm text-muted">Para ver tus favoritas, primero iniciá sesión.</span>
-                  <div style="margin-top: var(--space-3)">
-                    <a class="btn btn--primary btn--sm" href="../login.html">Ir a login</a>
-                  </div>
-                </div>
-
-                <div id="favoritesEmpty" class="empty-state" hidden>
-                  <div class="empty-state__icon">✦</div>
-                  <div class="empty-state__title">Todavía no seguís empresas</div>
-                  <div class="empty-state__text">Entrá a una oferta laboral, abrí la empresa y tocá el corazón.</div>
-                </div>
-
-                <div id="favoritesList" class="grid favorites-grid" hidden></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <div id="footer-placeholder"></div>
+  <body>
+    <p>Redireccionando a empresas favoritas...</p>
+    <p><a href="candidato/mis-empresas-favoritas.html">Continuar</a></p>
   </body>
 </html>

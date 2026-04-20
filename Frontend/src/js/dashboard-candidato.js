@@ -480,8 +480,8 @@
 
         const base =
           typeof window.resolvePagePath === 'function'
-            ? window.resolvePagePath('perfil-empresa-publico.html')
-            : 'perfil-empresa-publico.html';
+            ? window.resolvePagePath('empresa/perfil-empresa-publico.html')
+            : '../empresa/perfil-empresa-publico.html';
 
         window.location.href = `${base}?company=${encodeURIComponent(companyId)}`;
       });

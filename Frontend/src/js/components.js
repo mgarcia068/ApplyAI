@@ -28,7 +28,7 @@ function getRootPrefix() {
 }
 
 function resolvePathForContext(pathFromRoot) {
-  // pathFromRoot is relative to Frontend/src (e.g. 'pages/auth/login.html', 'pages/dashboard-candidato.html')
+  // pathFromRoot is relative to Frontend/src (e.g. 'pages/auth/login.html', 'pages/candidato/dashboard-candidato.html')
   return `${getRootPrefix()}${pathFromRoot}`;
 }
 
@@ -599,7 +599,7 @@ function initNavbarDashboardButton() {
   dashboardBtn.dataset.initialized = "true";
 
   dashboardBtn.addEventListener("click", () => {
-    window.location.href = resolvePagePath("dashboard-empresa.html");
+    window.location.href = resolvePathForContext("pages/empresa/dashboard-empresa.html");
   });
 }
 
@@ -687,28 +687,28 @@ function initNavbarUserDropdown() {
   // Panel button (Empresa)
   if (empresaPanelBtn) {
     empresaPanelBtn.addEventListener("click", () => {
-      window.location.href = resolvePagePath("dashboard-empresa.html");
+      window.location.href = resolvePathForContext("pages/empresa/dashboard-empresa.html");
     });
   }
 
   // Ofertas laborales
   if (offersBtn) {
     offersBtn.addEventListener("click", () => {
-      window.location.href = resolvePagePath("dashboard-candidato.html");
+      window.location.href = resolvePathForContext("pages/candidato/dashboard-candidato.html");
     });
   }
 
   // Mis postulaciones
   if (applicationsBtn) {
     applicationsBtn.addEventListener("click", () => {
-      window.location.href = resolvePagePath("mis-postulaciones.html");
+      window.location.href = resolvePathForContext("pages/candidato/mis-postulaciones.html");
     });
   }
 
   // Mis empresas favoritas
   if (favoritesBtn) {
     favoritesBtn.addEventListener("click", () => {
-      window.location.href = resolvePagePath("mis-empresas-favoritas.html");
+      window.location.href = resolvePathForContext("pages/candidato/mis-empresas-favoritas.html");
     });
   }
 

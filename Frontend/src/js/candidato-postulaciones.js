@@ -103,8 +103,8 @@
     const id = String(companyId || '').trim();
     const base =
       typeof window.resolvePagePath === 'function'
-        ? window.resolvePagePath('perfil-empresa-publico.html')
-        : 'perfil-empresa-publico.html';
+        ? window.resolvePagePath('empresa/perfil-empresa-publico.html')
+        : '../empresa/perfil-empresa-publico.html';
     return id ? `${base}?company=${encodeURIComponent(id)}` : base;
   }
 

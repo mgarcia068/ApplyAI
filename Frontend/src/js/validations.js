@@ -17,8 +17,8 @@
 
   function getDashboardForRole(role) {
     const target = role === 'empresa'
-      ? 'pages/dashboard-empresa.html'
-      : 'pages/dashboard-candidato.html';
+      ? 'pages/empresa/dashboard-empresa.html'
+      : 'pages/candidato/dashboard-candidato.html';
     return resolveFromSrcRoot(target);
   }
 
@@ -404,7 +404,7 @@
         // ignore
       }
 
-      window.location.href = 'login.html';
+      window.location.href = resolveFromSrcRoot('pages/auth/login.html');
     });
   }
 
