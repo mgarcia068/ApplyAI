@@ -90,6 +90,24 @@
       .replace(/[\u0300-\u036f]/g, '');
   }
 
+  function slugify(value) {
+    const base = normalizeText(value);
+    return base
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  function companyProfileUrl(companyId) {
+    const id = String(companyId || '').trim();
+    const base =
+      typeof window.resolvePagePath === 'function'
+        ? window.resolvePagePath('perfil-empresa-publico.html')
+        : 'perfil-empresa-publico.html';
+    return id ? `${base}?company=${encodeURIComponent(id)}` : base;
+  }
+
   function canWithdrawApplication(app) {
     const status = normalizeText(app?.status);
     // Regla simple: permitir retirar solo si sigue en revisión (no avanzado).
@@ -177,6 +195,7 @@
     listEl.innerHTML = OFFERS.map((offer) => {
       const existingApp = email ? getApplication(email, offer.id) : null;
       const already = Boolean(existingApp);
+      const companyId = slugify(offer.company);
 
       const statusBadge = already
         ? `<span class="badge ${badgeClassForStatus(existingApp.status)}">${existingApp.status || 'Postulado'}</span>`
@@ -204,18 +223,27 @@
             <div class="flex flex-col" style="gap: var(--space-1)">
               <div class="text-display" style="font-size: var(--text-md)">${offer.title}</div>
               <div class="text-xs text-muted flex items-center gap-1">
-                <a href="perfil-empresa-publico.html" class="text-primary" style="text-decoration: underline; color: var(--color-primary);">${offer.company}</a> • ${offer.location}
+                ${offer.company} • ${offer.location}
               </div>
             </div>
             ${statusBadge}
           </header>
 
-          <footer class="card__footer" style="justify-content: flex-end">
+          <footer class="card__footer" style="justify-content: flex-end; gap: var(--space-2)">
+            ${companyId ? `<button class="btn btn--secondary btn--sm" type="button" data-action="view-company" data-company-id="${companyId}">Ver empresa</button>` : ''}
             ${actionButtonHtml}
           </footer>
         </article>
       `;
     }).join('');
+
+    listEl.querySelectorAll('button[data-company-id][data-action="view-company"]').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const companyId = String(btn.getAttribute('data-company-id') || '').trim();
+        if (!companyId) return;
+        window.location.href = companyProfileUrl(companyId);
+      });
+    });
 
     listEl.querySelectorAll('button[data-offer-id][data-action="apply"]').forEach((btn) => {
       btn.addEventListener('click', function () {
@@ -256,19 +284,26 @@
             const badgeClass = badgeClassForStatus(app.status);
             const canWithdraw = canWithdrawApplication(app);
 
-            const companyLink = app.company 
-              ? `<a href="perfil-empresa-publico.html" class="text-primary" style="text-decoration: underline; color: var(--color-primary);">${app.company}</a>`
-              : '';
+            const companyName = String(app.company || '').trim();
+            const companyId = slugify(companyName);
             const locationPart = app.location ? ` • ${app.location}` : '';
 
-            const withdrawBtnHtml = canWithdraw
-              ? `
-                <div class="applications-list__actions">
-                  <button class="btn btn--danger btn--sm" type="button" data-action="withdraw" data-offer-id="${app.offerId}">
-                    Despostularme
-                  </button>
-                </div>
-              `
+            const actions = [];
+
+            if (companyId) {
+              actions.push(
+                `<button class="btn btn--secondary btn--sm" type="button" data-action="view-company" data-company-id="${companyId}">Ver empresa</button>`
+              );
+            }
+
+            if (canWithdraw) {
+              actions.push(
+                `<button class="btn btn--danger btn--sm" type="button" data-action="withdraw" data-offer-id="${app.offerId}">Despostularme</button>`
+              );
+            }
+
+            const actionsHtml = actions.length
+              ? `<div class="applications-list__actions" style="display: flex; gap: var(--space-2); flex-wrap: wrap;">${actions.join('')}</div>`
               : '';
 
             return `
@@ -276,17 +311,25 @@
                 <div class="applications-list__top">
                   <div class="applications-list__meta">
                     <div class="applications-list__title truncate">${app.offerTitle || 'Oferta'}</div>
-                    <div class="text-xs text-muted truncate">${companyLink}${locationPart}</div>
+                    <div class="text-xs text-muted truncate">${companyName}${locationPart}</div>
                   </div>
                   <span class="badge ${badgeClass}">${app.status || '—'}</span>
                 </div>
-                ${withdrawBtnHtml}
+                ${actionsHtml}
               </div>
             `;
           })
           .join('')}
       </div>
     `;
+
+    listEl.querySelectorAll('button[data-company-id][data-action="view-company"]').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const companyId = String(btn.getAttribute('data-company-id') || '').trim();
+        if (!companyId) return;
+        window.location.href = companyProfileUrl(companyId);
+      });
+    });
 
     listEl.querySelectorAll('button[data-offer-id][data-action="withdraw"]').forEach((btn) => {
       btn.addEventListener('click', function () {

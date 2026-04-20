@@ -95,6 +95,15 @@
       .replace(/[\u0300-\u036f]/g, '');
   }
 
+  function slugify(value) {
+    const base = normalizeText(value);
+    return base
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
   function getAllApplications() {
     const raw = localStorage.getItem(STORAGE_KEYS.applications);
     const parsed = raw ? safeJsonParse(raw, []) : [];
@@ -331,6 +340,7 @@
 
     const statusBadgeEl = document.getElementById('offerDetailStatusBadge');
     const applyBtnEl = document.getElementById('applyOfferBtn');
+    const viewCompanyBtnEl = document.getElementById('viewCompanyBtn');
 
     if (!offer) {
       setText('offerDetailTitle', 'Oferta');
@@ -338,6 +348,10 @@
       setHidden('offerDetail', true);
       if (statusBadgeEl) statusBadgeEl.hidden = true;
       if (applyBtnEl) applyBtnEl.hidden = true;
+      if (viewCompanyBtnEl) {
+        viewCompanyBtnEl.hidden = true;
+        viewCompanyBtnEl.removeAttribute('data-company-id');
+      }
       return;
     }
 
@@ -347,6 +361,17 @@
     setText('offerDetailTitle', offer.role || 'Oferta');
     setText('offerDetailCompany', offer.company ? `${offer.company} • ${offer.location}` : offer.location || '—');
     setText('offerDetailDescription', offer.description || '—');
+
+    if (viewCompanyBtnEl) {
+      const companyId = offer.company ? slugify(offer.company) : '';
+      if (companyId) {
+        viewCompanyBtnEl.hidden = false;
+        viewCompanyBtnEl.setAttribute('data-company-id', companyId);
+      } else {
+        viewCompanyBtnEl.hidden = true;
+        viewCompanyBtnEl.removeAttribute('data-company-id');
+      }
+    }
 
     setText('offerDetailName', offer.name || '—');
     setText('offerDetailRole', offer.role || '—');
@@ -434,6 +459,21 @@
 
         createApplication(currentUser.email, offer);
         renderAll();
+      });
+    }
+
+    const viewCompanyBtnEl = document.getElementById('viewCompanyBtn');
+    if (viewCompanyBtnEl) {
+      viewCompanyBtnEl.addEventListener('click', function () {
+        const companyId = String(viewCompanyBtnEl.getAttribute('data-company-id') || '').trim();
+        if (!companyId) return;
+
+        const base =
+          typeof window.resolvePagePath === 'function'
+            ? window.resolvePagePath('perfil-empresa-publico.html')
+            : 'perfil-empresa-publico.html';
+
+        window.location.href = `${base}?company=${encodeURIComponent(companyId)}`;
       });
     }
 

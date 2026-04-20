@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mis empresas favoritas</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="../css/base.css?v=1.1" />
+    <link rel="stylesheet" href="../css/components.css?v=1.1" />
+
+    <script src="../utils/theme.js?v=1.1"></script>
+    <script src="../utils/followed-companies.js?v=1.0" defer></script>
+    <script src="../js/components.js?v=1.2" defer></script>
+    <script src="../js/mis-empresas-favoritas.js?v=1.0" defer></script>
+  </head>
+
+  <body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="page-wrapper">
+      <section class="section section--sm">
+        <div class="container">
+          <div class="card">
+            <div class="card__body">
+              <div class="flex items-center justify-between" style="margin-bottom: var(--space-4)">
+                <h1 class="card__title">Mis empresas favoritas</h1>
+                <span class="badge badge--neutral" id="favoritesCount">0</span>
+              </div>
+
+              <p class="text-sm text-muted">Empresas que seguís desde el perfil público de cada empresa.</p>
+
+              <div id="favoritesAlert" class="alert alert--info flex-col" hidden style="margin-top: var(--space-6)">
+                <strong>Necesitás iniciar sesión como candidato.</strong>
+                <span class="text-sm text-muted">Para ver tus favoritas, primero iniciá sesión.</span>
+                <div style="margin-top: var(--space-3)">
+                  <a class="btn btn--primary btn--sm" href="../login.html">Ir a login</a>
+                </div>
+              </div>
+
+              <div id="favoritesEmpty" class="empty-state" style="padding: var(--space-10) var(--space-6); margin-top: var(--space-6)" hidden>
+                <div class="empty-state__icon">✦</div>
+                <div class="empty-state__title">Todavía no seguís empresas</div>
+                <div class="empty-state__text">Entrá a una oferta laboral, abrí la empresa y tocá el corazón.</div>
+              </div>
+
+              <div
+                id="favoritesList"
+                class="grid"
+                style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-4); margin-top: var(--space-6)"
+                hidden
+              ></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+  </body>
+</html>

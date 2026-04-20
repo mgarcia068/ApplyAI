@@ -240,6 +240,10 @@ function ensureNavbarDom() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <span>Ofertas laborales</span>
         </button>
+        <button class="user-dropdown__item" id="navbar-favorites-btn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          <span>Mis empresas favoritas</span>
+        </button>
         <button class="user-dropdown__item" id="navbar-applications-btn" type="button">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           <span>Mis postulaciones</span>
@@ -348,7 +352,7 @@ function ensureNavbarDom() {
 
   let applicationsBtn = document.getElementById("navbar-applications-btn") || userMenu.querySelector("#navbar-applications-btn");
   if (!applicationsBtn && userDropdown) {
-    // Insert after offers.
+    // Insert after favorites/offers.
     applicationsBtn = document.createElement("button");
     applicationsBtn.type = "button";
     applicationsBtn.className = "user-dropdown__item";
@@ -368,6 +372,27 @@ function ensureNavbarDom() {
     );
   }
 
+  let favoritesBtn = document.getElementById("navbar-favorites-btn") || userMenu.querySelector("#navbar-favorites-btn");
+  if (!favoritesBtn && userDropdown) {
+    favoritesBtn = document.createElement("button");
+    favoritesBtn.type = "button";
+    favoritesBtn.className = "user-dropdown__item";
+    favoritesBtn.id = "navbar-favorites-btn";
+    favoritesBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+      <span>Mis empresas favoritas</span>
+    `;
+    (offersBtn || profileBtn)?.insertAdjacentElement("afterend", favoritesBtn);
+  }
+  ensureButtonLabel(favoritesBtn, "Mis empresas favoritas");
+
+  if (favoritesBtn && !favoritesBtn.querySelector("svg")) {
+    favoritesBtn.insertAdjacentHTML(
+      "afterbegin",
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>'
+    );
+  }
+
   let themeToggleBtn = document.getElementById("navbar-theme-toggle-btn") || userMenu.querySelector("#navbar-theme-toggle-btn");
   if (!themeToggleBtn && userDropdown) {
     themeToggleBtn = document.createElement("div");
@@ -383,7 +408,21 @@ function ensureNavbarDom() {
         <div class="theme-switch" id="navbar-theme-switch-btn-2" aria-hidden="true"></div>
       </label>
     `;
-    (applicationsBtn || profileBtn)?.insertAdjacentElement("afterend", themeToggleBtn);
+    (applicationsBtn || favoritesBtn || offersBtn || profileBtn)?.insertAdjacentElement("afterend", themeToggleBtn);
+  }
+
+  // Enforce final dropdown order for both injected and cached navbars.
+  if (userDropdown && profileBtn && offersBtn) {
+    profileBtn.insertAdjacentElement("afterend", offersBtn);
+  }
+  if (userDropdown && offersBtn && favoritesBtn) {
+    offersBtn.insertAdjacentElement("afterend", favoritesBtn);
+  }
+  if (userDropdown && favoritesBtn && applicationsBtn) {
+    favoritesBtn.insertAdjacentElement("afterend", applicationsBtn);
+  }
+  if (userDropdown && applicationsBtn && themeToggleBtn) {
+    applicationsBtn.insertAdjacentElement("afterend", themeToggleBtn);
   }
 
   let logoutBtn = document.getElementById("navbar-logout-btn") || userMenu.querySelector("#navbar-logout-btn");
@@ -396,7 +435,7 @@ function ensureNavbarDom() {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       <span>Cerrar sesión</span>
     `;
-    themeToggleBtn?.insertAdjacentElement("afterend", logoutBtn);
+    (themeToggleBtn || applicationsBtn || favoritesBtn || offersBtn || profileBtn)?.insertAdjacentElement("afterend", logoutBtn);
   }
 
   // Ensure the logout item is visually separated like the company dashboard dropdown.
@@ -570,6 +609,7 @@ function initNavbarUserDropdown() {
   const empresaPanelBtn = document.getElementById("navbar-empresa-panel-btn");
   const offersBtn = document.getElementById("navbar-offers-btn");
   const applicationsBtn = document.getElementById("navbar-applications-btn");
+  const favoritesBtn = document.getElementById("navbar-favorites-btn");
   const themeToggleBtn = document.getElementById("navbar-theme-toggle-btn");
   const logoutBtn = document.getElementById("navbar-logout-btn");
 
@@ -621,9 +661,17 @@ function initNavbarUserDropdown() {
     });
   }
 
+  // Mis empresas favoritas
+  if (favoritesBtn) {
+    favoritesBtn.addEventListener("click", () => {
+      window.location.href = resolvePagePath("mis-empresas-favoritas.html");
+    });
+  }
+
   // Theme toggle (inside avatar dropdown)
   if (themeToggleBtn) {
-    themeToggleBtn.addEventListener("click", () => {
+    themeToggleBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       if (typeof window.toggleTheme === "function") {
         window.toggleTheme();
       }
