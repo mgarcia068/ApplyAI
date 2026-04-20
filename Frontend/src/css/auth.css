@@ -60,3 +60,170 @@
 	justify-content: center;
 	gap: var(--space-3);
 }
+
+/* ── Role toggle (Register) ───────────────────────────────── */
+.role-fieldset {
+	border: 0;
+	padding: 0;
+	margin: 0;
+	min-width: 0;
+}
+
+.role-fieldset > legend {
+	padding: 0;
+	padding-left: calc(44px + var(--space-3));
+	margin-bottom: var(--space-2);
+}
+
+.role-toggle {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--space-3);
+}
+
+.role-toggle__input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.role-toggle__option {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	gap: var(--space-1);
+	padding: var(--space-6) var(--space-6);
+	min-height: 118px;
+	background: linear-gradient(180deg, var(--color-bg-2), var(--color-bg-3));
+	border: 1.5px solid var(--color-surface);
+	border-radius: var(--radius-lg);
+	color: var(--color-text-muted);
+	font-size: var(--text-base);
+	font-weight: var(--weight-medium);
+	box-shadow: var(--shadow-sm);
+	position: relative;
+	overflow: hidden;
+	transition:
+		background-color var(--transition-fast),
+		background-image var(--transition-fast),
+		border-color var(--transition-fast),
+		box-shadow var(--transition-fast),
+		transform var(--transition-fast),
+		color var(--transition-fast);
+	cursor: pointer;
+	user-select: none;
+}
+
+.role-toggle__top {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	position: relative;
+	z-index: 1;
+}
+
+.role-toggle__icon {
+	width: 44px;
+	height: 44px;
+	border-radius: var(--radius-lg);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--color-accent-soft);
+	border: 1px solid var(--color-surface);
+	color: var(--color-accent);
+	flex-shrink: 0;
+}
+
+.role-toggle__icon svg {
+	display: block;
+}
+
+.role-toggle__option::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(135deg, var(--color-accent-soft), transparent 55%);
+	opacity: 0;
+	transition: opacity var(--transition-fast);
+	pointer-events: none;
+}
+
+.role-toggle__title {
+	font-weight: var(--weight-semibold);
+	color: var(--color-text);
+	letter-spacing: -0.01em;
+}
+
+.role-toggle__desc {
+	font-size: var(--text-xs);
+	color: var(--color-text-muted);
+	line-height: var(--leading-snug);
+	position: relative;
+	z-index: 1;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.role-toggle__input:focus-visible + .role-toggle__option {
+	border-color: var(--color-accent);
+	box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.role-toggle__input:checked + .role-toggle__option {
+	background-image: linear-gradient(180deg, var(--color-accent) 0%, var(--color-bg-3) 78%);
+	border-color: transparent;
+	color: var(--color-text);
+	box-shadow: var(--shadow-accent);
+	transform: translateY(-1px);
+}
+
+.role-toggle__input:checked + .role-toggle__option .role-toggle__icon {
+	background-color: var(--color-bg-2);
+	border-color: var(--color-accent-soft);
+	color: inherit;
+}
+
+.role-toggle__input:checked + .role-toggle__option .role-toggle__title,
+.role-toggle__input:checked + .role-toggle__option .role-toggle__desc {
+	color: inherit;
+}
+
+[data-theme="light"] .role-toggle__input:checked + .role-toggle__option {
+	color: var(--color-text);
+}
+
+.role-toggle__option:hover {
+	background-color: var(--color-bg-2);
+	border-color: var(--color-text-faint);
+	box-shadow: var(--shadow-md);
+	transform: translateY(-2px);
+}
+
+.role-toggle__option:hover::before {
+	opacity: 1;
+}
+
+/* Reuse existing error class used by inputs/selects */
+.role-toggle.form-input--error .role-toggle__option {
+	border-color: var(--color-error);
+}
+
+.role-toggle.form-input--error:focus {
+	outline: none;
+	box-shadow: 0 0 0 3px var(--color-error-soft);
+	border-radius: var(--radius-md);
+}
+
+@media (max-width: 520px) {
+	.role-fieldset > legend {
+		padding-left: 0;
+	}
+
+	.role-toggle {
+		grid-template-columns: 1fr;
+	}
+}

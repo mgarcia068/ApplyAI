@@ -34,12 +34,58 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="accountRole">Tipo de cuenta</label>
-              <select class="form-select" id="accountRole" name="role" required>
-                <option value="">Seleccioná una opción</option>
-                <option value="candidato">Candidato</option>
-                <option value="empresa">Empresa</option>
-              </select>
+              <fieldset class="form-group role-fieldset">
+                <legend class="form-label" id="accountRoleLegend">Tipo de cuenta</legend>
+
+                <div
+                  class="role-toggle"
+                  id="accountRole"
+                  role="radiogroup"
+                  aria-labelledby="accountRoleLegend"
+                  tabindex="-1"
+                >
+                  <input
+                    class="role-toggle__input"
+                    type="radio"
+                    id="roleCandidato"
+                    name="role"
+                    value="candidato"
+                    required
+                  />
+                  <label class="role-toggle__option" for="roleCandidato">
+                    <span class="role-toggle__top">
+                      <span class="role-toggle__icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                      </span>
+                      <span class="role-toggle__title">Candidato</span>
+                    </span>
+                    <span class="role-toggle__desc">Postulate a empleos, armá tu perfil y seguí tus postulaciones.</span>
+                  </label>
+
+                  <input
+                    class="role-toggle__input"
+                    type="radio"
+                    id="roleEmpresa"
+                    name="role"
+                    value="empresa"
+                  />
+                  <label class="role-toggle__option" for="roleEmpresa">
+                    <span class="role-toggle__top">
+                      <span class="role-toggle__icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="7" width="20" height="14" rx="2" />
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                        </svg>
+                      </span>
+                      <span class="role-toggle__title">Empresa</span>
+                    </span>
+                    <span class="role-toggle__desc">Publicá ofertas, revisá postulantes y gestioná entrevistas desde tu dashboard.</span>
+                  </label>
+                </div>
+              </fieldset>
               <p class="form-error" id="accountRoleError" aria-live="polite"></p>
             </div>
 

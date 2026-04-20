@@ -59,6 +59,10 @@
   }
 
   function getRoleFromRegisterForm() {
+    const checkedRole = document.querySelector('input[name="role"]:checked');
+    if (checkedRole) return normalizeRole(checkedRole.value);
+
+    // Backward compatibility (older markup used a <select id="accountRole">)
     const accountRole = document.getElementById('accountRole');
     return normalizeRole(accountRole?.value);
   }
@@ -224,6 +228,7 @@
     const fullName = document.getElementById('fullName');
     const fullNameLabel = document.getElementById('fullNameLabel');
     const accountRole = document.getElementById('accountRole');
+    const roleInputs = form.querySelectorAll('input[name="role"]');
     const email = document.getElementById('email');
     const password = document.getElementById('password');
     const confirmPassword = document.getElementById('confirmPassword');
@@ -237,6 +242,8 @@
     };
 
     function getRole() {
+      const checked = form.querySelector('input[name="role"]:checked');
+      if (checked) return normalizeRole(checked.value);
       return normalizeRole(accountRole?.value);
     }
 
@@ -255,13 +262,24 @@
     // Preselección por querystring (?rol=candidato|empresa)
     try {
       const qsRole = normalizeRole(new URLSearchParams(window.location.search).get('rol'));
-      if (accountRole && qsRole) accountRole.value = qsRole;
+      if (qsRole) {
+        const radio = form.querySelector('input[name="role"][value="' + qsRole + '"]');
+        if (radio) radio.checked = true;
+        else if (accountRole) accountRole.value = qsRole;
+      }
     } catch (_) {
       // ignore
     }
 
     applyRoleUI(getRole());
-    if (accountRole) {
+    if (roleInputs && roleInputs.length) {
+      roleInputs.forEach(function (input) {
+        input.addEventListener('change', function () {
+          applyRoleUI(getRole());
+          if (hasAttemptedSubmit) validate({ showAlert: true });
+        });
+      });
+    } else if (accountRole) {
       accountRole.addEventListener('change', function () {
         applyRoleUI(getRole());
         if (hasAttemptedSubmit) validate({ showAlert: true });
@@ -284,17 +302,28 @@
       return false;
     }
 
+    function setRoleError(message) {
+      if (!accountRole || !errors.accountRole) return false;
+
+      if (message) {
+        accountRole.classList.add('form-input--error');
+        accountRole.setAttribute('aria-invalid', 'true');
+        errors.accountRole.textContent = message;
+        return true;
+      }
+
+      accountRole.classList.remove('form-input--error');
+      accountRole.removeAttribute('aria-invalid');
+      errors.accountRole.textContent = '';
+      return false;
+    }
+
     function validate(options) {
       const showAlert = Boolean(options && options.showAlert);
       let hasAnyError = false;
 
       const roleValue = getRole();
-      hasAnyError =
-        setFieldError(
-          accountRole,
-          errors.accountRole,
-          roleValue ? '' : 'Seleccioná si sos candidato o empresa.'
-        ) || hasAnyError;
+      hasAnyError = setRoleError(roleValue ? '' : 'Seleccioná si sos candidato o empresa.') || hasAnyError;
 
       const fullNameValue = (fullName?.value || '').trim();
       const fullNameMessage = fullNameValue.length
