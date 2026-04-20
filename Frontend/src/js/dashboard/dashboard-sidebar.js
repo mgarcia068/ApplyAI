@@ -25,6 +25,9 @@ function navigateTo(seccion, subtitulo) {
 
   const content = document.getElementById('db-content');
   if (content) {
+    if (seccion !== 'resumen') {
+      content.classList.remove('dashboard-content-fixed');
+    }
     content.innerHTML = '';
     content.style.animation = 'none';
     requestAnimationFrame(() => {
@@ -37,9 +40,18 @@ function navigateTo(seccion, subtitulo) {
 }
 
 function renderResumen() {
-  document.getElementById('db-content').innerHTML = `
-    <div class="stats-grid" id="stats-container"></div>
-    <div style="margin-top:var(--space-8)">
+  const content = document.getElementById('db-content');
+  content.classList.add('dashboard-content-fixed');
+  content.innerHTML = `
+    <div class="dashboard-header-fixed">
+      <div style="padding-bottom: 24px;">
+          <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 4px;">Resumen General</h1>
+          <p style="color: var(--color-text-muted); margin: 0;">Vista rápida y analíticas de la empresa.</p>
+      </div>
+      <div class="stats-grid" id="stats-container"></div>
+    </div>
+    
+    <div class="dashboard-scrollable-content" style="margin-top:var(--space-8)">
       <div class="section-header">
         <div>
           <div class="section-header__title">Ofertas recientes</div>
@@ -53,7 +65,8 @@ function renderResumen() {
     </div>
   `;
   renderStats('stats-container');
-  renderOfertasTable('ofertas-resumen-container');
+  // mostrar solo las 3 ultimas ofertas para que no desborde y obligue a scrolear
+  renderOfertasTable('ofertas-resumen-container', OFERTAS.slice(0, 3));
 }
 
 function renderOfertas() {
