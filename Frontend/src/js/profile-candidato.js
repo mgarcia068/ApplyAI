@@ -279,6 +279,20 @@
     const cvUpdatedAt = document.getElementById('cvUpdatedAt');
     const cvViewLink = document.getElementById('cvViewLink');
     const removeCvBtn = document.getElementById('removeCvBtn');
+    const cvAiUploadHint = document.getElementById('cvAiUploadHint');
+
+    const cvAiScoreRing = document.getElementById('cvAiScoreRing');
+    const cvAiOverallScore = document.getElementById('cvAiOverallScore');
+    const cvAiScoreLabel = document.getElementById('cvAiScoreLabel');
+    const cvAiInsight = document.getElementById('cvAiInsight');
+    const cvAiClarityValue = document.getElementById('cvAiClarityValue');
+    const cvAiSkillsValue = document.getElementById('cvAiSkillsValue');
+    const cvAiExperienceValue = document.getElementById('cvAiExperienceValue');
+    const cvAiClarityFill = document.getElementById('cvAiClarityFill');
+    const cvAiSkillsFill = document.getElementById('cvAiSkillsFill');
+    const cvAiExperienceFill = document.getElementById('cvAiExperienceFill');
+    const cvAiStatus = document.getElementById('cvAiStatus');
+    const runCvAiEvalBtn = document.getElementById('runCvAiEvalBtn');
 
     const avatarPreview = document.getElementById('avatarPreview');
     const avatarFallback = document.getElementById('avatarFallback');
@@ -303,6 +317,175 @@
       return Boolean(profile && String(profile.cvDataUrl || '').trim());
     }
 
+    const CV_AI_KEYWORDS = [
+      'javascript',
+      'typescript',
+      'react',
+      'node',
+      'python',
+      'java',
+      'sql',
+      'aws',
+      'docker',
+      'qa',
+      'testing',
+      'scrum',
+      'agile',
+      'ux',
+      'ui',
+    ];
+
+    function describeCvScore(score) {
+      const safe = clampNumber(score, 0, 100);
+      if (safe >= 85) return 'Excelente perfil';
+      if (safe >= 70) return 'Perfil sólido';
+      if (safe >= 55) return 'Buen potencial';
+      return 'En desarrollo';
+    }
+
+    function scoreBand(score) {
+      const safe = clampNumber(score, 0, 100);
+      if (safe >= 75) return 'high';
+      if (safe >= 55) return 'medium';
+      return 'low';
+    }
+
+    function scoreRingPalette(score) {
+      const band = scoreBand(score);
+      if (band === 'high') {
+        return {
+          band,
+          start: '#22c55e',
+          end: '#14b8a6',
+        };
+      }
+      if (band === 'medium') {
+        return {
+          band,
+          start: '#f59e0b',
+          end: '#f97316',
+        };
+      }
+      return {
+        band,
+        start: '#ef4444',
+        end: '#ec4899',
+      };
+    }
+
+    function buildCvAiInsight(evaluation) {
+      if (!evaluation) return 'Sin datos de evaluación todavía.';
+
+      const metrics = [
+        { key: 'clarity', label: 'claridad', value: Number(evaluation.clarity || 0) },
+        { key: 'skills', label: 'habilidades', value: Number(evaluation.skills || 0) },
+        { key: 'experience', label: 'experiencia', value: Number(evaluation.experience || 0) },
+      ];
+
+      const strongest = metrics.slice().sort((a, b) => b.value - a.value)[0];
+      const weakest = metrics.slice().sort((a, b) => a.value - b.value)[0];
+      const overall = clampNumber(Number(evaluation.overall || 0), 0, 100);
+
+      if (overall >= 75) {
+        return `Tu CV muestra muy buen nivel general. Tu punto más fuerte es ${strongest.label}; para subir aún más, reforzá ${weakest.label} con ejemplos concretos y resultados.`;
+      }
+
+      if (overall >= 55) {
+        return `Tu perfil tiene buena base, especialmente en ${strongest.label}. El mayor salto ahora está en ${weakest.label}: sumá logros medibles, tecnologías usadas y contexto.`;
+      }
+
+      return `La base del CV todavía es inicial. Empezá por mejorar ${weakest.label} y destacá mejor ${strongest.label} para que el perfil gane impacto en pocos segundos de lectura.`;
+    }
+
+    function setCvAiMetric(valueEl, fillEl, value) {
+      const safe = Math.round(clampNumber(value, 0, 100));
+      if (valueEl) valueEl.textContent = `${safe}/100`;
+      if (fillEl) fillEl.style.width = `${safe}%`;
+    }
+
+    function countKeywordHits(text, keywords) {
+      const lower = String(text || '').toLowerCase();
+      return keywords.reduce((acc, keyword) => (lower.includes(keyword) ? acc + 1 : acc), 0);
+    }
+
+    function buildCvAiEvaluation(options = {}) {
+      const withJitter = Boolean(options.withJitter);
+      const profile = getCandidateProfile(userEmail) || {};
+
+      const headlineText = String(headline?.value || profile.headline || '').trim();
+      const aboutText = String(about?.value || profile.about || '').trim();
+      const mergedText = `${headlineText} ${aboutText}`.trim();
+      const hasUploadedCv = hasCv(profile);
+
+      const keywordHits = countKeywordHits(mergedText, CV_AI_KEYWORDS);
+      const yearsMatch = mergedText.match(/\b([0-2]?\d)\s*(años|anos|years?)\b/i);
+      const years = yearsMatch ? clampNumber(Number(yearsMatch[1]), 0, 30) : 0;
+
+      const clarityBase = 36 + Math.min(aboutText.length, 420) * 0.09 + (hasUploadedCv ? 18 : 0);
+      const skillsBase = 32 + keywordHits * 6.5 + (headlineText ? 10 : 0) + (hasUploadedCv ? 12 : 0);
+      const experienceBase = 30 + years * 3.1 + Math.min(aboutText.length, 380) * 0.05 + (hasUploadedCv ? 10 : 0);
+
+      const jitter = () => (withJitter ? Math.floor(Math.random() * 9) - 4 : 0);
+
+      const clarity = Math.round(clampNumber(clarityBase + jitter(), 0, 100));
+      const skills = Math.round(clampNumber(skillsBase + jitter(), 0, 100));
+      const experience = Math.round(clampNumber(experienceBase + jitter(), 0, 100));
+      const overall = Math.round(clarity * 0.34 + skills * 0.36 + experience * 0.30);
+
+      let status = hasUploadedCv
+        ? 'Análisis visual generado en modo demo IA.'
+        : 'Análisis visual generado con la información de tu perfil.';
+
+      if (!headlineText && !aboutText) {
+        status = 'Completá título y descripción para obtener una evaluación más útil.';
+      }
+
+      return {
+        clarity,
+        skills,
+        experience,
+        overall,
+        status,
+      };
+    }
+
+    function renderCvAiEvaluation(evaluation) {
+      if (!evaluation) return;
+
+      const overall = Math.round(clampNumber(evaluation.overall, 0, 100));
+      const palette = scoreRingPalette(overall);
+
+      if (cvAiScoreRing) {
+        cvAiScoreRing.style.setProperty('--cv-ai-score', String(overall));
+        cvAiScoreRing.style.setProperty('--cv-ai-score-color-start', palette.start);
+        cvAiScoreRing.style.setProperty('--cv-ai-score-color-end', palette.end);
+        cvAiScoreRing.setAttribute('data-band', palette.band);
+      }
+      if (cvAiOverallScore) cvAiOverallScore.textContent = String(overall);
+      if (cvAiScoreLabel) cvAiScoreLabel.textContent = describeCvScore(overall);
+      if (cvAiInsight) cvAiInsight.textContent = buildCvAiInsight(evaluation);
+
+      setCvAiMetric(cvAiClarityValue, cvAiClarityFill, evaluation.clarity);
+      setCvAiMetric(cvAiSkillsValue, cvAiSkillsFill, evaluation.skills);
+      setCvAiMetric(cvAiExperienceValue, cvAiExperienceFill, evaluation.experience);
+
+      if (cvAiStatus) cvAiStatus.textContent = String(evaluation.status || 'Evaluación visual lista.');
+    }
+
+    function runCvAiEvaluationSimulation() {
+      if (!runCvAiEvalBtn) return;
+
+      runCvAiEvalBtn.disabled = true;
+      runCvAiEvalBtn.textContent = 'Analizando...';
+      if (cvAiStatus) cvAiStatus.textContent = 'Procesando CV con IA (demo visual)...';
+
+      window.setTimeout(() => {
+        renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: true }));
+        runCvAiEvalBtn.disabled = false;
+        runCvAiEvalBtn.textContent = 'Volver a analizar';
+      }, 900);
+    }
+
     function syncPhotoUi(profile) {
       const available = hasPhoto(profile);
       if (removePhotoBtn) removePhotoBtn.hidden = !available;
@@ -314,6 +497,7 @@
       const uploaded = hasCv(profile);
 
       if (cvUploadLabel) cvUploadLabel.hidden = uploaded;
+      if (cvAiUploadHint) cvAiUploadHint.hidden = uploaded;
       if (cvInput) cvInput.disabled = uploaded;
     }
 
@@ -323,6 +507,10 @@
 
     const userName = currentUser?.fullName || '';
     const userEmail = currentUser?.email || '';
+
+    if (runCvAiEvalBtn) {
+      runCvAiEvalBtn.addEventListener('click', runCvAiEvaluationSimulation);
+    }
 
     setText('profileName', userName || '—');
     setText('profileEmail', userEmail || '—');
@@ -341,6 +529,9 @@
       if (removePhotoBtn) removePhotoBtn.disabled = true;
       if (removeCvBtn) removeCvBtn.disabled = true;
       if (removePhotoBtn) removePhotoBtn.hidden = true;
+      if (runCvAiEvalBtn) runCvAiEvalBtn.disabled = true;
+      if (cvAiStatus) cvAiStatus.textContent = 'Iniciá sesión como candidato para usar la evaluación visual del CV.';
+      if (cvAiInsight) cvAiInsight.textContent = 'Iniciá sesión para generar una descripción de análisis con IA.';
       return;
     }
 
@@ -385,6 +576,7 @@
 
     syncPhotoUi(storedProfile);
     syncCvUi(storedProfile);
+    renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
 
     if (typeof geoService !== 'undefined') {
       geoService.setupAutocomplete('#location');
@@ -400,6 +592,18 @@
 
     if (fullName) {
       fullName.addEventListener('input', updateHeaderFromFullName);
+    }
+
+    if (headline) {
+      headline.addEventListener('blur', function () {
+        renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
+      });
+    }
+
+    if (about) {
+      about.addEventListener('blur', function () {
+        renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
+      });
     }
 
     function clearPhotoError() {
@@ -546,6 +750,7 @@
 
       if (cvInput) cvInput.value = '';
       syncCvUi({ ...existing, cvDataUrl: dataUrl });
+      renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
     }
 
     if (photoInput) {
@@ -781,6 +986,7 @@
           });
 
           syncCvUi({ ...existing, cvDataUrl: '' });
+          renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
         });
       });
     }
@@ -828,6 +1034,7 @@
 
       setText('profileName', nextProfile.fullName || '—');
       if (avatarInitials) avatarInitials.textContent = initialsFromName(nextProfile.fullName);
+      renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
 
       if (typeof updateNavbarActions === 'function') {
         updateNavbarActions();

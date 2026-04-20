@@ -4,6 +4,50 @@
   width: 100%;
 }
 
+.profile-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-surface) 76%, transparent);
+  background:
+    radial-gradient(900px 360px at 8% -16%, color-mix(in srgb, var(--color-primary) 22%, transparent), transparent 66%),
+    radial-gradient(640px 300px at 102% 112%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 70%),
+    linear-gradient(165deg, color-mix(in srgb, var(--color-bg-2) 92%, transparent), var(--color-bg));
+  box-shadow: 0 18px 42px rgba(10, 15, 30, 0.2);
+}
+
+.profile-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 0 38%, color-mix(in srgb, var(--color-surface) 58%, transparent) 38% 39%, transparent 39% 100%);
+  opacity: 0.38;
+}
+
+.profile-shell__header,
+.profile-shell__intro,
+.profile-layout {
+  position: relative;
+  z-index: 1;
+}
+
+.profile-shell__intro {
+  max-width: 66ch;
+}
+
+.profile-layout.grid.grid-2 {
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 28px);
+}
+
+.profile-left-column {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  animation: profileRevealUp 0.42s ease-out;
+}
+
 .profile-card {
   display: flex;
   flex-direction: column;
@@ -17,26 +61,450 @@
   border-radius: var(--radius-xl);
 }
 
+.profile-card--photo {
+  position: sticky;
+  top: calc(var(--space-4) + 56px);
+  background:
+    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--color-primary) 20%, transparent), transparent 62%),
+    linear-gradient(170deg, color-mix(in srgb, var(--color-bg-3) 88%, transparent), var(--color-bg-2));
+  border: 1px solid color-mix(in srgb, var(--color-surface) 72%, transparent);
+  box-shadow: 0 12px 28px rgba(10, 18, 32, 0.18);
+}
+
+.profile-cv-card {
+  padding: var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--color-surface) 72%, transparent);
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--color-bg-3) 90%, transparent), var(--color-bg-2));
+  box-shadow: 0 12px 28px rgba(10, 18, 32, 0.14);
+}
+
 .profile-card .form-file {
   width: 100%;
   align-self: stretch;
-  padding: var(--space-5);
+  padding: var(--space-4);
   gap: var(--space-2);
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 42%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-bg-2) 82%, transparent);
+}
+
+.profile-card__extras {
+  width: 100%;
+  text-align: left;
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.profile-card__extras .form-group {
+  width: 100%;
+}
+
+.profile-card__extras #cvInfo {
+  margin-top: var(--space-3);
+}
+
+.profile-card__extras .cv-ai {
+  width: 100%;
+}
+
+.profile-card--about .form-textarea {
+  min-height: 160px;
+}
+
+.profile-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius-full);
+  border: 2px solid color-mix(in srgb, var(--color-primary) 26%, var(--color-surface));
+  overflow: hidden;
+  background: var(--color-bg);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 26px rgba(8, 14, 28, 0.24);
+}
+
+.profile-avatar__meta .text-display {
+  letter-spacing: 0.01em;
 }
 
 .profile-fields {
   padding: var(--space-2);
 }
 
-.profile-avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--color-surface);
+.profile-fields--panel {
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-surface) 72%, transparent);
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(168deg, color-mix(in srgb, var(--color-bg-2) 92%, transparent), var(--color-bg));
+  box-shadow: 0 12px 30px rgba(8, 14, 28, 0.16);
+  animation: profileRevealUp 0.42s ease-out;
+  animation-delay: 0.08s;
+  animation-fill-mode: both;
+}
+
+.profile-fields-grid .form-group {
+  border: 1px solid color-mix(in srgb, var(--color-surface) 72%, transparent);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-bg-2) 86%, transparent);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+}
+
+.profile-fields-grid > .grid.grid-2 {
+  border: 1px solid color-mix(in srgb, var(--color-surface) 70%, transparent);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--color-bg-2) 86%, transparent);
+}
+
+.profile-fields-grid > .grid.grid-2 .form-group {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.profile-fields-grid .divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 78%, var(--color-muted));
+}
+
+.profile-fields-grid .divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-primary) 36%, transparent),
+    color-mix(in srgb, var(--color-surface) 70%, transparent)
+  );
+}
+
+.cv-upload-group .form-file {
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 45%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-bg-3) 85%, transparent);
+}
+
+.cv-upload-tip {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-2);
+  border-left: 2px solid color-mix(in srgb, var(--color-primary) 42%, var(--color-surface));
+}
+
+.profile-fields .card__footer {
+  margin-top: var(--space-4);
+}
+
+.profile-fields .card__footer .btn {
+  min-width: 170px;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--color-primary) 24%, transparent);
+}
+
+.cv-ai {
+  position: relative;
+  isolation: isolate;
   overflow: hidden;
-  background: var(--color-bg);
+  margin-top: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 26%, var(--color-surface));
+  border-radius: calc(var(--radius-xl) + 2px);
+  background:
+    radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--color-primary) 28%, transparent), transparent 46%),
+    radial-gradient(circle at 96% 94%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 42%),
+    linear-gradient(160deg, color-mix(in srgb, var(--color-bg-3) 90%, transparent), var(--color-bg-2));
+  box-shadow:
+    0 20px 32px rgba(8, 14, 28, 0.2),
+    inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+}
+
+.cv-ai::before,
+.cv-ai::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.cv-ai::before {
+  width: 220px;
+  height: 220px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  top: -108px;
+  right: -84px;
+  filter: blur(8px);
+  opacity: 0.58;
+  animation: cvAiGlowDrift 7s ease-in-out infinite alternate;
+}
+
+.cv-ai::after {
+  inset: 0;
+  background:
+    linear-gradient(118deg, transparent 0 30%, color-mix(in srgb, var(--color-surface) 45%, transparent) 30% 31%, transparent 31% 100%);
+  opacity: 0.44;
+}
+
+.cv-ai__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-surface));
+}
+
+.cv-ai__title-wrap {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.cv-ai__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 52%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-primary) 68%, var(--color-text));
+  font-weight: 700;
+}
+
+.cv-ai__header h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cv-ai__header p {
+  margin: var(--space-1) 0 0;
+}
+
+.cv-ai__badge {
+  border: 1px solid color-mix(in srgb, var(--color-accent) 46%, var(--color-surface));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 26%, transparent), color-mix(in srgb, var(--color-primary) 20%, transparent));
+  color: var(--color-text);
+  box-shadow: 0 10px 18px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.cv-ai__body {
+  display: grid;
+  grid-template-columns: minmax(120px, 160px) 1fr;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.cv-ai__score {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--color-bg) 72%, transparent), color-mix(in srgb, var(--color-bg-3) 80%, transparent));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
+}
+
+.cv-ai__score-ring {
+  --cv-ai-score: 0;
+  --cv-ai-score-color-start: color-mix(in srgb, var(--color-primary) 92%, var(--color-accent));
+  --cv-ai-score-color-end: var(--color-accent);
+  width: 126px;
+  height: 126px;
+  border-radius: var(--radius-full);
   display: grid;
   place-items: center;
+  position: relative;
+  background: conic-gradient(
+    var(--cv-ai-score-color-start) calc(var(--cv-ai-score) * 1%),
+    var(--cv-ai-score-color-end) calc(var(--cv-ai-score) * 1%),
+    var(--color-surface) 0
+  );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-surface) 70%, transparent),
+    0 14px 28px rgba(7, 14, 25, 0.26);
+}
+
+.cv-ai__score-ring::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-surface);
+}
+
+.cv-ai__score-ring::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--cv-ai-score-color-start) 34%, transparent);
+  opacity: 0.5;
+}
+
+.cv-ai__score-ring > span {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+}
+
+.cv-ai__score-ring[data-band="low"] > span {
+  color: #ef4444;
+}
+
+.cv-ai__score-ring[data-band="medium"] > span {
+  color: #f59e0b;
+}
+
+.cv-ai__score-ring[data-band="high"] > span {
+  color: #22c55e;
+}
+
+#cvAiScoreLabel {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.cv-ai__insight {
+  max-width: 30ch;
+  text-align: center;
+  line-height: 1.5;
+  margin-top: var(--space-1);
+}
+
+.cv-ai__metrics {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.cv-ai__metric {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-surface) 82%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+}
+
+.cv-ai__metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.cv-ai__meter-track {
+  width: 100%;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-bg));
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(10, 18, 35, 0.2);
+}
+
+.cv-ai__meter-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 90%, #1ea896), var(--color-accent));
+  transition: width var(--transition-base), filter var(--transition-fast);
+  filter: saturate(1.08);
+}
+
+#cvAiClarityFill {
+  background: linear-gradient(90deg, #10b981, #14b8a6);
+}
+
+#cvAiSkillsFill {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+#cvAiExperienceFill {
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+}
+
+#cvAiClarityValue {
+  color: #14b8a6;
+  font-weight: 600;
+}
+
+#cvAiSkillsValue {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+#cvAiExperienceValue {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.cv-ai__footer {
+  margin-top: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, var(--color-surface) 88%, transparent);
+}
+
+.cv-ai__footer-copy {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: linear-gradient(175deg, color-mix(in srgb, var(--color-bg) 80%, transparent), color-mix(in srgb, var(--color-bg-2) 86%, transparent));
+  border: 1px solid color-mix(in srgb, var(--color-surface) 80%, transparent);
+}
+
+.cv-ai__status {
+  display: block;
+  color: color-mix(in srgb, var(--color-text) 88%, var(--color-muted));
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.cv-ai__insight--footer {
+  max-width: none;
+  text-align: left;
+  margin-top: var(--space-2);
+  margin-bottom: 0;
+  padding-left: var(--space-2);
+  border-left: 2px solid color-mix(in srgb, var(--color-primary) 44%, var(--color-surface));
+  color: color-mix(in srgb, var(--color-text) 86%, var(--color-muted));
+}
+
+.cv-ai__action {
+  min-width: 178px;
+  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-surface));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 24%, transparent), color-mix(in srgb, var(--color-accent) 22%, transparent));
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--color-primary) 22%, transparent);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.cv-ai__action:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 34%, transparent), color-mix(in srgb, var(--color-accent) 30%, transparent));
+  box-shadow: 0 14px 26px color-mix(in srgb, var(--color-primary) 28%, transparent);
 }
 
 .profile-avatar__img {
@@ -131,12 +599,96 @@
   gap: var(--space-1);
 }
 
+@keyframes profileRevealUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cvAiGlowDrift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(-16px, 12px);
+  }
+}
+
+@media (max-width: 980px) {
+  .profile-layout.grid.grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-card--photo {
+    position: static;
+  }
+}
+
 @media (max-width: 640px) {
   .profile-card {
     padding: var(--space-4);
   }
+  .profile-cv-card {
+    padding: var(--space-4);
+  }
   .profile-fields {
     padding: 0;
+  }
+  .profile-fields--panel {
+    padding: var(--space-3);
+  }
+  .profile-fields-grid .form-group {
+    padding: var(--space-3) var(--space-2) var(--space-2);
+  }
+  .cv-ai__body {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .cv-ai__score-ring {
+    width: 112px;
+    height: 112px;
+  }
+
+  .cv-ai__score-ring::before {
+    inset: 8px;
+  }
+
+  .cv-ai__metrics {
+    width: 100%;
+  }
+
+  .cv-ai__metric {
+    padding: var(--space-2);
+  }
+
+  .cv-ai__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cv-ai__footer-copy {
+    padding: var(--space-2);
+  }
+
+  .cv-ai__action {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-left-column,
+  .profile-fields--panel {
+    animation: none;
+  }
+
+  .cv-ai::before {
+    animation: none;
   }
 }
 

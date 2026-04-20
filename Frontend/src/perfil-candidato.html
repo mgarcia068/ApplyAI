@@ -28,8 +28,8 @@
     <main class="page-wrapper">
       <section class="section section--sm">
         <div class="container">
-          <div class="card">
-            <header class="card__header">
+          <div class="card profile-shell">
+            <header class="card__header profile-shell__header">
               <div>
                 <div class="label">Candidato</div>
                 <h1 class="card__title" style="font-size: var(--text-2xl)">Mi perfil</h1>
@@ -37,7 +37,7 @@
             </header>
 
             <div class="card__body">
-              <p class="text-sm text-muted">
+              <p class="text-sm text-muted profile-shell__intro">
                 Completá tu información básica.
               </p>
 
@@ -50,42 +50,60 @@
               </div>
 
               <form id="candidateProfileForm" class="profile-form" novalidate style="margin-top: var(--space-8)">
-                <div class="grid grid-2">
-                  <section class="profile-card">
-                    <div id="profileAvatar" class="profile-avatar" role="img" aria-label="Foto de perfil">
-                      <img
-                        id="avatarPreview"
-                        class="profile-avatar__img"
-                        alt="Foto de perfil"
-                        src=""
-                        draggable="false"
-                        hidden
-                      />
-                      <div id="avatarFallback" class="profile-avatar__fallback">
-                        <span id="avatarInitials">?</span>
+                <div class="grid grid-2 profile-layout">
+                  <div class="profile-left-column">
+                    <section class="profile-card profile-card--photo">
+                      <div id="profileAvatar" class="profile-avatar" role="img" aria-label="Foto de perfil">
+                        <img
+                          id="avatarPreview"
+                          class="profile-avatar__img"
+                          alt="Foto de perfil"
+                          src=""
+                          draggable="false"
+                          hidden
+                        />
+                        <div id="avatarFallback" class="profile-avatar__fallback">
+                          <span id="avatarInitials">?</span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div class="profile-avatar__meta">
-                      <div class="text-display" id="profileName" style="font-size: var(--text-lg)">—</div>
-                      <div class="text-xs text-muted" id="profileEmail">—</div>
-                    </div>
+                      <div class="profile-avatar__meta">
+                        <div class="text-display" id="profileName" style="font-size: var(--text-lg)">—</div>
+                        <div class="text-xs text-muted" id="profileEmail">—</div>
+                      </div>
 
-                    <label class="form-file" for="profilePhoto">
-                      <div class="text-sm">Subir foto</div>
-                      <div class="text-xs text-muted">JPG/PNG/WebP (máx. 2MB)</div>
-                      <input id="profilePhoto" name="profilePhoto" type="file" accept="image/*" />
-                    </label>
-                    <div class="form-error" id="profilePhotoError"></div>
+                      <label class="form-file" for="profilePhoto">
+                        <div class="text-sm">Subir foto</div>
+                        <div class="text-xs text-muted">JPG/PNG/WebP (máx. 2MB)</div>
+                        <input id="profilePhoto" name="profilePhoto" type="file" accept="image/*" />
+                      </label>
+                      <div class="form-error" id="profilePhotoError"></div>
 
-                    <button class="btn btn--secondary btn--sm" type="button" id="removePhotoBtn">
-                      Quitar foto
-                    </button>
-                  </section>
+                      <button class="btn btn--secondary btn--sm" type="button" id="removePhotoBtn">
+                        Quitar foto
+                      </button>
+                    </section>
 
-                  <section class="profile-fields">
-                    <div class="grid" style="grid-template-columns: 1fr; gap: var(--space-4)">
-                      <div class="form-group">
+                    <section class="profile-cv-card card profile-card--about">
+                      <div class="profile-card__extras">
+                        <div class="divider" style="margin: var(--space-2) 0">Sobre mí</div>
+
+                        <div class="form-group">
+                          <label class="form-label" for="about">Sobre mí</label>
+                          <textarea
+                            class="form-textarea"
+                            id="about"
+                            name="about"
+                            placeholder="Contá brevemente tu experiencia, stack y objetivos"
+                          ></textarea>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+
+                  <section class="profile-fields profile-fields--panel">
+                    <div class="grid profile-fields-grid" style="grid-template-columns: 1fr; gap: var(--space-4)">
+                      <div class="form-group cv-upload-group">
                         <label class="form-label" for="fullName">Nombre completo</label>
                         <input
                           class="form-input"
@@ -151,16 +169,6 @@
                         <div class="form-hint">Se toma del usuario logueado.</div>
                       </div>
 
-                      <div class="form-group">
-                        <label class="form-label" for="about">Sobre mí</label>
-                        <textarea
-                          class="form-textarea"
-                          id="about"
-                          name="about"
-                          placeholder="Contá brevemente tu experiencia, stack y objetivos"
-                        ></textarea>
-                      </div>
-
                       <div class="divider" style="margin: var(--space-2) 0">Curriculum</div>
 
                       <div class="form-group">
@@ -171,6 +179,10 @@
                           <div class="text-xs text-muted">PDF (máx. 3MB)</div>
                           <input id="cvFile" name="cvFile" type="file" accept="application/pdf" />
                         </label>
+
+                        <p class="text-xs text-muted cv-upload-tip" id="cvAiUploadHint">
+                          Subí tu CV en PDF para mejorar la precisión de la evaluación visual.
+                        </p>
 
                         <div class="form-error" id="cvFileError"></div>
 
@@ -189,6 +201,71 @@
                           </div>
                         </div>
                       </div>
+
+                      <div class="divider" style="margin: var(--space-2) 0">Evaluación IA del CV</div>
+
+                      <section class="cv-ai card card--flat" id="cvAiEvaluator" aria-label="Evaluación de currículum con IA">
+                        <header class="cv-ai__header">
+                          <div class="cv-ai__title-wrap">
+                            <div class="cv-ai__eyebrow">Analisis asistido</div>
+                            <h3 class="text-display" style="font-size: var(--text-md)">Score del currículum</h3>
+                            <p class="text-xs text-muted">Puntuación visual basada en claridad, habilidades y experiencia.</p>
+                          </div>
+                          <span class="badge badge--accent cv-ai__badge">Demo IA</span>
+                        </header>
+
+                        <div class="cv-ai__body">
+                          <div class="cv-ai__score">
+                            <div class="cv-ai__score-ring" id="cvAiScoreRing" style="--cv-ai-score: 0">
+                              <span id="cvAiOverallScore">0</span>
+                            </div>
+                            <div class="text-xs text-muted" id="cvAiScoreLabel">Sin analizar</div>
+                          </div>
+
+                          <div class="cv-ai__metrics">
+                            <div class="cv-ai__metric">
+                              <div class="cv-ai__metric-top">
+                                <span>Claridad</span>
+                                <span id="cvAiClarityValue">0</span>
+                              </div>
+                              <div class="cv-ai__meter-track">
+                                <div class="cv-ai__meter-fill" id="cvAiClarityFill" style="width: 0%"></div>
+                              </div>
+                            </div>
+
+                            <div class="cv-ai__metric">
+                              <div class="cv-ai__metric-top">
+                                <span>Habilidades</span>
+                                <span id="cvAiSkillsValue">0</span>
+                              </div>
+                              <div class="cv-ai__meter-track">
+                                <div class="cv-ai__meter-fill" id="cvAiSkillsFill" style="width: 0%"></div>
+                              </div>
+                            </div>
+
+                            <div class="cv-ai__metric">
+                              <div class="cv-ai__metric-top">
+                                <span>Experiencia</span>
+                                <span id="cvAiExperienceValue">0</span>
+                              </div>
+                              <div class="cv-ai__meter-track">
+                                <div class="cv-ai__meter-fill" id="cvAiExperienceFill" style="width: 0%"></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <footer class="cv-ai__footer">
+                          <div class="cv-ai__footer-copy">
+                            <span class="text-xs text-muted cv-ai__status" id="cvAiStatus">Todavía no ejecutaste la evaluación visual del CV.</span>
+                            <p class="cv-ai__insight cv-ai__insight--footer text-xs text-muted" id="cvAiInsight">
+                              Tu insight IA aparecerá acá cuando ejecutes el análisis visual del CV.
+                            </p>
+                          </div>
+                          <button class="btn btn--secondary btn--sm cv-ai__action" type="button" id="runCvAiEvalBtn">Analizar CV con IA</button>
+                        </footer>
+                      </section>
+
                     </div>
 
                     <div class="card__footer" style="justify-content: flex-end">
