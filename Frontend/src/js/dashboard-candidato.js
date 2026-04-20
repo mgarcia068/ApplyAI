@@ -269,7 +269,8 @@
 
   let selectedOfferId = '';
   let currentUser = null;
-  let isAllowed = false;
+  let canViewOffers = false;
+  let canApplyToOffers = false;
 
   function renderList(offers) {
     const listEl = document.getElementById('employeeOffersList');
@@ -312,7 +313,7 @@
           role="option"
           aria-selected="${selected ? 'true' : 'false'}"
           data-offer-id="${o.id}"
-          ${isAllowed ? '' : 'disabled'}
+          ${canViewOffers ? '' : 'disabled'}
         >
           <div class="offer-list__title">${escapeHtml(o.name)}</div>
           <div class="offer-list__meta">
@@ -327,6 +328,7 @@
 
     listEl.querySelectorAll('button[data-offer-id]').forEach((btn) => {
       btn.addEventListener('click', function () {
+        if (!canViewOffers) return;
         const id = btn.getAttribute('data-offer-id') || '';
         if (!id) return;
         selectedOfferId = id;
@@ -398,7 +400,7 @@
         (offer.requirements || []).map((t) => `<li>${escapeHtml(t)}</li>`).join('') || '<li>—</li>';
     }
 
-    const app = isAllowed && currentUser?.email ? getApplication(currentUser.email, offer.id) : null;
+    const app = canApplyToOffers && currentUser?.email ? getApplication(currentUser.email, offer.id) : null;
 
     if (statusBadgeEl) {
       if (app) {
@@ -411,7 +413,7 @@
     }
 
     if (applyBtnEl) {
-      if (!isAllowed || !currentUser?.email || app) {
+      if (!canApplyToOffers || !currentUser?.email || app) {
         applyBtnEl.hidden = true;
         applyBtnEl.disabled = true;
       } else {
@@ -436,23 +438,31 @@
     const alertEl = document.getElementById('employeeDashboardAlert');
 
     currentUser = getCurrentUser();
-    isAllowed = Boolean(currentUser && currentUser.email && currentUser.role === 'candidato');
+    const isLoggedIn = Boolean(currentUser && currentUser.email);
+    canViewOffers = Boolean(
+      isLoggedIn && (currentUser.role === 'candidato' || currentUser.role === 'empresa')
+    );
+    canApplyToOffers = Boolean(isLoggedIn && currentUser.role === 'candidato');
 
-    if (alertEl) alertEl.hidden = isAllowed;
+    if (alertEl) alertEl.hidden = canViewOffers;
 
-    setDisabled('filterOfferName', !isAllowed);
-    setDisabled('filterRole', !isAllowed);
-    setDisabled('filterLocation', !isAllowed);
-    setDisabled('filterPublishedDays', !isAllowed);
+    setDisabled('filterOfferName', !canViewOffers);
+    setDisabled('filterRole', !canViewOffers);
+    setDisabled('filterLocation', !canViewOffers);
+    setDisabled('filterPublishedDays', !canViewOffers);
 
-    if (isAllowed && typeof geoService !== 'undefined' && typeof geoService.setupAutocomplete === 'function') {
+    if (
+      canViewOffers &&
+      typeof geoService !== 'undefined' &&
+      typeof geoService.setupAutocomplete === 'function'
+    ) {
       geoService.setupAutocomplete('#filterLocation');
     }
 
     const applyBtnEl = document.getElementById('applyOfferBtn');
     if (applyBtnEl) {
       applyBtnEl.addEventListener('click', function () {
-        if (!isAllowed || !currentUser?.email) return;
+        if (!canApplyToOffers || !currentUser?.email) return;
 
         const offer = OFFERS.find((o) => o.id === selectedOfferId) || null;
         if (!offer) return;

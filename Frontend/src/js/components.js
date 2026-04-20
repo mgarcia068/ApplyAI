@@ -412,7 +412,13 @@ function ensureNavbarDom() {
   }
 
   // Enforce final dropdown order for both injected and cached navbars.
-  if (userDropdown && profileBtn && offersBtn) {
+  if (userDropdown && profileBtn && empresaPanelBtn) {
+    profileBtn.insertAdjacentElement("afterend", empresaPanelBtn);
+  }
+  if (userDropdown && empresaPanelBtn && offersBtn) {
+    empresaPanelBtn.insertAdjacentElement("afterend", offersBtn);
+  }
+  if (userDropdown && profileBtn && offersBtn && !empresaPanelBtn) {
     profileBtn.insertAdjacentElement("afterend", offersBtn);
   }
   if (userDropdown && offersBtn && favoritesBtn) {
@@ -492,11 +498,20 @@ function updateNavbarActions() {
     const profileBtn = document.getElementById("navbar-profile-btn");
     const empresaPanelBtn = document.getElementById("navbar-empresa-panel-btn");
     const offersBtn = document.getElementById("navbar-offers-btn");
+    const favoritesBtn = document.getElementById("navbar-favorites-btn");
     const applicationsBtn = document.getElementById("navbar-applications-btn");
 
-    if (profileBtn) profileBtn.style.display = isEmpresa ? "none" : "";
-    if (empresaPanelBtn) empresaPanelBtn.style.display = isEmpresa ? "" : "none";
+    if (profileBtn) {
+      profileBtn.style.display = isEmpresa ? "none" : "";
+      ensureButtonLabel(profileBtn, "Mi perfil");
+    }
+
+    if (empresaPanelBtn) {
+      empresaPanelBtn.style.display = isEmpresa ? "" : "none";
+    }
+
     if (offersBtn) offersBtn.style.display = isEmpresa ? "none" : "";
+    if (favoritesBtn) favoritesBtn.style.display = isEmpresa ? "none" : "";
     if (applicationsBtn) applicationsBtn.style.display = isEmpresa ? "none" : "";
 
     // Update user info
