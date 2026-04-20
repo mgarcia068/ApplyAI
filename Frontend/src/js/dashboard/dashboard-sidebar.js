@@ -211,6 +211,56 @@ try {
 
 const companyEmail = currentUser?.email || 'default@empresa.com';
 const companyName = currentUser?.fullName || 'TechCorp Argentina';
+const COMPANY_PHOTO_SCALE = 1.16;
+
+function clampCompanyNumber(value, min, max) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
+
+function getCompanyPhotoPan(profile) {
+  return {
+    x: clampCompanyNumber(profile?.photoPanX, -1, 1),
+    y: clampCompanyNumber(profile?.photoPanY, -1, 1),
+  };
+}
+
+function clearCompanyPhotoPan(imgEl) {
+  if (!imgEl) return;
+  imgEl.style.removeProperty('--photo-pan-x');
+  imgEl.style.removeProperty('--photo-pan-y');
+  imgEl.style.removeProperty('--photo-pan-scale');
+}
+
+function applyCompanyPhotoPan(imgEl, viewportEl, pan, scale) {
+  if (!imgEl || !viewportEl) return;
+
+  const rect = viewportEl.getBoundingClientRect();
+  const appliedScale = Number(scale) || 1;
+  const maxX = (appliedScale - 1) * rect.width * 0.5;
+  const maxY = (appliedScale - 1) * rect.height * 0.5;
+  const xN = clampCompanyNumber(pan?.x, -1, 1);
+  const yN = clampCompanyNumber(pan?.y, -1, 1);
+
+  const tx = maxX ? xN * maxX : 0;
+  const ty = maxY ? yN * maxY : 0;
+
+  imgEl.style.setProperty('--photo-pan-x', `${tx}px`);
+  imgEl.style.setProperty('--photo-pan-y', `${ty}px`);
+  imgEl.style.setProperty('--photo-pan-scale', String(appliedScale));
+}
+
+function getCompanyInitials(name) {
+  return String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0])
+    .join('')
+    .toUpperCase() || 'TC';
+}
 
 let PERFIL_EMPRESA = {
   nombre:      companyName,
@@ -220,6 +270,9 @@ let PERFIL_EMPRESA = {
   ubicacion:   'Buenos Aires, Argentina',
   empleados:   '50-100',
   fundacion:   '2018',
+  photoDataUrl:'',
+  photoPanX:   0,
+  photoPanY:   0,
 };
 
 try {
@@ -230,7 +283,266 @@ try {
   }
 } catch (e) {}
 
+let PERFIL_EMPRESA_EDIT_DRAFT = null;
+
+function createPerfilEmpresaDraft() {
+  const pan = getCompanyPhotoPan(PERFIL_EMPRESA);
+  return {
+    photoDataUrl: String(PERFIL_EMPRESA.photoDataUrl || ''),
+    photoPanX: pan.x,
+    photoPanY: pan.y,
+  };
+}
+
+function resetPerfilEmpresaDraft() {
+  PERFIL_EMPRESA_EDIT_DRAFT = createPerfilEmpresaDraft();
+}
+
+function getPerfilEmpresaDraft() {
+  if (!PERFIL_EMPRESA_EDIT_DRAFT) {
+    resetPerfilEmpresaDraft();
+  }
+  return PERFIL_EMPRESA_EDIT_DRAFT;
+}
+
+function syncPerfilEmpresaIdentityUi() {
+  document.querySelectorAll('.sidebar__empresa-nombre, .user-dropdown__name').forEach(el => {
+    el.textContent = PERFIL_EMPRESA.nombre;
+  });
+
+  document.querySelectorAll('.user-dropdown__email').forEach(el => {
+    el.textContent = companyEmail;
+  });
+
+  const profilePan = getCompanyPhotoPan(PERFIL_EMPRESA);
+  const source = {
+    photoDataUrl: String(PERFIL_EMPRESA.photoDataUrl || ''),
+    photoPanX: profilePan.x,
+    photoPanY: profilePan.y,
+  };
+
+  syncCompanyAvatarSlot('topbar-user-btn', 'topbar-user-avatar-img', 'topbar-user-avatar-fallback', source);
+  syncCompanyAvatarSlot('sidebar-company-avatar', 'sidebar-company-avatar-img', 'sidebar-company-avatar-fallback', source);
+}
+
+function syncPerfilEmpresaViewFields() {
+  const nombreEl = document.getElementById('view-nombre');
+  if (nombreEl) nombreEl.textContent = PERFIL_EMPRESA.nombre;
+
+  const rubroEl = document.getElementById('view-rubro');
+  if (rubroEl) rubroEl.textContent = PERFIL_EMPRESA.rubro;
+
+  const descripcionEl = document.getElementById('view-descripcion');
+  if (descripcionEl) descripcionEl.textContent = PERFIL_EMPRESA.descripcion;
+
+  const ubicacionEl = document.getElementById('view-ubicacion');
+  if (ubicacionEl) ubicacionEl.textContent = PERFIL_EMPRESA.ubicacion;
+
+  const empleadosEl = document.getElementById('view-empleados');
+  if (empleadosEl) empleadosEl.textContent = PERFIL_EMPRESA.empleados;
+
+  const fundacionEl = document.getElementById('view-fundacion');
+  if (fundacionEl) fundacionEl.textContent = PERFIL_EMPRESA.fundacion;
+
+  const webEl = document.getElementById('view-web');
+  if (webEl) webEl.href = PERFIL_EMPRESA.web;
+
+  const webTextEl = document.getElementById('view-web-text');
+  if (webTextEl) webTextEl.textContent = PERFIL_EMPRESA.web.replace('https://', '');
+}
+
+function syncCompanyAvatarSlot(viewportId, imageId, fallbackId, source) {
+  const viewportEl = document.getElementById(viewportId);
+  const imgEl = document.getElementById(imageId);
+  const fallbackEl = document.getElementById(fallbackId);
+  const initials = getCompanyInitials(PERFIL_EMPRESA.nombre);
+
+  if (fallbackEl) fallbackEl.textContent = initials;
+  if (!imgEl) return;
+
+  const hasPhoto = Boolean(source?.photoDataUrl);
+  if (!hasPhoto) {
+    imgEl.hidden = true;
+    imgEl.src = '';
+    clearCompanyPhotoPan(imgEl);
+    if (fallbackEl) fallbackEl.hidden = false;
+    return;
+  }
+
+  imgEl.src = source.photoDataUrl;
+  imgEl.hidden = false;
+  if (fallbackEl) fallbackEl.hidden = true;
+  if (viewportEl) {
+    applyCompanyPhotoPan(
+      imgEl,
+      viewportEl,
+      { x: source.photoPanX, y: source.photoPanY },
+      COMPANY_PHOTO_SCALE,
+    );
+  }
+}
+
+function syncPerfilEmpresaAvatars() {
+  const profilePan = getCompanyPhotoPan(PERFIL_EMPRESA);
+  syncCompanyAvatarSlot('company-avatar-view', 'company-avatar-view-img', 'company-avatar-view-fallback', {
+    photoDataUrl: String(PERFIL_EMPRESA.photoDataUrl || ''),
+    photoPanX: profilePan.x,
+    photoPanY: profilePan.y,
+  });
+
+  const draft = getPerfilEmpresaDraft();
+  syncCompanyAvatarSlot('company-photo-edit-preview', 'company-photo-edit-img', 'company-photo-edit-fallback', draft);
+}
+
+function hydratePerfilEmpresaEditFields() {
+  const nombreEl = document.getElementById('edit-nombre');
+  if (nombreEl) nombreEl.value = PERFIL_EMPRESA.nombre;
+
+  const rubroEl = document.getElementById('edit-rubro');
+  if (rubroEl) rubroEl.value = PERFIL_EMPRESA.rubro;
+
+  const descripcionEl = document.getElementById('edit-descripcion');
+  if (descripcionEl) descripcionEl.value = PERFIL_EMPRESA.descripcion;
+
+  const webEl = document.getElementById('edit-web');
+  if (webEl) webEl.value = PERFIL_EMPRESA.web;
+
+  const ubicacionEl = document.getElementById('edit-ubicacion');
+  if (ubicacionEl) ubicacionEl.value = PERFIL_EMPRESA.ubicacion;
+
+  const empleadosEl = document.getElementById('edit-empleados');
+  if (empleadosEl) empleadosEl.value = PERFIL_EMPRESA.empleados;
+
+  const fundacionEl = document.getElementById('edit-fundacion');
+  if (fundacionEl) fundacionEl.value = PERFIL_EMPRESA.fundacion;
+}
+
+function initPerfilEmpresaPhotoEditor() {
+  const photoInput = document.getElementById('edit-foto');
+  const removePhotoBtn = document.getElementById('company-photo-remove-btn');
+  const previewEl = document.getElementById('company-photo-edit-preview');
+  const imgEl = document.getElementById('company-photo-edit-img');
+  const errorEl = document.getElementById('company-photo-error');
+
+  if (!photoInput || !removePhotoBtn || !previewEl || !imgEl) return;
+
+  function showPhotoError(message) {
+    if (errorEl) errorEl.textContent = String(message || '');
+  }
+
+  photoInput.addEventListener('change', async () => {
+    showPhotoError('');
+    const file = photoInput.files && photoInput.files[0] ? photoInput.files[0] : null;
+    if (!file) return;
+
+    if (!file.type || !file.type.startsWith('image/')) {
+      showPhotoError('Selecciona una imagen valida.');
+      photoInput.value = '';
+      return;
+    }
+
+    const maxBytes = 2 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      showPhotoError('La imagen supera los 2MB.');
+      photoInput.value = '';
+      return;
+    }
+
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('No se pudo leer la imagen'));
+      reader.readAsDataURL(file);
+    }).catch(() => '');
+
+    if (!dataUrl) {
+      showPhotoError('No se pudo cargar la imagen.');
+      photoInput.value = '';
+      return;
+    }
+
+    const draft = getPerfilEmpresaDraft();
+    draft.photoDataUrl = dataUrl;
+    draft.photoPanX = 0;
+    draft.photoPanY = 0;
+    syncPerfilEmpresaAvatars();
+    photoInput.value = '';
+  });
+
+  removePhotoBtn.addEventListener('click', () => {
+    showPhotoError('');
+    const draft = getPerfilEmpresaDraft();
+    draft.photoDataUrl = '';
+    draft.photoPanX = 0;
+    draft.photoPanY = 0;
+    syncPerfilEmpresaAvatars();
+    photoInput.value = '';
+  });
+
+  let dragging = false;
+  let startClientX = 0;
+  let startClientY = 0;
+  let startPanX = 0;
+  let startPanY = 0;
+
+  function onGlobalPointerMove(e) {
+    if (!dragging) return;
+
+    const draft = getPerfilEmpresaDraft();
+    if (!draft.photoDataUrl) return;
+
+    e.preventDefault();
+
+    const rect = previewEl.getBoundingClientRect();
+    const maxX = (COMPANY_PHOTO_SCALE - 1) * rect.width * 0.5;
+    const maxY = (COMPANY_PHOTO_SCALE - 1) * rect.height * 0.5;
+
+    const dx = e.clientX - startClientX;
+    const dy = e.clientY - startClientY;
+
+    const startTx = maxX ? startPanX * maxX : 0;
+    const startTy = maxY ? startPanY * maxY : 0;
+
+    const nextTx = clampCompanyNumber(startTx + dx, -maxX, maxX);
+    const nextTy = clampCompanyNumber(startTy + dy, -maxY, maxY);
+
+    draft.photoPanX = maxX ? nextTx / maxX : 0;
+    draft.photoPanY = maxY ? nextTy / maxY : 0;
+    syncPerfilEmpresaAvatars();
+  }
+
+  function onGlobalPointerUp(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    dragging = false;
+    window.removeEventListener('pointermove', onGlobalPointerMove);
+    window.removeEventListener('pointerup', onGlobalPointerUp);
+    window.removeEventListener('pointercancel', onGlobalPointerUp);
+  }
+
+  imgEl.addEventListener('dragstart', e => e.preventDefault());
+  previewEl.addEventListener('dragstart', e => e.preventDefault());
+
+  previewEl.addEventListener('pointerdown', e => {
+    const draft = getPerfilEmpresaDraft();
+    if (!draft.photoDataUrl) return;
+
+    e.preventDefault();
+    dragging = true;
+    startClientX = e.clientX;
+    startClientY = e.clientY;
+    startPanX = clampCompanyNumber(draft.photoPanX, -1, 1);
+    startPanY = clampCompanyNumber(draft.photoPanY, -1, 1);
+
+    window.addEventListener('pointermove', onGlobalPointerMove, { passive: false });
+    window.addEventListener('pointerup', onGlobalPointerUp, { passive: false });
+    window.addEventListener('pointercancel', onGlobalPointerUp, { passive: false });
+  });
+}
+
 function renderPerfil() {
+  resetPerfilEmpresaDraft();
+
   document.getElementById('db-content').innerHTML = `
     <div class="section-header">
       <div>
@@ -247,7 +559,17 @@ function renderPerfil() {
       <div class="perfil-cover">
         <div class="perfil-cover__bg"></div>
         <div class="perfil-cover__avatar">
-          <div class="avatar avatar--xl" style="width:80px;height:80px;font-size:var(--text-2xl)">TC</div>
+          <div class="avatar avatar--xl perfil-avatar-company" id="company-avatar-view" style="width:80px;height:80px;font-size:var(--text-2xl)">
+            <img
+              id="company-avatar-view-img"
+              class="perfil-avatar-company__img"
+              alt="Foto de la empresa"
+              src=""
+              draggable="false"
+              hidden
+            />
+            <span id="company-avatar-view-fallback">TC</span>
+          </div>
         </div>
       </div>
       <div class="perfil-body">
@@ -292,6 +614,37 @@ function renderPerfil() {
       <div class="form-card">
         <div class="form-card__title">Editar informacion de la empresa</div>
         <div class="form-grid">
+          <div class="form-group form-grid--full">
+            <label class="form-label">Foto de la empresa</label>
+            <div class="perfil-photo-editor">
+              <div
+                id="company-photo-edit-preview"
+                class="perfil-photo-editor__preview"
+                role="img"
+                aria-label="Foto de la empresa"
+              >
+                <img
+                  id="company-photo-edit-img"
+                  class="perfil-photo-editor__img"
+                  alt="Previsualizacion de foto de empresa"
+                  src=""
+                  draggable="false"
+                  hidden
+                />
+                <span id="company-photo-edit-fallback">TC</span>
+              </div>
+              <div class="perfil-photo-editor__actions">
+                <label class="form-file" for="edit-foto">
+                  <div class="text-sm">Subir foto</div>
+                  <div class="text-xs text-muted">JPG/PNG/WebP (max. 2MB)</div>
+                  <input id="edit-foto" type="file" accept="image/*" />
+                </label>
+                <button class="btn btn--ghost btn--sm" type="button" id="company-photo-remove-btn">Quitar foto</button>
+                <div class="form-hint">Arrastra la imagen para centrarla dentro del circulo.</div>
+                <div class="form-error" id="company-photo-error"></div>
+              </div>
+            </div>
+          </div>
           <div class="form-group">
             <label class="form-label">Nombre de la empresa</label>
             <input class="form-input" id="edit-nombre" value="${PERFIL_EMPRESA.nombre}">
@@ -334,6 +687,10 @@ function renderPerfil() {
       </div>
     </div>
   `;
+
+  syncPerfilEmpresaViewFields();
+  syncPerfilEmpresaAvatars();
+  initPerfilEmpresaPhotoEditor();
 }
 
 function togglePerfilEdit(editar) {
@@ -343,6 +700,10 @@ function togglePerfilEdit(editar) {
   if (!view || !edit) return;
 
   if (editar) {
+    resetPerfilEmpresaDraft();
+    hydratePerfilEmpresaEditFields();
+    syncPerfilEmpresaAvatars();
+
     view.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
     view.style.opacity = '0';
     view.style.transform = 'translateY(-8px)';
@@ -384,42 +745,24 @@ function guardarPerfil() {
   PERFIL_EMPRESA.empleados   = document.getElementById('edit-empleados')?.value          || PERFIL_EMPRESA.empleados;
   PERFIL_EMPRESA.fundacion   = document.getElementById('edit-fundacion')?.value          || PERFIL_EMPRESA.fundacion;
 
+  const photoDraft = getPerfilEmpresaDraft();
+  PERFIL_EMPRESA.photoDataUrl = String(photoDraft.photoDataUrl || '');
+  PERFIL_EMPRESA.photoPanX = clampCompanyNumber(photoDraft.photoPanX, -1, 1);
+  PERFIL_EMPRESA.photoPanY = clampCompanyNumber(photoDraft.photoPanY, -1, 1);
+
+  if (PERFIL_EMPRESA.web && !/^https?:\/\//i.test(PERFIL_EMPRESA.web)) {
+    PERFIL_EMPRESA.web = `https://${PERFIL_EMPRESA.web}`;
+  }
+
   try {
     localStorage.setItem(`ApplyAI.perfilEmpresa_${companyEmail}`, JSON.stringify(PERFIL_EMPRESA));
-    
-    // Update company names in sidebar/nav if they exist
-    document.querySelectorAll('.sidebar__empresa-nombre, .user-dropdown__name').forEach(el => {
-      el.textContent = PERFIL_EMPRESA.nombre;
-    });
-
-    const emailEls = document.querySelectorAll('.user-dropdown__email');
-    emailEls.forEach(el => {
-      el.textContent = companyEmail;
-    });
-
-    const rawName = PERFIL_EMPRESA.nombre.trim();
-    const initials = rawName.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase() || 'TC';
-    document.querySelectorAll('#topbar-user-btn, .avatar--xl').forEach(el => {
-      if (el.tagName === 'BUTTON' || el.classList.contains('avatar--xl')) {
-        el.textContent = initials;
-      }
-    });
-
+    syncPerfilEmpresaIdentityUi();
   } catch (e) {
     console.error('Error saving company profile:', e);
   }
 
-  document.getElementById('view-nombre').textContent      = PERFIL_EMPRESA.nombre;
-  document.getElementById('view-rubro').textContent       = PERFIL_EMPRESA.rubro;
-  document.getElementById('view-descripcion').textContent = PERFIL_EMPRESA.descripcion;
-  document.getElementById('view-ubicacion').textContent   = PERFIL_EMPRESA.ubicacion;
-  document.getElementById('view-empleados').textContent   = PERFIL_EMPRESA.empleados;
-  document.getElementById('view-fundacion').textContent   = PERFIL_EMPRESA.fundacion;
-  const webEl = document.getElementById('view-web');
-  if (webEl) {
-    webEl.href = PERFIL_EMPRESA.web;
-    document.getElementById('view-web-text').textContent = PERFIL_EMPRESA.web.replace('https://', '');
-  }
+  syncPerfilEmpresaViewFields();
+  syncPerfilEmpresaAvatars();
   togglePerfilEdit(false);
 }
 
@@ -443,23 +786,7 @@ function closeMobileSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Update hardcoded names in header and sidebar
-  document.querySelectorAll('.sidebar__empresa-nombre, .user-dropdown__name').forEach(el => {
-    el.textContent = PERFIL_EMPRESA.nombre;
-  });
-
-  const emailEls = document.querySelectorAll('.user-dropdown__email');
-  emailEls.forEach(el => {
-    el.textContent = companyEmail;
-  });
-
-  const rawName = PERFIL_EMPRESA.nombre.trim();
-  const initials = rawName.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase() || 'TC';
-  document.querySelectorAll('#topbar-user-btn').forEach(el => {
-    if (el.tagName === 'BUTTON') {
-      el.textContent = initials;
-    }
-  });
+  syncPerfilEmpresaIdentityUi();
 
   navigateTo('resumen');
 

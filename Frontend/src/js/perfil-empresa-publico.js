@@ -90,6 +90,94 @@
       .replace(/^-|-$/g, '');
   }
 
+  function clampCompanyNumber(value, min, max) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return min;
+    return Math.min(max, Math.max(min, n));
+  }
+
+  function getCompanyPhotoPan(profile) {
+    return {
+      x: clampCompanyNumber(profile?.photoPanX, -1, 1),
+      y: clampCompanyNumber(profile?.photoPanY, -1, 1),
+    };
+  }
+
+  function applyCompanyPhotoPan(imgEl, viewportEl, pan, scale) {
+    if (!imgEl || !viewportEl) return;
+
+    const rect = viewportEl.getBoundingClientRect();
+    const appliedScale = Number(scale) || 1;
+    const maxX = (appliedScale - 1) * rect.width * 0.5;
+    const maxY = (appliedScale - 1) * rect.height * 0.5;
+    const xN = clampCompanyNumber(pan?.x, -1, 1);
+    const yN = clampCompanyNumber(pan?.y, -1, 1);
+
+    const tx = maxX ? xN * maxX : 0;
+    const ty = maxY ? yN * maxY : 0;
+
+    imgEl.style.setProperty('--photo-pan-x', `${tx}px`);
+    imgEl.style.setProperty('--photo-pan-y', `${ty}px`);
+    imgEl.style.setProperty('--photo-pan-scale', String(appliedScale));
+  }
+
+  function getCompanyInitials(name) {
+    return String(name || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || 'TC';
+  }
+
+  function mapSavedProfileToPublic(saved, fallbackName, requestedId, isOwnProfile) {
+    const name = String(saved?.nombre || fallbackName || 'Mi Empresa').trim() || 'Mi Empresa';
+    const pan = getCompanyPhotoPan(saved);
+    return {
+      id: requestedId || slugify(name) || 'empresa',
+      name,
+      tagline: String(saved?.descripcion || 'Empresa de desarrollo de software con foco en soluciones B2B para el mercado latinoamericano.'),
+      description: String(saved?.descripcion || 'Empresa de desarrollo de software con foco en soluciones B2B para el mercado latinoamericano.'),
+      industry: String(saved?.rubro || 'Tecnologia & Software'),
+      location: String(saved?.ubicacion || 'Buenos Aires, Argentina'),
+      website: String(saved?.web || 'www.miempresa.com').replace(/^https?:\/\//i, ''),
+      offers: [],
+      isOwnProfile: Boolean(isOwnProfile),
+      photoDataUrl: String(saved?.photoDataUrl || ''),
+      photoPanX: pan.x,
+      photoPanY: pan.y,
+    };
+  }
+
+  function findSavedCompanyProfileById(companyId) {
+    const requestedId = String(companyId || '').trim();
+    if (!requestedId) return null;
+
+    try {
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('ApplyAI.perfilEmpresa_')) continue;
+
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const saved = safeJsonParse(raw, null);
+        if (!saved) continue;
+
+        const savedName = String(saved?.nombre || '').trim();
+        const savedId = slugify(savedName);
+        if (savedId && savedId === requestedId) {
+          return saved;
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
+  }
+
   function getQueryParam(name) {
     try {
       const url = new URL(window.location.href);
@@ -109,45 +197,47 @@
         const currentUserRaw = localStorage.getItem('ApplyAI.currentUser');
         if (currentUserRaw) {
           const currentUser = JSON.parse(currentUserRaw);
-          if (currentUser.role === 'empresa') {
+          if (normalizeRole(currentUser.role) === 'empresa') {
             const companyEmail = currentUser.email;
             let companyName = currentUser.fullName || 'Mi Empresa';
-            
-            let profile = {
-              id: slugify(companyName),
-              name: companyName,
-              tagline: 'Empresa de desarrollo de software con foco en soluciones B2B para el mercado latinoamericano.',
-              description: 'Empresa de desarrollo de software con foco en soluciones B2B... (Por defecto)',
-              industry: 'Tecnologia & Software',
-              location: 'Buenos Aires, Argentina',
-              website: 'www.miempresa.com',
-              offers: [],
-              isOwnProfile: true
-            };
+
+            let profile = mapSavedProfileToPublic(null, companyName, slugify(companyName), true);
 
             const savedRaw = localStorage.getItem(`ApplyAI.perfilEmpresa_${companyEmail}`);
             if (savedRaw) {
-               const saved = JSON.parse(savedRaw);
-               profile.name = saved.nombre || profile.name;
-               profile.industry = saved.rubro || profile.industry;
-               profile.tagline = saved.descripcion || profile.tagline; // In dashboard-sidebar it is 'descripcion'
-               profile.description = saved.descripcion || profile.description;
-               profile.website = saved.web || profile.website;
-               profile.location = saved.ubicacion || profile.location;
+              const saved = safeJsonParse(savedRaw, null);
+              if (saved) {
+                profile = mapSavedProfileToPublic(saved, companyName, requestedId || slugify(companyName), true);
+              }
             }
             return profile;
           }
         }
-      } catch(e){}
+      } catch (e) {}
     }
 
-    const fallback = COMPANY_CATALOG.techcorp;
-    fallback.description = 'En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida...';
+    const fallback = {
+      ...COMPANY_CATALOG.techcorp,
+      description: 'En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida...',
+      photoDataUrl: '',
+      photoPanX: 0,
+      photoPanY: 0,
+    };
+
+    const savedFromStorage = requestedId ? findSavedCompanyProfileById(requestedId) : null;
+    if (savedFromStorage) {
+      return mapSavedProfileToPublic(savedFromStorage, requested, requestedId, false);
+    }
 
     const fromCatalog = requestedId && COMPANY_CATALOG[requestedId] ? COMPANY_CATALOG[requestedId] : null;
     if (fromCatalog) {
-      fromCatalog.description = fromCatalog.tagline;
-      return fromCatalog;
+      return {
+        ...fromCatalog,
+        description: fromCatalog.tagline,
+        photoDataUrl: '',
+        photoPanX: 0,
+        photoPanY: 0,
+      };
     }
 
     if (requested) {
@@ -160,6 +250,9 @@
         location: '—',
         website: '#',
         offers: [],
+        photoDataUrl: '',
+        photoPanX: 0,
+        photoPanY: 0,
       };
     }
 
@@ -255,6 +348,8 @@
     const locationEl = document.getElementById('companyLocation');
     const websiteEl = document.getElementById('companyWebsite');
     const logoEl = document.getElementById('companyLogo');
+    const logoImgEl = document.getElementById('companyLogoImg');
+    const logoFallbackEl = document.getElementById('companyLogoFallback');
     const descriptionEl = document.getElementById('companyDescription'); // added for description
 
     if (nameEl) nameEl.textContent = company.name || 'Empresa';
@@ -263,20 +358,34 @@
     if (locationEl) locationEl.textContent = company.location || '—';
     if (descriptionEl) descriptionEl.textContent = company.description || company.tagline || '';
     if (websiteEl) {
-      websiteEl.textContent = company.website || '';
-      websiteEl.href = company.website && company.website !== '#' ? `https://${company.website.replace(/^https?:\/\//, '')}` : '#';
+      const cleanWebsite = String(company.website || '').trim();
+      websiteEl.textContent = cleanWebsite;
+      websiteEl.href = cleanWebsite && cleanWebsite !== '#' ? `https://${cleanWebsite.replace(/^https?:\/\//, '')}` : '#';
     }
 
     if (logoEl) {
-      const initials = String(company.name || '')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((p) => p[0])
-        .join('')
-        .toUpperCase();
-      logoEl.textContent = initials || '—';
+      const initials = getCompanyInitials(company.name);
+      if (logoFallbackEl) logoFallbackEl.textContent = initials || '—';
+
+      const hasPhoto = Boolean(company.photoDataUrl);
+      if (logoImgEl && hasPhoto) {
+        logoImgEl.src = company.photoDataUrl;
+        logoImgEl.hidden = false;
+        if (logoFallbackEl) logoFallbackEl.hidden = true;
+
+        const pan = getCompanyPhotoPan(company);
+        applyCompanyPhotoPan(logoImgEl, logoEl, pan, 1.16);
+        requestAnimationFrame(() => {
+          applyCompanyPhotoPan(logoImgEl, logoEl, pan, 1.16);
+        });
+      } else if (logoImgEl) {
+        logoImgEl.hidden = true;
+        logoImgEl.src = '';
+        logoImgEl.style.removeProperty('--photo-pan-x');
+        logoImgEl.style.removeProperty('--photo-pan-y');
+        logoImgEl.style.removeProperty('--photo-pan-scale');
+        if (logoFallbackEl) logoFallbackEl.hidden = false;
+      }
     }
   }
 

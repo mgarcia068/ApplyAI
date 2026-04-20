@@ -28,7 +28,10 @@
       </div>
 
       <a href="perfil-empresa-publico.html" class="sidebar__empresa sidebar__empresa--link" title="Ver perfil público">
-        <div class="avatar avatar--md" style="flex-shrink:0">TC</div>
+        <div class="avatar avatar--md" id="sidebar-company-avatar" style="flex-shrink:0">
+          <img id="sidebar-company-avatar-img" alt="Foto de empresa" src="" draggable="false" hidden />
+          <span id="sidebar-company-avatar-fallback">TC</span>
+        </div>
         <div class="sidebar__empresa-info">
           <div class="sidebar__empresa-nombre">TechCorp Argentina</div>
           <div class="sidebar__empresa-rubro">Empresa</div>
@@ -90,7 +93,10 @@
         </div>
         <div class="db-topbar__actions relative">
           <!-- Modificado para que el avatar sea un poco más grande (avatar--md) -->
-          <button class="avatar avatar--md cursor-pointer" id="topbar-user-btn" aria-haspopup="true" aria-expanded="false" style="border: none; outline: none;">TC</button>
+          <button class="avatar avatar--md cursor-pointer" id="topbar-user-btn" type="button" aria-haspopup="true" aria-expanded="false" style="border: none; outline: none;">
+            <img id="topbar-user-avatar-img" alt="Foto de empresa" src="" draggable="false" hidden />
+            <span id="topbar-user-avatar-fallback">TC</span>
+          </button>
 
           <div class="user-dropdown" id="topbar-user-dropdown">
             <div class="user-dropdown__header">
