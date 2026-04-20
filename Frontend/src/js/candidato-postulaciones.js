@@ -310,8 +310,8 @@
               <div class="applications-list__item" data-offer-id="${app.offerId}">
                 <div class="applications-list__top">
                   <div class="applications-list__meta">
-                    <div class="applications-list__title truncate">${app.offerTitle || 'Oferta'}</div>
-                    <div class="text-xs text-muted truncate">${companyName}${locationPart}</div>
+                    <div class="applications-list__title">${app.offerTitle || 'Oferta'}</div>
+                    <div class="text-xs text-muted">${companyName}${locationPart}</div>
                   </div>
                   <span class="badge ${badgeClass}">${app.status || '—'}</span>
                 </div>

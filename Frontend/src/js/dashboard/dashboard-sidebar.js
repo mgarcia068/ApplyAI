@@ -8,6 +8,24 @@ const SECCIONES = {
 
 let seccionActual = 'resumen';
 
+const DASHBOARD_MOBILE_BREAKPOINT = 1024;
+
+function isMobileDashboardViewport() {
+  return window.matchMedia(`(max-width: ${DASHBOARD_MOBILE_BREAKPOINT}px)`).matches;
+}
+
+function syncResumenContentMode() {
+  const content = document.getElementById('db-content');
+  if (!content) return;
+
+  if (seccionActual !== 'resumen' || isMobileDashboardViewport()) {
+    content.classList.remove('dashboard-content-fixed');
+    return;
+  }
+
+  content.classList.add('dashboard-content-fixed');
+}
+
 function navigateTo(seccion, subtitulo) {
   const def = SECCIONES[seccion];
   if (!def) return;
@@ -41,7 +59,7 @@ function navigateTo(seccion, subtitulo) {
 
 function renderResumen() {
   const content = document.getElementById('db-content');
-  content.classList.add('dashboard-content-fixed');
+  syncResumenContentMode();
   content.innerHTML = `
     <div class="dashboard-header-fixed">
       <div style="padding-bottom: 24px;">
@@ -455,4 +473,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('sidebar-overlay')?.addEventListener('click', closeMobileSidebar);
+
+  let resizeDebounce;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeDebounce);
+    resizeDebounce = setTimeout(syncResumenContentMode, 120);
+  });
 });

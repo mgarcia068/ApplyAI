@@ -35,13 +35,39 @@ function initCarousel() {
   const dotsWrap   = document.getElementById('reviews-dots');
   const btnPrev    = document.getElementById('reviews-prev');
   const btnNext    = document.getElementById('reviews-next');
+  const wrapper    = track?.closest('.reviews__track-wrapper');
 
   if (!track) return;
 
+  function getCardMetrics() {
+    const firstCard = track.querySelector('.review-card');
+    if (!firstCard) return { cardWidth: 0, gap: 0 };
+
+    const styles = window.getComputedStyle(track);
+    const gap = parseFloat(styles.columnGap || styles.gap || '0') || 0;
+    return { cardWidth: firstCard.offsetWidth, gap };
+  }
+
   function visibleCount() {
-    if (window.innerWidth < 640)  return 1;
+    if (window.innerWidth < 640) return 1;
     if (window.innerWidth < 1024) return 2;
-    return 3;
+
+    if (!wrapper) return 3;
+
+    const { cardWidth, gap } = getCardMetrics();
+    if (!cardWidth) return 3;
+
+    const availableWidth = wrapper.parentElement?.clientWidth || wrapper.clientWidth;
+    const fit = Math.floor((availableWidth + gap) / (cardWidth + gap));
+    return fit >= 4 ? 4 : 3;
+  }
+
+  function syncVisibleLayout() {
+    const visible = visibleCount();
+    if (wrapper) {
+      wrapper.style.setProperty('--reviews-visible', String(visible));
+    }
+    return visible;
   }
 
   const total   = REVIEWS.length;
@@ -50,9 +76,24 @@ function initCarousel() {
 
   track.innerHTML = REVIEWS.map(buildReviewCard).join('');
 
-  const dotCount = total - visibleCount() + 1;
+  function getDotCount() {
+    return Math.max(1, total - visibleCount() + 1);
+  }
+
+  function getStepSize() {
+    const { cardWidth, gap } = getCardMetrics();
+    if (!cardWidth) return 0;
+
+    if (visibleCount() === 1 && wrapper) {
+      return wrapper.clientWidth;
+    }
+
+    return cardWidth + gap;
+  }
 
   function buildDots() {
+    syncVisibleLayout();
+    const dotCount = getDotCount();
     dotsWrap.innerHTML = Array.from({ length: dotCount }, (_, i) =>
       `<button class="reviews__dot${i === 0 ? ' active' : ''}" data-index="${i}" aria-label="Ir a reseña ${i + 1}"></button>`
     ).join('');
@@ -63,17 +104,18 @@ function initCarousel() {
   }
 
   function goTo(index) {
-    const maxIndex = total - visibleCount();
+    const visible = syncVisibleLayout();
+    const maxIndex = Math.max(0, total - visible);
     current = Math.max(0, Math.min(index, maxIndex));
 
-    const cardWidth = track.querySelector('.review-card').offsetWidth + 24;
-    track.style.transform = `translateX(-${current * cardWidth}px)`;
+    const stepSize = getStepSize();
+    track.style.transform = `translateX(-${current * stepSize}px)`;
     dotsWrap.querySelectorAll('.reviews__dot').forEach((dot, i) => {
       dot.classList.toggle('active', i === current);
     });
 
     btnPrev.disabled = current === 0;
-    btnNext.disabled = current >= total - visibleCount();
+    btnNext.disabled = current >= total - visible;
   }
 
   function next() { goTo(current + 1); }
@@ -81,13 +123,16 @@ function initCarousel() {
 
   function startAuto() {
     autoTimer = setInterval(() => {
-      const maxIndex = total - visibleCount();
+      const maxIndex = Math.max(0, total - syncVisibleLayout());
       goTo(current >= maxIndex ? 0 : current + 1);
     }, 7000);
   }
 
   function stopAuto() {
-    clearInterval(autoTimer);
+    if (autoTimer) {
+      clearInterval(autoTimer);
+      autoTimer = null;
+    }
   }
 
   btnNext.addEventListener('click', () => { stopAuto(); next(); startAuto(); });
@@ -106,9 +151,13 @@ function initCarousel() {
     }
   });
 
+  let resizeDebounce;
   window.addEventListener('resize', () => {
-    buildDots();
-    goTo(0);
+    clearTimeout(resizeDebounce);
+    resizeDebounce = setTimeout(() => {
+      buildDots();
+      goTo(current);
+    }, 120);
   });
 
   buildDots();
