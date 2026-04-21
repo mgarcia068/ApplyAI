@@ -170,7 +170,9 @@
 }
 
 /* Avatar img pan support (same crop model as profile editor) */
-#navbar-user-avatar-img {
+#navbar-user-avatar-img,
+#topbar-user-avatar-img,
+#sidebar-company-avatar-img {
   transform: translate(var(--photo-pan-x, 0px), var(--photo-pan-y, 0px)) scale(var(--photo-pan-scale, 1));
   transform-origin: center;
 }
