@@ -292,13 +292,13 @@
 
             if (companyId) {
               actions.push(
-                `<button class="btn btn--secondary btn--sm" type="button" data-action="view-company" data-company-id="${companyId}">Ver empresa</button>`
+                `<button class="btn btn--secondary btn--sm applications-list__action-btn applications-list__action-btn--company" type="button" data-action="view-company" data-company-id="${companyId}">Ver empresa</button>`
               );
             }
 
             if (canWithdraw) {
               actions.push(
-                `<button class="btn btn--danger btn--sm" type="button" data-action="withdraw" data-offer-id="${app.offerId}">Despostularme</button>`
+                `<button class="btn btn--danger btn--sm applications-list__action-btn applications-list__action-btn--withdraw" type="button" data-action="withdraw" data-offer-id="${app.offerId}">Despostularme</button>`
               );
             }
 
