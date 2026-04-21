@@ -1,7 +1,7 @@
 // USO: agregar en cada HTML, antes del cierre de </body>:
 //   <div id="navbar-placeholder"></div>   ← al inicio del body
 //   <div id="footer-placeholder"></div>   ← al final del body
-//   <script src="js/components.js"></script>
+//   <script src="js/core/components.js"></script>
 
 const isLanding =
   window.location.pathname === "/" ||
