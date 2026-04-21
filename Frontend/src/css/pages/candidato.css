@@ -143,9 +143,24 @@
 .applications-list__actions {
   margin-top: var(--space-3);
   display: flex;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-3);
+  row-gap: var(--space-2);
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.applications-list__action-btn {
+  min-width: 142px;
+  justify-content: center;
+}
+
+.applications-list__action-btn--company {
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.applications-list__action-btn--withdraw {
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--color-error) 22%, transparent);
 }
 
 /* Mis empresas favoritas */
@@ -241,6 +256,11 @@
 
   .applications-list__item {
     padding: var(--space-3) var(--space-4);
+  }
+
+  .applications-list__action-btn {
+    min-width: 0;
+    width: 100%;
   }
 
   .favorite-company-card__actions {

@@ -87,6 +87,41 @@ function getCandidateProfile(email) {
   }
 }
 
+function getCompanyProfile(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail) return null;
+
+  const exactKey = `ApplyAI.perfilEmpresa_${normalizedEmail}`;
+  const exactRaw = localStorage.getItem(exactKey);
+  if (exactRaw) {
+    try {
+      return JSON.parse(exactRaw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Backward compatibility for profiles saved with non-normalized email casing.
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith("ApplyAI.perfilEmpresa_")) continue;
+
+    const savedEmail = key.slice("ApplyAI.perfilEmpresa_".length).trim().toLowerCase();
+    if (savedEmail !== normalizedEmail) continue;
+
+    const raw = localStorage.getItem(key);
+    if (!raw) continue;
+
+    try {
+      return JSON.parse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 function handleGlobalLogout() {
   const overlay = document.createElement("div");
   overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity 0.2s ease;";
@@ -535,17 +570,10 @@ function updateNavbarActions() {
     if (applicationsBtn) applicationsBtn.style.display = isEmpresa ? "none" : "";
 
     // Update user info
-    const profile = isEmpresa ? null : getCandidateProfile(user.email);
-    let displayName = profile?.fullName || user.fullName || user.email;
-    if (isEmpresa) {
-        try {
-            const savedRaw = localStorage.getItem(`ApplyAI.perfilEmpresa_${user.email}`);
-            if (savedRaw) {
-               const saved = JSON.parse(savedRaw);
-               if (saved.nombre) displayName = saved.nombre;
-            }
-        } catch(e){}
-    }
+    const profile = isEmpresa ? getCompanyProfile(user.email) : getCandidateProfile(user.email);
+    const displayName = isEmpresa
+      ? String(profile?.nombre || user.fullName || user.email).trim()
+      : String(profile?.fullName || user.fullName || user.email).trim();
     const initials = initialsFromName(displayName);
     
     const nameEl = document.getElementById("navbar-user-name");
@@ -557,7 +585,7 @@ function updateNavbarActions() {
     
     if (nameEl) nameEl.textContent = displayName;
 
-    const locationText = String(profile?.location || "").trim();
+    const locationText = isEmpresa ? "" : String(profile?.location || "").trim();
     if (locationEl) {
       if (locationText) {
         locationEl.textContent = locationText;
@@ -578,8 +606,8 @@ function updateNavbarActions() {
       avatarImgEl.hidden = false;
       if (avatarFallbackEl) avatarFallbackEl.hidden = true;
 
-      // Match the crop/pan behavior from the candidate profile editor.
-      applyPhotoPan(avatarImgEl, avatarEl, getPhotoPan(profile), 1.18);
+      const avatarScale = isEmpresa ? 1.16 : 1.18;
+      applyPhotoPan(avatarImgEl, avatarEl, getPhotoPan(profile), avatarScale);
     } else {
       if (avatarImgEl) {
         avatarImgEl.hidden = true;
