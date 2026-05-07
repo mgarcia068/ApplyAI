@@ -54,7 +54,7 @@ function renderStats(containerId) {
         </div>
       </div>
       <div class="stat-card__value">${ofertasActivas}</div>
-      <div class="stat-card__delta" style="color: var(--color-success)">De ${totalOfertas} totales</div>
+      <div class="stat-card__delta text-success">De ${totalOfertas} totales</div>
     </div>
 
     <div class="stat-card">
@@ -65,7 +65,7 @@ function renderStats(containerId) {
         </div>
       </div>
       <div class="stat-card__value">${totalPostulantes}</div>
-      <div class="stat-card__delta" style="color: var(--color-success)">Recibidos esta semana</div>
+      <div class="stat-card__delta text-success">Recibidos esta semana</div>
     </div>
 
     <div class="stat-card">
@@ -81,7 +81,7 @@ function renderStats(containerId) {
         </div>
       </div>
       <div class="stat-card__value">${enEntrevista}</div>
-      <div class="stat-card__delta" style="color: var(--color-success)">Candidatos avanzando</div>
+      <div class="stat-card__delta text-success">Candidatos avanzando</div>
     </div>
 
     <div class="stat-card">
@@ -95,7 +95,7 @@ function renderStats(containerId) {
         </div>
       </div>
       <div class="stat-card__value">${aceptados}</div>
-      <div class="stat-card__delta" style="color: var(--color-success)">Nuevos talentos sumados</div>
+      <div class="stat-card__delta text-success">Nuevos talentos sumados</div>
     </div>
   `;
 }
@@ -106,7 +106,7 @@ function renderOfertasTable(containerId, ofertasList = OFERTAS) {
 
   if (ofertasList.length === 0) {
     el.innerHTML = `
-      <div class="empty-box" style="border:none; border-radius:0;">
+      <div class="empty-box border-none radius-0">
         <svg class="empty-box__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -141,13 +141,13 @@ function renderOfertasTable(containerId, ofertasList = OFERTAS) {
         </div>
       </td>
       <td>${getEstadoBadge(o.estado)}</td>
-      <td><strong style="color:var(--color-text)">${o.postulantes}</strong></td>
+      <td><strong class="text-default">${o.postulantes}</strong></td>
       <td>${o.fecha}</td>
       <td>
         <div class="offers-table__actions">
           <button class="btn btn--ghost btn--sm" onclick="verPostulantes(${o.id})">Ver postulantes</button>
           <button class="btn btn--ghost btn--sm" onclick="abrirModalEditarOferta(${o.id})">Editar</button>
-          <button class="btn btn--ghost btn--sm" onclick="eliminarOferta(${o.id})" style="color: var(--color-error)">Eliminar</button>
+          <button class="btn btn--ghost btn--sm" onclick="eliminarOferta(${o.id})" class="text-error">Eliminar</button>
         </div>
       </td>
     </tr>
@@ -196,7 +196,7 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
   }
 
   el.innerHTML = `
-    <div class="applicants-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); align-items: stretch;">
+    <div class="applicants-grid grid-cards">
       ${lista.map(p => {
         // Obtenemos el nombre del puesto usando OFERTAS (dashboard-data.js)
         let puestoOferta = 'Puesto no especificado';
@@ -222,8 +222,8 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
         }
 
         return `
-        <div class="applicant-card" style="position: relative; display: flex; flex-direction: column; height: 100%;">
-          <div style="position: absolute; top: var(--space-4); right: var(--space-4); z-index: 10; display: flex; align-items: center; gap: var(--space-2);">
+        <div class="applicant-card card-relative-col">
+          <div class="card-top-right">
             <button onclick="abrirModalExplicacionIA('${p.nombre}', '${p.rating}', '${ratingColor}', '${ratingBg}', '${(p.skills || []).join(', ')}')" style="display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: ${ratingBg}; border: 2px solid ${ratingColor}; font-size: 11px; font-weight: 700; color: ${ratingColor}; cursor: pointer; padding: 0; outline: none; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Ver análisis de la IA">
               ${p.rating}
             </button>
@@ -237,26 +237,26 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
           </div>
           <div class="applicant-card__header">
             ${buildAvatarInitials(p.iniciales)}
-            <div class="applicant-card__info" style="padding-right: var(--space-12);">
-              <div class="applicant-card__name" style="font-weight: 600;">${p.nombre}</div>
+            <div class="applicant-card__info pr-12">
+              <div class="applicant-card__name font-semibold">${p.nombre}</div>
               <div class="applicant-card__role text-xs text-muted mb-1">${p.rol}</div>
-              <div class="flex items-center gap-2" style="font-size: var(--text-xs); color: var(--color-text-muted); flex-wrap: wrap;">
-                ${p.experiencia ? `<span style="background:var(--color-bg-3); padding:2px 6px; border-radius:4px;">${p.experiencia}</span>` : ''}
-                ${p.estudio ? `<span style="background:var(--color-bg-3); padding:2px 6px; border-radius:4px;">${p.estudio}</span>` : ''}
+              <div class="flex items-center gap-2 text-xs text-muted flex-wrap">
+                ${p.experiencia ? `<span class="badge-small">${p.experiencia}</span>` : ''}
+                ${p.estudio ? `<span class="badge-small">${p.estudio}</span>` : ''}
               </div>
             </div>
           </div>
-          <div class="applicant-card__skills" style="margin-top: var(--space-2); margin-bottom: var(--space-4);">
+          <div class="applicant-card__skills my-2-4">
             ${buildSkillChips(p.skills)}
           </div>
-          <div class="applicant-card__footer" style="margin-top: auto; border-top: 1px solid var(--color-surface); padding-top: var(--space-4); display: flex; justify-content: space-between; align-items: center; gap: var(--space-3);">
-            <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%;">
-              <span style="color: var(--color-text-muted);">Postulado a:</span><br>
-              <strong style="color: var(--color-primary); font-weight: 600;">${puestoOferta}</strong>
+          <div class="applicant-card__footer card-footer-auto">
+            <div class="text-ellipsis-11">
+              <span class="text-muted">Postulado a:</span><br>
+              <strong class="text-primary font-semibold">${puestoOferta}</strong>
             </div>
             <div class="flex items-center gap-2">
-              <button class="btn btn--secondary cursor-pointer" style="height: 32px; font-size: var(--text-xs); padding: 0 var(--space-3);" onclick="visualizarCV('${p.nombre}', null, '${p.cvRating || ((p.id * 17 % 40) / 10 + 6.0).toFixed(1)}')">Ver CV</button>
-              <select class="form-select cursor-pointer" style="padding: 4px 28px 4px 8px; font-size: var(--text-xs); height: 32px; min-width: 120px; background-color: var(--color-bg-3);" 
+              <button class="btn btn--secondary cursor-pointer btn-sm-32" onclick="visualizarCV('${p.nombre}', null, '${p.cvRating || ((p.id * 17 % 40) / 10 + 6.0).toFixed(1)}')">Ver CV</button>
+              <select class="form-select cursor-pointer select-sm-32" 
                 onchange="cambiarEstadoCandidato(${p.id}, this.value)"
                 ${p.estado === 'Aceptado' || p.estado === 'Rechazado' ? 'disabled' : ''}>
                 <option value="Revisión" ${p.estado === 'Revisión' ? 'selected' : ''} ${p.estado === 'Entrevista' ? 'disabled' : ''}>En revisión</option>
@@ -298,10 +298,10 @@ function abrirModalExplicacionIA(nombre, rating, color, bg, skillsStr) {
   modal.style.cssText = 'background: var(--color-bg, #fff); color: var(--color-text, #111827); padding: 28px; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-width: 480px; width: 90%; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;';
   
   modal.innerHTML = `
-    <button id="ia-close-btn" style="position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; color: var(--color-text-muted, #6B7280); padding: 4px; border-radius: 4px;" onmouseover="this.style.background='var(--color-bg-3, #f3f4f6)'" onmouseout="this.style.background='none'">
+    <button id="ia-close-btn" class="btn-close-top-right" onmouseover="this.style.background='var(--color-bg-3, #f3f4f6)'" onmouseout="this.style.background='none'">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
     </button>
-    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+    <div class="flex items-center gap-16 mb-24">
       <div style="width: 56px; height: 56px; border-radius: 50%; background: ${bg}; border: 3px solid ${color}; display: flex; align-items: center; justify-content: center; color: ${color}; font-size: 18px; font-weight: 800; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
         ${rating}
       </div>
@@ -678,7 +678,7 @@ function eliminarOferta(id) {
   modal.innerHTML = `
     <div class="modal-panel modal-panel--visible" style="width: 400px; max-width: calc(100vw - 32px);">
       <div class="modal-panel__header">
-        <div class="modal-panel__title" style="color: var(--color-error)">Eliminar Oferta</div>
+        <div class="modal-panel__title text-error">Eliminar Oferta</div>
       </div>
       <div class="modal-panel__body">
         ¿Estás seguro de que deseás eliminar permanentemente esta oferta? Esta acción no se puede deshacer y borrará a los postulantes asociados.

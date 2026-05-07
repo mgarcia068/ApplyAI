@@ -172,7 +172,7 @@
 
   function emptyStateHtml(title, text) {
     return `
-      <div class="empty-state" style="padding: var(--space-10) var(--space-6)">
+      <div class="empty-state empty-state--padded">
         <div class="empty-state__icon">✦</div>
         <div class="empty-state__title">${title}</div>
         <div class="empty-state__text">${text}</div>
@@ -218,10 +218,10 @@
           `;
 
       return `
-        <article class="card card--flat" style="margin-top: var(--space-4)">
-          <header class="flex items-start justify-between" style="gap: var(--space-4)">
-            <div class="flex flex-col" style="gap: var(--space-1)">
-              <div class="text-display" style="font-size: var(--text-md)">${offer.title}</div>
+        <article class="card card--flat card--spaced-top">
+          <header class="flex items-start justify-between header--gap-4">
+            <div class="flex flex-col flex-col--gap-1">
+              <div class="text-display text-display--md">${offer.title}</div>
               <div class="text-xs text-muted flex items-center gap-1">
                 ${offer.company} • ${offer.location}
               </div>
@@ -229,7 +229,7 @@
             ${statusBadge}
           </header>
 
-          <footer class="card__footer" style="justify-content: flex-end; gap: var(--space-2)">
+          <footer class="card__footer card__footer--end">
             ${companyId ? `<button class="btn btn--secondary btn--sm" type="button" data-action="view-company" data-company-id="${companyId}">Ver empresa</button>` : ''}
             ${actionButtonHtml}
           </footer>

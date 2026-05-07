@@ -4,7 +4,7 @@
 
     <div class="navbar__actions">
       <!-- Cambiar tema (disponible aun sin login) -->
-      <label class="theme-switch-wrapper" id="navbar-public-theme-toggle" onclick="toggleTheme()" style="width: auto; display: flex; align-items: center; cursor: pointer;">
+      <label class="theme-switch-wrapper" id="navbar-public-theme-toggle" onclick="toggleTheme()" class="theme-toggle-public">
         <div class="theme-switch" id="navbar-theme-switch-btn"></div>
       </label>
 
@@ -45,8 +45,8 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
             <span>Mis postulaciones</span>
           </button>
-          <div class="user-dropdown__item" id="navbar-theme-toggle-btn" style="padding: var(--space-2) var(--space-4);">
-            <label class="theme-switch-wrapper" style="gap: var(--space-2);">
+          <div class="user-dropdown__item" id="navbar-theme-toggle-btn" class="theme-toggle-item">
+            <label class="theme-switch-wrapper gap-2">
               <div class="theme-switch__label">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 Cambiar tema

@@ -165,7 +165,7 @@
   </head>
 
   <body>
-    <div class="db-topbar" style="position: sticky; top: 0; z-index: 100; height: 60px; background: var(--color-bg); border-bottom: 1px solid var(--color-surface); padding: 0 var(--space-8); display: flex; align-items: center; justify-content: flex-start;">
+    <div class="db-topbar db-topbar-sticky">
       <button class="btn btn--ghost btn--sm flex items-center" style="gap: var(--space-2)" onclick="window.history.back()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         Volver
@@ -176,7 +176,7 @@
       <div class="container">
         
         <!-- Company Header (Banner + Basic Info) -->
-        <header style="margin-top: var(--space-4); margin-bottom: var(--space-4);">
+        <header class="my-4">
           <div class="company-banner"></div>
           <div class="company-header">
             <div class="flex items-end justify-between">
@@ -192,46 +192,46 @@
               </div>
             </div>
             
-            <div style="margin-top: var(--space-4);">
-              <h1 class="text-display" style="font-size: var(--text-3xl)" id="companyName">TechCorp Argentina</h1>
+            <div class="mt-4">
+              <h1 class="text-display text-3xl" id="companyName">TechCorp Argentina</h1>
               <div class="text-lg text-muted" id="companyTagline">Innovando el futuro del desarrollo de software.</div>
               
               <div class="info-grid">
                 <div class="info-item">
-                  <span class="text-xs text-muted flex items-center" style="gap: var(--space-2);">
+                  <span class="text-xs text-muted flex items-center gap-2">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                     Industria
                   </span>
                   <span class="text-sm font-medium" id="companyIndustry">Desarrollo de Software</span>
                 </div>
                 <div class="info-item">
-                  <span class="text-xs text-muted flex items-center" style="gap: var(--space-2);">
+                  <span class="text-xs text-muted flex items-center gap-2">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                     Ubicación
                   </span>
                   <span class="text-sm font-medium" id="companyLocation">Córdoba, Argentina</span>
                 </div>
                 <div class="info-item">
-                  <span class="text-xs text-muted flex items-center" style="gap: var(--space-2);">
+                  <span class="text-xs text-muted flex items-center gap-2">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2A15.3 15.3 0 0 1 17 12a15.3 15.3 0 0 1-5 10 15.3 15.3 0 0 1-5-10A15.3 15.3 0 0 1 12 2z"></path><line x1="2" y1="12" x2="22" y2="12"></line></svg>
                     Sitio Web
                   </span>
-                  <a href="#" class="text-sm font-medium" id="companyWebsite" style="color: var(--color-primary)">www.techcorp.com.ar</a>
+                  <a href="#" class="text-sm font-medium" id="companyWebsite" class="text-primary">www.techcorp.com.ar</a>
                 </div>
               </div>
             </div>
           </div>
         </header>
 
-        <section style="margin-bottom: var(--space-8);">
+        <section class="mb-8">
           <div class="company-body">
             <!-- Left Column: About & Tech Stack -->
-            <div class="flex flex-col" style="gap: var(--space-6);">
+            <div class="flex flex-col gap-6">
               <div class="card">
                 <header class="card__header">
-                  <h2 class="card__title" style="font-size: var(--text-xl)">Sobre Nosotros</h2>
+                  <h2 class="card__title text-xl">Sobre Nosotros</h2>
                 </header>
-                <div class="card__body text-muted" id="companyAbout" style="line-height: 1.6;">
+                <div class="card__body text-muted" id="companyAbout" class="leading-relaxed">
                   <p id="companyDescription">En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida para empresas de tecnología a nivel global. Con más de 10 años de experiencia, nuestro equipo combina talento y creatividad para resolver problemas complejos.</p>
                 </div>
               </div>
@@ -239,22 +239,22 @@
               <div class="card">
                 <header class="card__header">
                   <div class="flex items-center justify-between">
-                    <h2 class="card__title" style="font-size: var(--text-xl)">Ofertas de Trabajo</h2>
+                    <h2 class="card__title text-xl">Ofertas de Trabajo</h2>
                     <span class="badge badge--accent" id="companyOffersCount">3</span>
                   </div>
                 </header>
                 <div class="card__body" id="companyOffersList">
                   <!-- Offers injected by JS -->
-                  <div class="text-center text-muted" style="padding: var(--space-4)">Cargando ofertas...</div>
+                  <div class="text-center text-muted p-4">Cargando ofertas...</div>
                 </div>
               </div>
             </div>
 
             <!-- Right Column: Sidebar Info -->
-            <div class="flex flex-col" style="gap: var(--space-6);">
+            <div class="flex flex-col gap-6">
               <div class="card">
-                <header class="card__header" style="border-bottom: 1px solid var(--color-surface); padding-bottom: var(--space-3);">
-                  <h3 class="card__title" style="font-size: var(--text-base)">Cultura y Beneficios</h3>
+                <header class="card__header border-b-surface pb-3">
+                  <h3 class="card__title text-base">Cultura y Beneficios</h3>
                 </header>
                 <div class="card__body">
                   <ul class="flex flex-col" style="gap: var(--space-3); list-style: none; padding: 0; margin: 0;">
@@ -279,8 +279,8 @@
               </div>
 
               <div class="card">
-                <header class="card__header" style="border-bottom: 1px solid var(--color-surface); padding-bottom: var(--space-3);">
-                  <h3 class="card__title" style="font-size: var(--text-base)">Tecnologías comunes</h3>
+                <header class="card__header border-b-surface pb-3">
+                  <h3 class="card__title text-base">Tecnologías comunes</h3>
                 </header>
                 <div class="card__body">
                   <div class="flex items-center" style="gap: var(--space-2); flex-wrap: wrap;">

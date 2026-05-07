@@ -124,23 +124,22 @@ function getCompanyProfile(email) {
 
 function handleGlobalLogout() {
   const overlay = document.createElement("div");
-  overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity 0.2s ease;";
+  overlay.className = "logout-overlay";
 
   const modal = document.createElement("div");
-  modal.className = "card";
-  modal.style.cssText = "background:var(--color-bg);padding:var(--space-6);border-radius:var(--radius-lg);width:90%;max-width:400px;transform:translateY(20px);transition:transform 0.2s ease;box-shadow:var(--shadow-lg);";
+  modal.className = "card logout-modal";
   
   modal.innerHTML = `
-    <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4);">
-      <div style="width:40px;height:40px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;color:var(--color-error);">
+    <div class="logout-modal__header">
+      <div class="logout-modal__icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </div>
-      <h3 style="margin:0;font-size:var(--text-lg);color:var(--color-text);">Cerrar sesión</h3>
+      <h3 class="logout-modal__title">Cerrar sesión</h3>
     </div>
-    <p style="margin-bottom:var(--space-6);color:var(--color-text-muted);font-size:var(--text-sm);">¿Estás seguro de que deseas salir de tu cuenta? Tendrás que volver a ingresar tus credenciales para acceder a tus datos.</p>
-    <div style="display:flex;justify-content:flex-end;gap:var(--space-3);">
+    <p class="logout-modal__text">¿Estás seguro de que deseas salir de tu cuenta? Tendrás que volver a ingresar tus credenciales para acceder a tus datos.</p>
+    <div class="logout-modal__actions">
       <button class="btn btn--ghost" id="btn-cancel-logout">Cancelar</button>
-      <button class="btn btn--primary" id="btn-confirm-logout" style="background:var(--color-error);border-color:var(--color-error);color:white;">Sí, cerrar sesión</button>
+      <button class="btn btn--primary btn--danger" id="btn-confirm-logout">Sí, cerrar sesión</button>
     </div>
   `;
 
@@ -303,8 +302,8 @@ function ensureNavbarDom() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           <span>Mis postulaciones</span>
         </button>
-        <div class="user-dropdown__item" id="navbar-theme-toggle-btn" style="padding: var(--space-2) var(--space-4);">
-          <label class="theme-switch-wrapper" style="gap: var(--space-2);">
+        <div class="user-dropdown__item theme-toggle-item" id="navbar-theme-toggle-btn">
+          <label class="theme-switch-wrapper theme-toggle-label">
             <div class="theme-switch__label">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
               Cambiar tema
@@ -451,11 +450,10 @@ function ensureNavbarDom() {
   let themeToggleBtn = document.getElementById("navbar-theme-toggle-btn") || userMenu.querySelector("#navbar-theme-toggle-btn");
   if (!themeToggleBtn && userDropdown) {
     themeToggleBtn = document.createElement("div");
-    themeToggleBtn.className = "user-dropdown__item";
+    themeToggleBtn.className = "user-dropdown__item theme-toggle-item";
     themeToggleBtn.id = "navbar-theme-toggle-btn";
-    themeToggleBtn.style.padding = "var(--space-2) var(--space-4)";
     themeToggleBtn.innerHTML = `
-      <label class="theme-switch-wrapper" style="gap: var(--space-2);">
+      <label class="theme-switch-wrapper theme-toggle-label">
         <div class="theme-switch__label">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           Cambiar tema
