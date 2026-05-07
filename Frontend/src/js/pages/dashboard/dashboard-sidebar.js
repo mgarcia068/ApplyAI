@@ -62,14 +62,14 @@ function renderResumen() {
   syncResumenContentMode();
   content.innerHTML = `
     <div class="dashboard-header-fixed">
-      <div style="padding-bottom: 24px;">
-          <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 4px;">Resumen General</h1>
-          <p style="color: var(--color-text-muted); margin: 0;">Vista rápida y analíticas de la empresa.</p>
+      <div class="db-summary-header">
+          <h1 class="db-summary-title">Resumen General</h1>
+          <p class="db-summary-subtitle">Vista rápida y analíticas de la empresa.</p>
       </div>
       <div class="stats-grid" id="stats-container"></div>
     </div>
     
-    <div class="dashboard-scrollable-content" style="margin-top:var(--space-8)">
+    <div class="dashboard-scrollable-content dashboard-scrollable-content--spaced">
       <div class="section-header">
         <div>
           <div class="section-header__title">Ofertas recientes</div>
@@ -77,7 +77,7 @@ function renderResumen() {
         </div>
         <button class="btn btn--ghost btn--sm" onclick="navigateTo('ofertas')">Ver todas</button>
       </div>
-      <div class="card" style="padding:0;overflow:hidden">
+      <div class="card card--no-padding">
         <div id="ofertas-resumen-container"></div>
       </div>
     </div>
@@ -98,10 +98,10 @@ function renderOfertas() {
     </div>
 
     <div class="filters-bar">
-      <div class="form-group" style="flex: 1; margin-bottom: 0;">
+      <div class="form-group flex-1 mb-0">
         <input type="text" id="filter-search" class="form-input" placeholder="Buscar por puesto o área..." oninput="filtrarOfertas()">
       </div>
-      <div class="form-group" style="width: 180px; margin-bottom: 0;">
+      <div class="form-group w-180 mb-0">
         <select id="filter-estado" class="form-select" onchange="filtrarOfertas()">
           <option value="">Todos los estados</option>
           <option value="activa">Activas</option>
@@ -109,7 +109,7 @@ function renderOfertas() {
           <option value="cerrada">Cerradas</option>
         </select>
       </div>
-      <div class="form-group" style="width: 180px; margin-bottom: 0;">
+      <div class="form-group w-180 mb-0">
         <select id="filter-modalidad" class="form-select" onchange="filtrarOfertas()">
           <option value="">Todas las modalidades</option>
           <option value="Remoto">Remoto</option>
@@ -119,7 +119,7 @@ function renderOfertas() {
       </div>
     </div>
 
-    <div class="card" style="padding:0;overflow:hidden">
+    <div class="card card--no-padding">
       <div id="ofertas-container"></div>
     </div>
   `;
@@ -129,25 +129,25 @@ function renderOfertas() {
 function renderPostulantesView() {
   const oferta = ofertaActivaId ? OFERTAS.find(o => o.id === ofertaActivaId) : null;
   document.getElementById('db-content').innerHTML = `
-    <div class="section-header" style="margin-bottom: var(--space-4);">
+    <div class="section-header mb-4">
       <div>
         <div class="section-header__title">
           ${oferta ? `Postulantes — ${oferta.titulo}` : 'Todos los postulantes'}
         </div>
         <div class="section-header__sub">Ordenados por compatibilidad segun IA</div>
       </div>
-      <div style="display:flex; gap:var(--space-2)">
+      <div class="flex gap-2">
         ${ofertaActivaId ? `<button class="btn btn--ghost btn--sm" onclick="ofertaActivaId=null;navigateTo('postulantes')">Ver todos</button>` : ''}
       </div>
     </div>
     
-    <div id="postulantes-filters" style="margin-bottom: var(--space-6);">
-      <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-        <div class="form-group" style="margin-bottom: 0;">
+    <div id="postulantes-filters" class="mb-6">
+      <div class="form-grid grid-cols-auto-200">
+        <div class="form-group mb-0">
           <label class="form-label text-xs">Tecnologías (ej: React, Node)</label>
           <input type="text" class="form-input" id="filter-tech" placeholder="Buscar por skill..." onkeyup="applyPostulantesFilters()">
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
+        <div class="form-group mb-0">
           <label class="form-label text-xs">Años de experiencia</label>
           <select class="form-select" id="filter-exp" onchange="applyPostulantesFilters()">
             <option value="">Todas</option>
@@ -158,7 +158,7 @@ function renderPostulantesView() {
             <option value="5+ años">5+ años</option>
           </select>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
+        <div class="form-group mb-0">
           <label class="form-label text-xs">Estudios</label>
           <select class="form-select" id="filter-estudios" onchange="applyPostulantesFilters()">
             <option value="">Todos</option>
@@ -168,7 +168,7 @@ function renderPostulantesView() {
             <option value="Ingeniería">Ingeniería</option>
           </select>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
+        <div class="form-group mb-0">
           <label class="form-label text-xs">Estado</label>
           <select class="form-select" id="filter-estado" onchange="applyPostulantesFilters()">
             <option value="">Todos los estados</option>
@@ -180,7 +180,7 @@ function renderPostulantesView() {
           </select>
         </div>
       </div>
-      <div class="flex justify-end" style="margin-top: var(--space-3);">
+      <div class="flex justify-end mt-3">
          <button class="btn btn--ghost btn--sm cursor-pointer" onclick="limpiarPostulantesFilters()">Limpiar filtros</button>
       </div>
     </div>
@@ -550,7 +550,7 @@ function renderPerfil() {
         <div class="section-header__sub">Asi te ven los candidatos en la plataforma</div>
       </div>
       <button class="btn btn--ghost btn--sm" id="btn-editar-perfil" onclick="togglePerfilEdit(true)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Editar perfil
       </button>
     </div>
@@ -559,7 +559,7 @@ function renderPerfil() {
       <div class="perfil-cover">
         <div class="perfil-cover__bg"></div>
         <div class="perfil-cover__avatar">
-          <div class="avatar avatar--xl perfil-avatar-company" id="company-avatar-view" style="width:80px;height:80px;font-size:var(--text-2xl)">
+          <div class="avatar avatar--xl perfil-avatar-company" id="company-avatar-view" class="avatar-size-80">
             <img
               id="company-avatar-view-img"
               class="perfil-avatar-company__img"
@@ -601,7 +601,7 @@ function renderPerfil() {
         </div>
         <div class="perfil-ofertas-activas">
           <div class="perfil-desc__label">Ofertas activas</div>
-          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-3)">
+          <div class="flex flex-wrap gap-2 mt-3">
             ${OFERTAS.filter(o => o.estado === 'activa').map(o => `
               <span class="badge badge--accent" style="cursor:pointer" onclick="verPostulantes(${o.id})">${o.titulo}</span>
             `).join('')}

@@ -281,7 +281,7 @@
 
     if (!OFFERS.length) {
       listEl.innerHTML = `
-        <div class="empty-state" style="padding: var(--space-10) var(--space-6)">
+        <div class="empty-state empty-state--padded">
           <div class="empty-state__icon">✦</div>
           <div class="empty-state__title">No hay ofertas</div>
           <div class="empty-state__text">Volvé más tarde para ver nuevas oportunidades.</div>
@@ -292,7 +292,7 @@
 
     if (!offers.length) {
       listEl.innerHTML = `
-        <div class="empty-state" style="padding: var(--space-10) var(--space-6)">
+        <div class="empty-state empty-state--padded">
           <div class="empty-state__icon">✦</div>
           <div class="empty-state__title">No se encontraron ofertas</div>
           <div class="empty-state__text">Probá ajustando los filtros para ver más resultados.</div>

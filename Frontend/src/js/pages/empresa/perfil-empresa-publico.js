@@ -273,7 +273,7 @@
     const toast = document.createElement('div');
     toast.className = `alert alert--${type === 'success' ? 'success' : 'info'}`;
     toast.style.cssText = 'box-shadow: var(--shadow-lg); animation: slideUp 0.3s ease-out forwards;';
-    toast.innerHTML = `<span style="font-weight: 500">${String(message || '')}</span>`;
+    toast.innerHTML = `<span class="font-medium">${String(message || '')}</span>`;
 
     toastContainer.appendChild(toast);
 
@@ -496,15 +496,15 @@
     if (countEl) countEl.textContent = String(offers.length);
 
     if (offers.length === 0) {
-      listEl.innerHTML = `<div class="text-center text-muted" style="padding: var(--space-4)">Actualmente no hay búsquedas abiertas.</div>`;
+      listEl.innerHTML = `<div class="text-center text-muted p-4">Actualmente no hay búsquedas abiertas.</div>`;
       return;
     }
 
     listEl.innerHTML = offers.map(offer => `
-      <article class="card card--flat" style="margin-bottom: var(--space-4);">
+      <article class="card card--flat mb-4">
         <header class="flex items-start justify-between">
-          <div class="flex flex-col" style="gap: var(--space-1)">
-            <h3 class="text-display" style="font-size: var(--text-md)">${offer.title}</h3>
+          <div class="flex flex-col gap-1">
+            <h3 class="text-display text-display--md">${offer.title}</h3>
             <div class="text-xs text-muted flex items-center gap-2">
               <span class="badge badge--neutral">${offer.type}</span>
               <span>${offer.date}</span>
