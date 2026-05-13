@@ -7,3 +7,9 @@ node_modules
 # Uploads (CVs, etc.)
 Backend/uploads/
 uploads/
+
+# Build outputs
+Backend/dist/
+dist/
+*.tsbuildinfo
+
