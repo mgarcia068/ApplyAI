@@ -15,6 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobsController = void 0;
 const common_1 = require("@nestjs/common");
 const jobs_service_1 = require("./jobs.service");
+const create_job_dto_1 = require("./dto/create-job.dto");
+const roles_guard_1 = require("../auth/guards/roles.guard");
+const roles_decorator_1 = require("../auth/decorators/roles.decorator");
+const client_1 = require("@prisma/client");
+const get_user_decorator_1 = require("../auth/decorators/get-user.decorator");
 let JobsController = class JobsController {
     constructor(jobsService) {
         this.jobsService = jobsService;
@@ -24,6 +29,13 @@ let JobsController = class JobsController {
     }
     detail(id) {
         return this.jobsService.findOne(id);
+    }
+    create(createJobDto, user) {
+        const companyId = user?.id;
+        if (!companyId) {
+            throw new common_1.UnauthorizedException('ID de la empresa no encontrado. El endpoint requiere autenticación.');
+        }
+        return this.jobsService.create(companyId, createJobDto);
     }
 };
 exports.JobsController = JobsController;
@@ -40,6 +52,17 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], JobsController.prototype, "detail", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.COMPANY),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, get_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_job_dto_1.CreateJobDto, Object]),
+    __metadata("design:returntype", void 0)
+], JobsController.prototype, "create", null);
 exports.JobsController = JobsController = __decorate([
     (0, common_1.Controller)('jobs'),
     __metadata("design:paramtypes", [jobs_service_1.JobsService])

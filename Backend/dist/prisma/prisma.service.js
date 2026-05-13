@@ -11,6 +11,10 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 let PrismaService = class PrismaService extends client_1.PrismaClient {
     async onModuleInit() {
+        console.log('[PrismaService] URL cargada de DATABASE_URL:', process.env.DATABASE_URL);
+        if (!process.env.DATABASE_URL) {
+            console.error('[PrismaService] ERROR CRÍTICO: No hay DATABASE_URL en process.env!');
+        }
         if (!process.env.DATABASE_URL)
             return;
         try {
