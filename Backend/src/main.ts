@@ -21,7 +21,6 @@ async function bootstrap() {
   app.useStaticAssets(uploadsPath, {
     prefix: '/uploads/',
   });
-
   const frontendUrls = appConfig.frontendUrls;
   app.enableCors({
     // Si FRONTEND_URL existe, restringimos a ese/estos origins.
