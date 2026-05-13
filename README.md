@@ -113,11 +113,11 @@ git clone https://github.com/tu-usuario/applyai.git
 cd applyai
 
 # Instalar dependencias del backend
-cd backend
+cd Backend
 npm install
 
 # Instalar dependencias del frontend (si aplica)
-cd ../frontend
+cd ../Frontend
 npm install
 ```
 
@@ -141,8 +141,11 @@ FRONTEND_URL=http://localhost:5500
 ### Correr en local
 
 ```bash
+# Generar Prisma Client (requerido para compilar tipos/enums)
+cd Backend
+npm run prisma:generate
+
 # Iniciar el backend
-cd backend
 npm run start:dev
 
 # Abrir el frontend
