@@ -16,13 +16,37 @@ let AppConfigService = class AppConfigService {
     constructor(config) {
         this.config = config;
     }
+    getOptional(key) {
+        const value = this.config.get(key);
+        const trimmed = value?.trim();
+        return trimmed ? trimmed : undefined;
+    }
     get port() {
-        const value = this.config.get('PORT');
+        const value = this.getOptional('PORT');
         const parsed = value ? Number(value) : 3000;
         return Number.isFinite(parsed) ? parsed : 3000;
     }
-    get frontendUrl() {
-        return this.config.get('FRONTEND_URL') || undefined;
+    get frontendUrls() {
+        const value = this.getOptional('FRONTEND_URL');
+        if (!value)
+            return undefined;
+        const urls = value
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
+        return urls.length ? urls : undefined;
+    }
+    get databaseUrl() {
+        return this.getOptional('DATABASE_URL');
+    }
+    get jwtSecret() {
+        return this.getOptional('JWT_SECRET');
+    }
+    get jwtExpiresIn() {
+        return this.getOptional('JWT_EXPIRES_IN') ?? '7d';
+    }
+    get anthropicApiKey() {
+        return this.getOptional('ANTHROPIC_API_KEY');
     }
 };
 exports.AppConfigService = AppConfigService;
