@@ -9,8 +9,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 let UsersService = class UsersService {
-    me() {
-        return { ok: true };
+    me(user) {
+        return { user };
     }
 };
 exports.UsersService = UsersService;

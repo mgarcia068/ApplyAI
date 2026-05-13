@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
+import { JwtPayload } from '../auth/types/jwt-payload.type';
+
 @Injectable()
 export class UsersService {
-  me() {
-    return { ok: true };
+  me(user: JwtPayload) {
+    return { user };
   }
 }
