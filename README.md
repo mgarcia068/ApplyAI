@@ -123,12 +123,19 @@ npm install
 
 ### Variables de entorno
 
-Crear un archivo `.env` dentro de `/backend`:
+Crear un archivo `.env` dentro de `/Backend` **o** en la raíz del repo (no se commitea; está en `.gitignore`).
+
+Plantilla: `Backend/.env.example`
 
 ```env
+PORT=3000
 DATABASE_URL=tu_url_de_base_de_datos
+DIRECT_URL=tu_url_directa_de_base_de_datos
 JWT_SECRET=tu_clave_secreta
+JWT_EXPIRES_IN=7d
 ANTHROPIC_API_KEY=tu_api_key
+# CORS: 1 URL o múltiples separadas por coma
+FRONTEND_URL=http://localhost:5500
 ```
 
 ### Correr en local

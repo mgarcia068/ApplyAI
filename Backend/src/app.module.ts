@@ -16,8 +16,8 @@ import { AppService } from './app.service';
     ConfigModule.forRoot({
       isGlobal: true,
       // Permite correr el backend desde `Backend/` leyendo variables de `Backend/.env`
-      // o, si no existe, desde `../.env` (raíz del repo).
-      envFilePath: ['.env', '../.env'],
+      // o desde la raíz del repo leyendo `./.env` o `./Backend/.env`.
+      envFilePath: ['.env', 'Backend/.env', '../.env'],
     }),
     AppConfigModule,
     PrismaModule,

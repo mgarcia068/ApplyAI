@@ -13,11 +13,11 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const frontendUrl = appConfig.frontendUrl;
+  const frontendUrls = appConfig.frontendUrls;
   app.enableCors({
-    // Si FRONTEND_URL existe, restringimos a ese origin.
+    // Si FRONTEND_URL existe, restringimos a ese/estos origins.
     // Caso contrario, dejamos abierto para desarrollo.
-    origin: frontendUrl ? [frontendUrl] : true,
+    origin: frontendUrls?.length ? frontendUrls : true,
     credentials: true,
   });
 
