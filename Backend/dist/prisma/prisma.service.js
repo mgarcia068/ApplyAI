@@ -19,10 +19,6 @@ let PrismaService = class PrismaService extends client_1.PrismaClient {
         this.appConfig = appConfig;
     }
     async onModuleInit() {
-        console.log('[PrismaService] URL cargada de DATABASE_URL:', process.env.DATABASE_URL);
-        if (!process.env.DATABASE_URL) {
-            console.error('[PrismaService] ERROR CRÍTICO: No hay DATABASE_URL en process.env!');
-        }
         if (!this.appConfig.databaseUrl)
             return;
         try {
