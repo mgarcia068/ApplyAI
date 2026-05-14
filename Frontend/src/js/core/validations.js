@@ -22,6 +22,13 @@
     return resolveFromSrcRoot(target);
   }
 
+  function getProfileRedirectForRole(role) {
+    const target = role === 'empresa'
+      ? 'pages/empresa/dashboard-empresa.html?editProfile=1'
+      : 'pages/candidato/perfil-candidato.html';
+    return resolveFromSrcRoot(target);
+  }
+
   function getGoogleClientIdFromMeta() {
     // Expected format:
     // <meta name="google-client-id" content="<client-id>.apps.googleusercontent.com" />
@@ -83,9 +90,11 @@
     localStorage.setItem(
       STORAGE_KEYS.currentUser,
       JSON.stringify({
+        id: user.id,
         email: user.email,
         role: normalizeRole(user.role),
-        fullName: user.fullName,
+        fullName: user.fullName || '',
+        token: user.token,
         loggedInAt: new Date().toISOString(),
       })
     );
@@ -127,21 +136,87 @@
     return nextUser;
   }
 
-  function handleGoogleCredentialResponse(response) {
+  async function handleGoogleCredentialResponse(response, forcedRole) {
     try {
       const credential = response?.credential;
       if (!credential) throw new Error('No se recibió credencial de Google.');
 
-      const payload = decodeJwtPayload(credential);
-      const user = upsertGoogleUserFromPayload(payload);
-      if (!user) return;
+      let mappedRole = forcedRole;
+      if (!mappedRole) {
+        let role = getRoleFromRegisterForm();
+        if (role === 'empresa') mappedRole = 'COMPANY';
+        if (role === 'candidato') mappedRole = 'CANDIDATE';
+      }
 
-      setCurrentUserSession(user);
-      window.location.href = getDashboardForRole(normalizeRole(user.role));
+      const res = await axios.post('http://localhost:3000/api/auth/google', {
+        credential,
+        role: mappedRole
+      });
+
+      const { user, accessToken } = res.data;
+      const normalizedRole = user.role === 'COMPANY' ? 'empresa' : 'candidato';
+
+      setCurrentUserSession({
+        id: user.id,
+        email: user.email,
+        role: normalizedRole,
+        fullName: user.fullName || '',
+        token: accessToken
+      });
+
+      const isNewUser = res.data.isNewUser || window.location.search.includes('new=1');
+      window.location.href = isNewUser ? getProfileRedirectForRole(normalizedRole) : getDashboardForRole(normalizedRole);
     } catch (err) {
       console.error(err);
-      alert(err?.message || 'Ocurrió un error al iniciar sesión con Google.');
+      const errMsg = err.response?.data?.message || err?.message || 'Ocurrió un error al iniciar sesión con Google.';
+      
+      if (errMsg.includes('Se requiere el rol para el registro con Google') || 
+          errMsg.includes('Por favor, selecciona un tipo de cuenta')) {
+        showGoogleRoleSelectionModal(response);
+      } else {
+        alert(errMsg);
+      }
     }
+  }
+
+  function showGoogleRoleSelectionModal(googleResponse) {
+    if (document.getElementById('google-role-modal')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'google-role-modal';
+    overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px);';
+    
+    const modal = document.createElement('div');
+    modal.className = 'card';
+    modal.style.cssText = 'max-width: 400px; width: 90%; padding: 2rem; animation: slideUp 0.3s ease; text-align: center;';
+    
+    modal.innerHTML = `
+      <h3 class="text-xl font-bold mb-2">¡Hola! Vemos que eres nuevo</h3>
+      <p class="text-muted mb-6">Para terminar tu registro con Google, por favor indícanos cómo deseas usar la plataforma:</p>
+      
+      <div class="flex flex-col gap-3">
+        <button id="btn-google-candidate" class="btn btn--primary" style="width: 100%;">Soy Candidato (Busco empleo)</button>
+        <button id="btn-google-company" class="btn btn--secondary" style="width: 100%;">Soy Empresa (Busco talento)</button>
+        <button id="btn-google-cancel" class="btn btn--ghost mt-2" style="width: 100%;">Cancelar</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById('btn-google-candidate').onclick = () => {
+      document.body.removeChild(overlay);
+      handleGoogleCredentialResponse(googleResponse, 'CANDIDATE');
+    };
+
+    document.getElementById('btn-google-company').onclick = () => {
+      document.body.removeChild(overlay);
+      handleGoogleCredentialResponse(googleResponse, 'COMPANY');
+    };
+
+    document.getElementById('btn-google-cancel').onclick = () => {
+      document.body.removeChild(overlay);
+    };
   }
 
   function initGoogleIdentity(attempt) {
@@ -215,18 +290,7 @@
     }
   }
 
-  function getUsers() {
-    const raw = localStorage.getItem(STORAGE_KEYS.users);
-    const parsed = raw ? safeJsonParse(raw, []) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  }
 
-  function upsertUser(user) {
-    const users = getUsers();
-    const nextUsers = users.filter((u) => (u?.email || '').toLowerCase() !== user.email);
-    nextUsers.push(user);
-    localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(nextUsers));
-  }
 
   function initSignupValidation() {
     const form = document.getElementById('signupForm');
@@ -376,7 +440,7 @@
       return !hasAnyError;
     }
 
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', async function (e) {
       hasAttemptedSubmit = true;
 
       if (!validate({ showAlert: true })) {
@@ -389,22 +453,32 @@
       e.preventDefault();
       if (alertEl) alertEl.hidden = true;
 
-      // Persistencia mínima (sin backend): guarda el rol para diferenciar perfiles.
-      const user = {
-        role: getRole(),
-        fullName: (fullName?.value || '').trim(),
-        email: (email?.value || '').trim().toLowerCase(),
-        password: password?.value || '',
-        createdAt: new Date().toISOString(),
-      };
+      const role = getRole();
+      const mappedRole = role === 'empresa' ? 'COMPANY' : 'CANDIDATE';
+      
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Cargando...';
+      submitBtn.disabled = true;
 
       try {
-        upsertUser(user);
-      } catch (_) {
-        // ignore
-      }
+        await axios.post('http://localhost:3000/api/auth/register', {
+          email: (email?.value || '').trim().toLowerCase(),
+          password: password?.value || '',
+          fullName: (fullName?.value || '').trim(),
+          role: mappedRole,
+        });
 
-      window.location.href = resolveFromSrcRoot('pages/auth/login.html');
+        window.location.href = resolveFromSrcRoot('pages/auth/login.html?new=1');
+      } catch (error) {
+        if (alertEl) {
+          alertEl.textContent = error.response?.data?.message || 'Error al registrar la cuenta. Intente nuevamente.';
+          alertEl.hidden = false;
+        }
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
     });
   }
 
@@ -462,7 +536,7 @@
       return !hasAnyError;
     }
 
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', async function (e) {
       hasAttemptedSubmit = true;
 
       if (!validate({ showAlert: true })) {
@@ -474,39 +548,43 @@
 
       e.preventDefault();
 
+      if (alertEl) alertEl.hidden = true;
+
       const emailValue = (email?.value || '').trim().toLowerCase();
       const passwordValue = password?.value || '';
 
-      let user = null;
-      try {
-        user = getUsers().find((u) => (u?.email || '').toLowerCase() === emailValue) || null;
-      } catch (_) {
-        user = null;
-      }
-
-      const isPasswordOk = Boolean(user && String(user.password || '') === String(passwordValue));
-
-      if (!user) {
-        setFieldError(email, errors.email, 'No existe una cuenta con ese correo.');
-      }
-
-      if (user && !isPasswordOk) {
-        setFieldError(password, errors.password, 'La contraseña no es correcta.');
-      }
-
-      if (!user || !isPasswordOk) {
-        if (alertEl) alertEl.hidden = false;
-        return;
-      }
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Cargando...';
+      submitBtn.disabled = true;
 
       try {
-        setCurrentUserSession(user);
-      } catch (_) {
-        // ignore
-      }
+        const response = await axios.post('http://localhost:3000/api/auth/login', {
+          email: emailValue,
+          password: passwordValue,
+        });
 
-      const role = normalizeRole(user.role);
-      window.location.href = getDashboardForRole(role);
+        const { user, accessToken } = response.data;
+        const mappedRole = user.role === 'COMPANY' ? 'empresa' : 'candidato';
+
+        setCurrentUserSession({
+          id: user.id,
+          email: user.email,
+          role: mappedRole,
+          token: accessToken
+        });
+
+        const isNewUser = window.location.search.includes('new=1');
+        window.location.href = isNewUser ? getProfileRedirectForRole(mappedRole) : getDashboardForRole(mappedRole);
+      } catch (error) {
+        if (alertEl) {
+          alertEl.textContent = error.response?.data?.message || 'Credenciales inválidas.';
+          alertEl.hidden = false;
+        }
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
     });
   }
 
