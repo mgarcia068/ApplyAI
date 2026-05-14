@@ -48,4 +48,8 @@ export class AppConfigService {
   get anthropicApiKey(): string | undefined {
     return this.getOptional('ANTHROPIC_API_KEY');
   }
+
+  get googleClientId(): string | undefined {
+    return this.getOptional('GOOGLE_CLIENT_ID');
+  }
 }

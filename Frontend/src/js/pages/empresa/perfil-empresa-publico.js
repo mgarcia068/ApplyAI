@@ -199,7 +199,7 @@
           const currentUser = JSON.parse(currentUserRaw);
           if (normalizeRole(currentUser.role) === 'empresa') {
             const companyEmail = currentUser.email;
-            let companyName = currentUser.fullName || 'Mi Empresa';
+            let companyName = currentUser.fullName || currentUser.email.split('@')[0] || 'Mi Empresa';
 
             let profile = mapSavedProfileToPublic(null, companyName, slugify(companyName), true);
 
