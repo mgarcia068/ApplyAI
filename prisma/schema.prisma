@@ -97,6 +97,7 @@ model Application {
   jobOffer    JobOffer          @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
 
   status      ApplicationStatus @default(PENDING)
+  matchScore  Int?              // Nuevo: Puntaje de match con la oferta (1-100)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
@@ -112,6 +113,9 @@ model CvAnalysis {
   skills      String[]
   experience  String[]
   technologies String[]
+  strengths   String[]         // Nuevo: Puntos fuertes del CV
+  weaknesses  String[]         // Nuevo: Cosas a mejorar
+  overallScore Int?            // Nuevo: Puntaje general del CV (1-100)
   rawResponse String?
 
   createdAt   DateTime @default(now())
