@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -22,5 +22,11 @@ export class ApplicationsController {
   @Get()
   listMine(@CurrentUser() user: JwtPayload) {
     return this.applicationsService.listMine(user);
+  }
+
+  @Post(':id/evaluate')
+  @Roles(Role.COMPANY)
+  evaluateMatch(@Param('id') applicationId: string, @CurrentUser() user: JwtPayload) {
+    return this.applicationsService.evaluateMatch(applicationId, user);
   }
 }

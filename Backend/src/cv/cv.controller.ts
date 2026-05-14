@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Controller,
+  Param,
   Post,
   UploadedFiles,
   UseGuards,
@@ -14,6 +15,9 @@ import { extname, join } from 'path';
 import { diskStorage } from 'multer';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CvService } from './cv.service';
@@ -23,6 +27,7 @@ const CV_UPLOAD_DIR = join(__dirname, '..', '..', 'uploads', 'cv');
 mkdirSync(CV_UPLOAD_DIR, { recursive: true });
 
 @Controller('cv')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CvController {
   constructor(private readonly cvService: CvService) {}
 
@@ -77,5 +82,18 @@ export class CvController {
     }
 
     return this.cvService.upload(user, file);
+  }
+
+  @Post('analyze/me')
+  @Roles(Role.CANDIDATE)
+  analyzeMe(@CurrentUser() user: JwtPayload) {
+    // El candidato analiza su propio CV, por lo que buscamos primero su candidateId
+    return this.cvService.analyzeMyCv(user.sub);
+  }
+
+  @Post('analyze/:id')
+  @Roles(Role.COMPANY)
+  analyze(@Param('id') id: string) {
+    return this.cvService.analyze(id);
   }
 }
