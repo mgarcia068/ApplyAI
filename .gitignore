@@ -4,6 +4,9 @@ node_modules
 
 /generated/prisma
 
+# Backend Prisma schema copy (generated from /prisma/schema.prisma)
+Backend/prisma/schema.prisma
+
 # Uploads (CVs, etc.)
 Backend/uploads/
 uploads/

@@ -75,6 +75,8 @@ POST   /cv/upload              Subir CV en PDF
 POST   /cv/:id/analyze         Iniciar análisis de IA sobre un CV
 ```
 
+Nota: `POST /cv/upload` espera `multipart/form-data` con el archivo en el campo `cv` y valida el PDF por contenido (magic numbers), no solo por extensión/mimetype.
+
 ---
 
 ## Estructura del proyecto
@@ -136,6 +138,23 @@ JWT_EXPIRES_IN=7d
 ANTHROPIC_API_KEY=tu_api_key
 # CORS: 1 URL o múltiples separadas por coma
 FRONTEND_URL=http://localhost:5500
+
+# Cloud Storage (S3) para CVs (stateless)
+# Se sube el PDF a S3 y en BD se guarda la URL externa.
+S3_BUCKET=tu_bucket
+S3_REGION=us-east-1
+# URL pública base (recomendado: CloudFront/CDN o endpoint público)
+# Ej: https://cdn.tu-dominio.com
+S3_PUBLIC_BASE_URL=https://tu-cdn-o-endpoint-publico
+
+# Opcionales (S3-compatible: MinIO/LocalStack/R2)
+S3_ENDPOINT=http://localhost:4566
+S3_FORCE_PATH_STYLE=true
+S3_CV_PREFIX=cv
+
+# Credenciales AWS (usa el standard AWS SDK)
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
 ```
 
 ### Correr en local

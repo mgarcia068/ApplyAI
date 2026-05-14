@@ -3,8 +3,6 @@ import 'reflect-metadata';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { mkdirSync } from 'fs';
-import { join } from 'path';
 
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app-config.service';
@@ -16,11 +14,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const uploadsPath = join(__dirname, '..', 'uploads');
-  mkdirSync(uploadsPath, { recursive: true });
-  app.useStaticAssets(uploadsPath, {
-    prefix: '/uploads/',
-  });
+  // Nota: CVs y archivos se almacenan en Cloud Storage (S3). Mantener el backend stateless.
   const frontendUrls = appConfig.frontendUrls;
   app.enableCors({
     // Si FRONTEND_URL existe, restringimos a ese/estos origins.
