@@ -210,7 +210,7 @@ try {
 } catch (e) {}
 
 const companyEmail = currentUser?.email || 'default@empresa.com';
-const companyName = currentUser?.fullName || 'TechCorp Argentina';
+const companyName = currentUser?.fullName || companyEmail.split('@')[0] || 'Mi Empresa';
 const COMPANY_PHOTO_SCALE = 1.16;
 
 function clampCompanyNumber(value, min, max) {
@@ -788,7 +788,17 @@ function closeMobileSidebar() {
 document.addEventListener('DOMContentLoaded', () => {
   syncPerfilEmpresaIdentityUi();
 
-  navigateTo('resumen');
+  if (window.location.search.includes('editProfile=1')) {
+    navigateTo('perfil');
+    setTimeout(() => {
+      if (typeof togglePerfilEdit === 'function') {
+        togglePerfilEdit(true);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }, 100);
+  } else {
+    navigateTo('resumen');
+  }
 
   document.getElementById('sidebar-collapse')?.addEventListener('click', () => {
     document.getElementById('sidebar')?.classList.toggle('collapsed');
