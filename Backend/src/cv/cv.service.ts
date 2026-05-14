@@ -1,6 +1,10 @@
-import { ForbiddenException, Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
-import { unlink } from 'fs/promises';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import * as pdfParseModule from 'pdf-parse';
@@ -10,6 +14,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
 import { ConfigService } from '@nestjs/config';
+import { CvStorageService } from './cv-storage.service';
 
 @Injectable()
 export class CvService {
@@ -17,6 +22,7 @@ export class CvService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly cvStorageService: CvStorageService,
     private readonly configService: ConfigService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
@@ -24,16 +30,16 @@ export class CvService {
   }
 
   async upload(user: JwtPayload, file: Express.Multer.File) {
-    const cleanup = async () => {
-      await unlink(file.path).catch(() => undefined);
-    };
-
     if (user.role !== Role.CANDIDATE) {
-      await cleanup();
       throw new ForbiddenException('Solo un candidato puede subir su CV.');
     }
 
-    const cvUrl = `/uploads/cv/${file.filename}`;
+    const uploaded = await this.cvStorageService.uploadCandidateCvPdf({
+      userId: user.sub,
+      file,
+    });
+
+    const cvUrl = uploaded.url;
 
     const nameFallback = String(user.email || 'Candidato').split('@')[0] || 'Candidato';
 
@@ -55,8 +61,7 @@ export class CvService {
           updatedAt: true,
         },
       })
-      .catch(async (error: unknown) => {
-        await cleanup();
+      .catch((error: unknown) => {
         throw error;
       });
 
@@ -87,17 +92,15 @@ export class CvService {
     }
 
     // 2. Extraer el texto del PDF
-    const filePath = join(__dirname, '..', '..', profile.cvUrl);
-    if (!existsSync(filePath)) {
-      throw new NotFoundException('El archivo físico del CV no existe en el servidor.');
-    }
-
     let pdfText = '';
     try {
-      const dataBuffer = readFileSync(filePath);
+      const dataBuffer = await this.loadPdfBuffer(profile.cvUrl);
       const pdfData = await pdfParse(dataBuffer);
       pdfText = pdfData.text;
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Error al intentar leer el archivo PDF.');
     }
 
@@ -178,5 +181,47 @@ export class CvService {
         error?.message || 'Error al contactar a la IA o procesar el resultado.'
       );
     }
+  }
+
+  private isHttpUrl(value: string): boolean {
+    return /^https?:\/\//i.test(value);
+  }
+
+  private async loadPdfBuffer(cvUrl: string): Promise<Buffer> {
+    const trimmed = String(cvUrl || '').trim();
+    if (!trimmed) {
+      throw new NotFoundException('El candidato no tiene un CV subido.');
+    }
+
+    // CV alojado en Cloud Storage (URL externa)
+    if (this.isHttpUrl(trimmed)) {
+      try {
+        const response = await fetch(trimmed, {
+          method: 'GET',
+          signal: AbortSignal.timeout(15_000),
+        });
+
+        if (!response.ok) {
+          throw new NotFoundException('No se pudo descargar el CV desde el almacenamiento en la nube.');
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+      } catch (error) {
+        if (error instanceof NotFoundException) throw error;
+        console.error('Error descargando CV desde URL:', error);
+        throw new InternalServerErrorException('No se pudo descargar el CV desde el almacenamiento en la nube.');
+      }
+    }
+
+    // Compatibilidad con la arquitectura anterior: ruta local en /uploads
+    // Nota: si cvUrl comienza con "/", path.join lo trata como absoluto y rompe.
+    const safeRelative = trimmed.replace(/^\/+/, '');
+    const filePath = join(__dirname, '..', '..', safeRelative);
+    if (!existsSync(filePath)) {
+      throw new NotFoundException('El archivo físico del CV no existe en el servidor.');
+    }
+
+    return readFileSync(filePath);
   }
 }
