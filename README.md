@@ -75,6 +75,8 @@ POST   /cv/upload              Subir CV en PDF
 POST   /cv/:id/analyze         Iniciar análisis de IA sobre un CV
 ```
 
+Nota: `POST /cv/upload` espera `multipart/form-data` con el archivo en el campo `cv` y valida el PDF por contenido (magic numbers), no solo por extensión/mimetype.
+
 ---
 
 ## Estructura del proyecto

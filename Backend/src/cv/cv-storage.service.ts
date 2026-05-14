@@ -12,7 +12,11 @@ export class CvStorageService {
   private readonly s3: S3Client | undefined;
 
   constructor(private readonly configService: ConfigService) {
-    this.bucket = this.getOptional('S3_BUCKET');
+    this.bucket =
+      this.getOptional('S3_BUCKET') ??
+      // Compatibilidad con nombres usados en .env existentes
+      this.getOptional('AWS_BUCKET_NAME') ??
+      this.getOptional('AWS_BUCKET');
     this.region =
       this.getOptional('S3_REGION') ??
       this.getOptional('AWS_REGION') ??
@@ -27,9 +31,14 @@ export class CvStorageService {
     const endpoint = this.getOptional('S3_ENDPOINT');
     const forcePathStyle = this.parseOptionalBool(this.getOptional('S3_FORCE_PATH_STYLE'));
 
+    const accessKeyId = this.getOptional('AWS_ACCESS_KEY_ID') ?? this.getOptional('AWS_ACCESS_KEY');
+    const secretAccessKey = this.getOptional('AWS_SECRET_ACCESS_KEY');
+    const credentials = accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined;
+
     if (this.bucket) {
       this.s3 = new S3Client({
         region: this.region,
+        ...(credentials ? { credentials } : {}),
         ...(endpoint ? { endpoint } : {}),
         ...(forcePathStyle !== undefined ? { forcePathStyle } : {}),
       });

@@ -3,11 +3,11 @@ import {
   Controller,
   Param,
   Post,
-  UploadedFiles,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
 import { memoryStorage } from 'multer';
 
@@ -25,13 +25,12 @@ export class CvController {
   constructor(private readonly cvService: CvService) {}
 
   @Post('upload')
-  @UseGuards(JwtAuthGuard)
+  @Roles(Role.CANDIDATE)
   @UseInterceptors(
-    AnyFilesInterceptor({
+    FileInterceptor('cv', {
       storage: memoryStorage(),
       limits: {
         fileSize: 3 * 1024 * 1024, // 3MB
-        files: 1,
       },
       fileFilter: (
         _req: Request,
@@ -48,19 +47,17 @@ export class CvController {
   )
   upload(
     @CurrentUser() user: JwtPayload,
-    @UploadedFiles() files: Array<Express.Multer.File>,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    const file = files?.[0];
-
     if (!file) {
       throw new BadRequestException('Seleccioná un archivo PDF para subir.');
     }
 
-    if (files.length > 1) {
-      throw new BadRequestException('Solo se permite subir 1 archivo PDF.');
-    }
-
-    return this.cvService.upload(user, file);
+    return this.cvService.upload({
+      userId: user.sub,
+      email: user.email,
+      file,
+    });
   }
 
   @Post('analyze/me')

@@ -1,18 +1,17 @@
 import {
-  ForbiddenException,
+  BadRequestException,
   Injectable,
   NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { Role } from '@prisma/client';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import * as pdfParseModule from 'pdf-parse';
 const pdfParse = (pdfParseModule as any).default || pdfParseModule;
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { fromBuffer as detectFileTypeFromBuffer } from 'file-type';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { JwtPayload } from '../auth/types/jwt-payload.type';
 import { ConfigService } from '@nestjs/config';
 import { CvStorageService } from './cv-storage.service';
 
@@ -29,26 +28,26 @@ export class CvService {
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
-  async upload(user: JwtPayload, file: Express.Multer.File) {
-    if (user.role !== Role.CANDIDATE) {
-      throw new ForbiddenException('Solo un candidato puede subir su CV.');
-    }
+  async upload(params: { userId: string; email: string; file: Express.Multer.File }) {
+    const { userId, email, file } = params;
+
+    await this.assertPdfUpload(file);
 
     const uploaded = await this.cvStorageService.uploadCandidateCvPdf({
-      userId: user.sub,
+      userId,
       file,
     });
 
     const cvUrl = uploaded.url;
 
-    const nameFallback = String(user.email || 'Candidato').split('@')[0] || 'Candidato';
+    const nameFallback = String(email || 'Candidato').split('@')[0] || 'Candidato';
 
     const candidateProfile = await this.prisma.candidateProfile
       .upsert({
-        where: { userId: user.sub },
+        where: { userId },
         update: { cvUrl },
         create: {
-          userId: user.sub,
+          userId,
           name: nameFallback,
           skills: [],
           languages: [],
@@ -69,6 +68,32 @@ export class CvService {
       cvUrl: candidateProfile.cvUrl,
       updatedAt: candidateProfile.updatedAt,
     };
+  }
+
+  private async assertPdfUpload(file: Express.Multer.File): Promise<void> {
+    const buffer = (file as any)?.buffer as Buffer | undefined;
+    if (!buffer || !Buffer.isBuffer(buffer) || buffer.length === 0) {
+      throw new InternalServerErrorException(
+        'No se pudo leer el archivo PDF en memoria. Verificá que el backend esté usando memoryStorage().',
+      );
+    }
+
+    // Validación por magic numbers (no confiar en mimetype/originalname)
+    const detected = await detectFileTypeFromBuffer(buffer).catch((error: unknown) => {
+      console.error('Error detectando tipo de archivo por magic numbers:', error);
+      return undefined;
+    });
+
+    // Fallback simple para PDFs si file-type no logra detectarlo.
+    const header = buffer.subarray(0, 5).toString('ascii');
+    const headerLooksPdf = header === '%PDF-';
+
+    const isPdf = detected?.mime === 'application/pdf' || (!detected && headerLooksPdf);
+    if (!isPdf) {
+      throw new BadRequestException(
+        'El archivo subido no parece ser un PDF válido (se valida por contenido, no por nombre o mimetype).',
+      );
+    }
   }
 
   async analyzeMyCv(userId: string) {
