@@ -4,60 +4,7 @@
     applications: 'ApplyAI.applications',
   };
 
-  const OFFERS = [
-    {
-      id: 'emp-offer-1',
-      name: 'Programa Trainee 2026',
-      role: 'Desarrollador Frontend Jr',
-      company: 'NovaTech',
-      location: 'Remoto (AR)',
-      publishedAt: '2026-04-12T12:00:00.000Z',
-      description:
-        'Sumate a un equipo de producto para construir interfaces modernas, accesibles y performantes.',
-      responsibilities: [
-        'Implementar pantallas en HTML/CSS/JS siguiendo diseño',
-        'Consumir APIs REST y manejar estados en el frontend',
-        'Escribir componentes reutilizables',
-      ],
-      requirements: [
-        'Conocimientos básicos de JavaScript',
-        'Manejo de HTML y CSS',
-        'Ganas de aprender y trabajar en equipo',
-      ],
-    },
-    {
-      id: 'emp-offer-2',
-      name: 'Búsqueda Backend',
-      role: 'Backend Node.js',
-      company: 'ByteWorks',
-      location: 'Córdoba, AR',
-      publishedAt: '2026-04-05T09:30:00.000Z',
-      description:
-        'Desarrollá servicios y APIs en Node.js, con foco en calidad, mantenibilidad y buenas prácticas.',
-      responsibilities: [
-        'Construir endpoints REST',
-        'Integrar base de datos y modelado de datos',
-        'Escribir tests y documentación técnica',
-      ],
-      requirements: ['Node.js y Express', 'Git y flujo de PRs', 'SQL o NoSQL (deseable)'],
-    },
-    {
-      id: 'emp-offer-3',
-      name: 'Calidad de producto',
-      role: 'QA Manual',
-      company: 'QualityLab',
-      location: 'Híbrido',
-      publishedAt: '2026-03-28T15:10:00.000Z',
-      description:
-        'Participá del ciclo de desarrollo asegurando la calidad del producto y la experiencia del usuario.',
-      responsibilities: [
-        'Diseñar y ejecutar casos de prueba',
-        'Reportar bugs con pasos reproducibles',
-        'Colaborar con diseño y desarrollo',
-      ],
-      requirements: ['Atención al detalle', 'Comunicación clara', 'Experiencia en testing (deseable)'],
-    },
-  ];
+  let OFFERS = [];
 
   function safeJsonParse(value, fallback) {
     try {
@@ -69,8 +16,8 @@
 
   function normalizeRole(value) {
     const normalized = String(value || '').trim().toLowerCase();
-    if (normalized === 'candidato' || normalized === 'cliente') return 'candidato';
-    if (normalized === 'empresa') return 'empresa';
+    if (normalized === 'candidato' || normalized === 'cliente' || normalized === 'candidate') return 'candidato';
+    if (normalized === 'empresa' || normalized === 'company') return 'empresa';
     return '';
   }
 
@@ -434,7 +381,68 @@
     renderDetail();
   }
 
-  function init() {
+  
+function showToast(title, subtitle = '', type = 'success') {
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = 'position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px;';
+    document.body.appendChild(toastContainer);
+  }
+
+  const toast = document.createElement('div');
+  const typeColors = {
+    success: { bg: '#10B981', color: 'white', icon: '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>' },
+    info: { bg: '#3B82F6', color: 'white', icon: '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"></path></svg>' },
+    error: { bg: '#EF4444', color: 'white', icon: '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>' }
+  };
+
+  const styleDef = typeColors[type] || typeColors.success;
+
+  toast.style.cssText = `
+    background: ${styleDef.bg};
+    color: ${styleDef.color};
+    padding: 14px 20px;
+    border-radius: 10px;
+    box-shadow: 0 14px 20px -5px rgba(0, 0, 0, 0.15), 0 5px 7px -3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    font-family: inherit;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  `;
+  
+  toast.innerHTML = `
+    <div style="flex-shrink: 0; padding-top: 1px;">
+      ${styleDef.icon}
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-weight: 600; line-height: 1.2;">${title}</span>
+      ${subtitle ? `<span style="font-size: 13px; opacity: 0.85; line-height: 1.4;">${subtitle}</span>` : ''}
+    </div>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+  });
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      if (toastContainer.contains(toast)) toastContainer.removeChild(toast);
+    }, 350);
+  }, 4000);
+}
+
+  async function init() {
     const alertEl = document.getElementById('employeeDashboardAlert');
 
     currentUser = getCurrentUser();
@@ -459,16 +467,75 @@
       geoService.setupAutocomplete('#filterLocation');
     }
 
+    try {
+      const res = await axios.get('http://localhost:3000/api/jobs');
+      OFFERS = res.data.map(job => ({
+        id: job.id,
+        name: job.title,
+        role: job.title,
+        company: job.company?.user?.fullName || job.company?.email || 'Empresa',
+        location: job.location || 'Remoto',
+        publishedAt: job.createdAt,
+        description: job.description,
+        responsibilities: [],
+        requirements: job.skillsRequired || []
+      }));
+
+      const rawUser = localStorage.getItem('ApplyAI.currentUser');
+      if (rawUser) {
+        const token = JSON.parse(rawUser).token;
+        if (token) {
+          const appsRes = await axios.get('http://localhost:3000/api/applications', { headers: { Authorization: 'Bearer ' + token } });
+          const mappedApps = appsRes.data.map(app => ({
+            id: app.id,
+            email: currentUser.email,
+            offerId: app.jobOfferId,
+            offerTitle: app.jobOffer?.title || 'Oferta',
+            company: app.jobOffer?.company?.user?.fullName || app.jobOffer?.company?.email || 'Empresa',
+            location: app.jobOffer?.location || 'Remoto',
+            status: app.status === 'PENDING' ? 'En revisión' : app.status === 'VIEWED' ? 'En Entrevista' : app.status === 'ACCEPTED' ? 'Aceptado' : 'Rechazado',
+            appliedAt: app.createdAt
+          }));
+          saveAllApplications(mappedApps);
+        }
+      }
+    } catch (e) { console.error('Error fetching data', e); }
+
     const applyBtnEl = document.getElementById('applyOfferBtn');
     if (applyBtnEl) {
-      applyBtnEl.addEventListener('click', function () {
+      applyBtnEl.addEventListener('click', async function () {
         if (!canApplyToOffers || !currentUser?.email) return;
 
         const offer = OFFERS.find((o) => o.id === selectedOfferId) || null;
         if (!offer) return;
 
-        createApplication(currentUser.email, offer);
-        renderAll();
+        try {
+          const rawUser = localStorage.getItem('ApplyAI.currentUser');
+          const token = rawUser ? JSON.parse(rawUser).token : '';
+          const res = await axios.post('http://localhost:3000/api/applications', { jobOfferId: offer.id }, { headers: { Authorization: 'Bearer ' + token } });
+          
+          showToast('¡Postulación exitosa!', 'Tu postulación fue enviada correctamente.', 'success');
+          
+          // Guardar localmente y actualizar UI
+          const apps = getAllApplications();
+          apps.push({
+            id: res.data.id || Math.random().toString(),
+            email: currentUser.email,
+            offerId: offer.id,
+            offerTitle: offer.role,
+            company: offer.company,
+            location: offer.location,
+            status: 'En revisión',
+            appliedAt: new Date().toISOString()
+          });
+          saveAllApplications(apps);
+          
+          renderAll();
+          renderDetail(); // Ocultar el botón inmediatamente
+        } catch (e) {
+          const errorMsg = e.response?.data?.message || 'Ya te postulaste a esta oferta o hubo un problema.';
+          showToast('Error', errorMsg, 'error');
+        }
       });
     }
 

@@ -188,4 +188,45 @@ export class ApplicationsService {
         throw new InternalServerErrorException('Error al contactar a la IA Gemini para establecer el Match.');
     }
   }
+
+  async listByOffer(offerId: string, user: JwtPayload) {
+    const job = await this.prisma.jobOffer.findUnique({ where: { id: offerId } });
+    if (!job) throw new NotFoundException('Oferta no encontrada.');
+    if (job.companyId !== user.sub) throw new ForbiddenException('No tienes permiso para ver estas postulaciones.');
+
+    return this.prisma.application.findMany({
+      where: { jobOfferId: offerId },
+      include: {
+        candidate: {
+          include: {
+            user: { select: { email: true, fullName: true } },
+            cvAnalysis: true,
+          },
+        },
+      },
+      orderBy: { matchScore: 'desc' },
+    });
+  }
+
+  async updateStatus(applicationId: string, status: any, user: JwtPayload) {
+    const application = await this.prisma.application.findUnique({
+      where: { id: applicationId },
+      include: { jobOffer: true },
+    });
+
+    if (!application) throw new NotFoundException('Postulación no encontrada.');
+    if (application.jobOffer.companyId !== user.sub) throw new ForbiddenException('No tienes permiso.');
+
+    return this.prisma.application.update({
+      where: { id: applicationId },
+      data: { status },
+      include: {
+        candidate: {
+          include: {
+            user: { select: { email: true, fullName: true } },
+          },
+        },
+      },
+    });
+  }
 }

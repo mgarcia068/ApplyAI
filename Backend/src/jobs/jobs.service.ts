@@ -60,4 +60,45 @@ export class JobsService {
 
     return job;
   }
+
+  async findCompanyOffers(companyId: string): Promise<JobOffer[]> {
+    return this.prisma.jobOffer.findMany({
+      where: { companyId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: { applications: true },
+        },
+      },
+    });
+  }
+
+  async update(id: string, updateJobDto: any, companyId: string): Promise<JobOffer> {
+    const job = await this.prisma.jobOffer.findUnique({ where: { id } });
+    if (!job) {
+      throw new NotFoundException(`JobOffer with ID ${id} not found`);
+    }
+    if (job.companyId !== companyId) {
+      throw new NotFoundException(`JobOffer not found or not owned by you`);
+    }
+
+    return this.prisma.jobOffer.update({
+      where: { id },
+      data: updateJobDto,
+    });
+  }
+
+  async remove(id: string, companyId: string): Promise<void> {
+    const job = await this.prisma.jobOffer.findUnique({ where: { id } });
+    if (!job) {
+      throw new NotFoundException(`JobOffer with ID ${id} not found`);
+    }
+    if (job.companyId !== companyId) {
+      throw new NotFoundException(`JobOffer not found or not owned by you`);
+    }
+
+    await this.prisma.jobOffer.delete({
+      where: { id },
+    });
+  }
 }

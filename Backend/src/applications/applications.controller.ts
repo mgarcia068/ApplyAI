@@ -26,7 +26,23 @@ export class ApplicationsController {
 
   @Post(':id/evaluate')
   @Roles(Role.COMPANY)
-  evaluateMatch(@Param('id') applicationId: string, @CurrentUser() user: JwtPayload) {
-    return this.applicationsService.evaluateMatch(applicationId, user);
+  evaluateMatch(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.applicationsService.evaluateMatch(id, user);
+  }
+
+  @Get('offer/:offerId')
+  @Roles(Role.COMPANY)
+  listByOffer(@Param('offerId') offerId: string, @CurrentUser() user: JwtPayload) {
+    return this.applicationsService.listByOffer(offerId, user);
+  }
+
+  @Post(':id/status')
+  @Roles(Role.COMPANY)
+  updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: any },
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.applicationsService.updateStatus(id, body.status, user);
   }
 }
