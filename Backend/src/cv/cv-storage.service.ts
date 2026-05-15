@@ -1,10 +1,13 @@
-import { InternalServerErrorException, Injectable } from '@nestjs/common';
+import { InternalServerErrorException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class CvStorageService {
+  private readonly logger = new Logger(CvStorageService.name);
   private readonly bucket: string | undefined;
   private readonly region: string;
   private readonly publicBaseUrl: string | undefined;
@@ -14,13 +17,12 @@ export class CvStorageService {
   constructor(private readonly configService: ConfigService) {
     this.bucket =
       this.getOptional('S3_BUCKET') ??
-      // Compatibilidad con nombres usados en .env existentes
       this.getOptional('AWS_BUCKET_NAME') ??
       this.getOptional('AWS_BUCKET');
+    
     this.region =
       this.getOptional('S3_REGION') ??
       this.getOptional('AWS_REGION') ??
-      // Default razonable (útil para MinIO / LocalStack / AWS por defecto)
       'us-east-1';
 
     this.publicBaseUrl = this.getOptional('S3_PUBLIC_BASE_URL');
@@ -42,6 +44,9 @@ export class CvStorageService {
         ...(endpoint ? { endpoint } : {}),
         ...(forcePathStyle !== undefined ? { forcePathStyle } : {}),
       });
+      this.logger.log(`Storage configurado con S3 (Bucket: ${this.bucket})`);
+    } else {
+      this.logger.warn('S3 no está configurado. Se usará el almacenamiento local como fallback en uploads/cvs/');
     }
   }
 
@@ -67,10 +72,8 @@ export class CvStorageService {
       return `${base}/${objectKey}`;
     }
 
-    // Fallback: endpoint clásico de AWS. Nota: para buckets con puntos puede ser preferible setear S3_PUBLIC_BASE_URL.
     const bucket = this.bucket ?? '';
     const region = this.region;
-
     const encodedKey = encodeURIComponent(objectKey).replace(/%2F/g, '/');
 
     if (bucket.includes('.')) {
@@ -84,15 +87,6 @@ export class CvStorageService {
     userId: string;
     file: Express.Multer.File;
   }): Promise<{ url: string; key: string }> {
-    if (!this.bucket || !this.s3) {
-      throw new InternalServerErrorException(
-        'Storage de CV no configurado. Definí la variable de entorno S3_BUCKET (y opcionalmente S3_REGION, S3_PUBLIC_BASE_URL).',
-      );
-    }
-
-    const bucket = this.bucket;
-    const s3 = this.s3;
-
     const { userId, file } = params;
 
     const buffer = (file as any)?.buffer as Buffer | undefined;
@@ -104,28 +98,51 @@ export class CvStorageService {
 
     const safeUserId = String(userId || 'anon').trim() || 'anon';
     const fileId = randomUUID();
-    const objectKey = `${this.keyPrefix}/${safeUserId}/${fileId}.pdf`;
+    const fileName = `${fileId}.pdf`;
 
-    await s3
-      .send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: objectKey,
-          Body: buffer,
-          ContentType: 'application/pdf',
-          Metadata: {
-            originalname: String(file.originalname || 'CV.pdf').slice(0, 200),
-          },
-        }),
-      )
-      .catch((error: unknown) => {
-        console.error('Error subiendo CV a S3:', error);
-        throw new InternalServerErrorException('No se pudo subir el CV al almacenamiento en la nube.');
-      });
+    // Si tenemos S3, usamos S3
+    if (this.bucket && this.s3) {
+      const objectKey = `${this.keyPrefix}/${safeUserId}/${fileName}`;
+      await this.s3
+        .send(
+          new PutObjectCommand({
+            Bucket: this.bucket,
+            Key: objectKey,
+            Body: buffer,
+            ContentType: 'application/pdf',
+            Metadata: {
+              originalname: String(file.originalname || 'CV.pdf').slice(0, 200),
+            },
+          }),
+        )
+        .catch((error: unknown) => {
+          console.error('Error subiendo CV a S3:', error);
+          throw new InternalServerErrorException('No se pudo subir el CV al almacenamiento en la nube.');
+        });
 
-    return {
-      key: objectKey,
-      url: this.buildPublicUrl(objectKey),
-    };
+      return {
+        key: objectKey,
+        url: this.buildPublicUrl(objectKey),
+      };
+    }
+
+    // Fallback: almacenamiento local
+    const baseUploadsDir = path.join(__dirname, '..', '..', 'uploads', 'cvs');
+    const userDir = path.join(baseUploadsDir, safeUserId);
+    
+    try {
+      await fs.promises.mkdir(userDir, { recursive: true });
+      const filePath = path.join(userDir, fileName);
+      await fs.promises.writeFile(filePath, buffer);
+      
+      const localUrl = `/cv/file/${safeUserId}/${fileName}`;
+      return {
+        key: path.join(safeUserId, fileName),
+        url: localUrl,
+      };
+    } catch (error) {
+      console.error('Error guardando CV localmente:', error);
+      throw new InternalServerErrorException('No se pudo guardar el CV localmente.');
+    }
   }
 }
