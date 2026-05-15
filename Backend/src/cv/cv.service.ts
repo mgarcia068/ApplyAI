@@ -239,10 +239,21 @@ export class CvService {
       }
     }
 
-    // Compatibilidad con la arquitectura anterior: ruta local en /uploads
-    // Nota: si cvUrl comienza con "/", path.join lo trata como absoluto y rompe.
-    const safeRelative = trimmed.replace(/^\/+/, '');
-    const filePath = join(__dirname, '..', '..', safeRelative);
+    // Compatibilidad con la arquitectura anterior y con el nuevo endpoint de descargas locales
+    let filePath: string;
+    
+    // Si la URL es de nuestro endpoint local (ej: /cv/file/userId/file.pdf)
+    if (trimmed.startsWith('/cv/file/')) {
+      const parts = trimmed.split('/');
+      const filename = parts.pop() || '';
+      const userId = parts.pop() || '';
+      filePath = join(__dirname, '..', '..', 'uploads', 'cvs', userId, filename);
+    } else {
+      // Compatibilidad con la arquitectura anterior (ruta relativa en /uploads)
+      const safeRelative = trimmed.replace(/^\/+/, '');
+      filePath = join(__dirname, '..', '..', safeRelative);
+    }
+
     if (!existsSync(filePath)) {
       throw new NotFoundException('El archivo físico del CV no existe en el servidor.');
     }
