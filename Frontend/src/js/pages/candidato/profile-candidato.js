@@ -817,6 +817,14 @@
     function buildCvAiInsight(evaluation) {
       if (!evaluation) return 'Sin datos de evaluación todavía.';
 
+      if (evaluation.aiData) {
+        const d = evaluation.aiData;
+        let txt = d.summary ? `${d.summary} ` : '';
+        if (d.strengths && d.strengths.length) txt += ` Puntos fuertes: ${d.strengths.join(', ')}. `;
+        if (d.weaknesses && d.weaknesses.length) txt += ` Para mejorar: ${d.weaknesses.join(', ')}.`;
+        return txt || 'Análisis completado sin feedback detallado.';
+      }
+
       const metrics = [
         { key: 'clarity', label: 'claridad', value: Number(evaluation.clarity || 0) },
         { key: 'skills', label: 'habilidades', value: Number(evaluation.skills || 0) },
@@ -957,7 +965,7 @@
       }
     }
 
-    function runCvAiEvaluationSimulation() {
+    async function runCvAiEvaluation() {
       if (!runCvAiEvalBtn) return;
 
       if (hasCvAiReachedDailyLimit(userEmail)) {
@@ -967,20 +975,52 @@
 
       runCvAiEvalBtn.disabled = true;
       runCvAiEvalBtn.textContent = 'Analizando...';
-      if (cvAiStatus) cvAiStatus.textContent = 'Procesando CV con IA (demo visual)...';
+      if (cvAiStatus) cvAiStatus.textContent = 'Procesando CV con IA...';
 
-      incrementCvAiDailyUsage(userEmail);
+      try {
+        const currentUser = getCurrentUser();
+        if (!currentUser?.token) throw new Error("No estás autenticado.");
 
-      window.setTimeout(() => {
-        renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: true }));
+        const res = await fetch('http://localhost:3000/cv/analyze/me', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
 
+        if (!res.ok) {
+          let errorMsg = 'Error al analizar el CV con IA.';
+          try {
+            const errBody = await res.json();
+            errorMsg = errBody.message || errorMsg;
+          } catch(e) {}
+          throw new Error(errorMsg);
+        }
+
+        const data = await res.json();
+        incrementCvAiDailyUsage(userEmail);
+
+        // Map backend analysis to frontend UI
+        const score = data.overallScore || 70;
+        const evaluation = {
+          clarity: clampNumber(score + 5, 0, 100), // mocked sub-metrics based on overall
+          skills: clampNumber(score - 2, 0, 100),
+          experience: clampNumber(score, 0, 100),
+          overall: score,
+          status: 'Análisis generado por IA exitosamente.',
+          aiData: data
+        };
+
+        renderCvAiEvaluation(evaluation);
+
+      } catch (error) {
+        console.error(error);
+        if (cvAiStatus) cvAiStatus.textContent = 'Error: ' + error.message;
+      } finally {
         if (!hasCvAiReachedDailyLimit(userEmail)) {
           runCvAiEvalBtn.disabled = false;
           runCvAiEvalBtn.textContent = 'Volver a analizar';
         }
-
         syncCvAiDailyLimitUi();
-      }, 900);
+      }
     }
 
     function syncPhotoUi(profile) {
@@ -1006,7 +1046,7 @@
     const userEmail = currentUser?.email || '';
 
     if (runCvAiEvalBtn) {
-      runCvAiEvalBtn.addEventListener('click', runCvAiEvaluationSimulation);
+      runCvAiEvalBtn.addEventListener('click', runCvAiEvaluation);
     }
 
     setText('profileName', userName || '—');
