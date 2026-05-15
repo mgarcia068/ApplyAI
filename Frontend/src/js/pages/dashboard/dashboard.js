@@ -145,9 +145,9 @@ function renderOfertasTable(containerId, ofertasList = OFERTAS) {
       <td>${o.fecha}</td>
       <td>
         <div class="offers-table__actions">
-          <button class="btn btn--ghost btn--sm" onclick="verPostulantes(${o.id})">Ver postulantes</button>
-          <button class="btn btn--ghost btn--sm" onclick="abrirModalEditarOferta(${o.id})">Editar</button>
-          <button class="btn btn--ghost btn--sm" onclick="eliminarOferta(${o.id})" class="text-error">Eliminar</button>
+          <button class="btn btn--ghost btn--sm" onclick="verPostulantes('${o.id}')">Ver postulantes</button>
+          <button class="btn btn--ghost btn--sm" onclick="abrirModalEditarOferta('${o.id}')">Editar</button>
+          <button class="btn btn--ghost btn--sm" onclick="eliminarOferta('${o.id}')" class="text-error">Eliminar</button>
         </div>
       </td>
     </tr>
@@ -229,7 +229,7 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
             </button>
             <button class="btn btn--ghost btn--sm cursor-pointer" 
                style="padding: var(--space-1); width: 32px; height: 32px; color: ${p.favorito ? 'var(--color-primary)' : 'var(--color-text-muted)'}" 
-               onclick="toggleCandidatoFavorito(${p.id})" title="${p.favorito ? 'Quitar de favoritos' : 'Añadir a favoritos'}">
+               onclick="toggleCandidatoFavorito('${p.id}')" title="${p.favorito ? 'Quitar de favoritos' : 'Añadir a favoritos'}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="${p.favorito ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
@@ -255,9 +255,9 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
               <strong class="text-primary font-semibold">${puestoOferta}</strong>
             </div>
             <div class="flex items-center gap-2">
-              <button class="btn btn--secondary cursor-pointer btn-sm-32" onclick="visualizarCV('${p.nombre}', null, '${p.cvRating || ((p.id * 17 % 40) / 10 + 6.0).toFixed(1)}')">Ver CV</button>
+              <button class="btn btn--secondary cursor-pointer btn-sm-32" onclick="visualizarCV('${p.nombre}', null, '${p.rating || '0.0'}')">Ver CV</button>
               <select class="form-select cursor-pointer select-sm-32" 
-                onchange="cambiarEstadoCandidato(${p.id}, this.value)"
+                onchange="cambiarEstadoCandidato('${p.id}', this.value)"
                 ${p.estado === 'Aceptado' || p.estado === 'Rechazado' ? 'disabled' : ''}>
                 <option value="Revisión" ${p.estado === 'Revisión' ? 'selected' : ''} ${p.estado === 'Entrevista' ? 'disabled' : ''}>En revisión</option>
                 <option value="Entrevista" ${p.estado === 'Entrevista' ? 'selected' : ''}>Entrevista</option>
@@ -455,16 +455,33 @@ function cambiarEstadoCandidato(id, nuevoEstado) {
   const candidato = POSTULANTES.find(p => p.id === id);
   if (!candidato) return;
 
-  const performChange = () => {
-    candidato.estado = nuevoEstado;
-    if (nuevoEstado === 'Entrevista') {
-      showToast('Candidato en Entrevista', `Se notificó por mail a ${candidato.nombre} los pasos a seguir.`, 'info');
-    } else if (nuevoEstado === 'Aceptado') {
-      showToast('¡Candidato Aceptado!', `Se envió propuesta formal a ${candidato.nombre} a su correo.`, 'success');
-    } else if (nuevoEstado === 'Rechazado') {
-      showToast('Candidato Rechazado', `Se envió mail de agradecimiento a ${candidato.nombre}.`, 'error');
+  const performChange = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+      let backendStatus = 'PENDING';
+      if (nuevoEstado === 'Entrevista') backendStatus = 'VIEWED';
+      else if (nuevoEstado === 'Aceptado') backendStatus = 'ACCEPTED';
+      else if (nuevoEstado === 'Rechazado') backendStatus = 'REJECTED';
+
+      await axios.post(`http://localhost:3000/api/applications/${id}/status`, 
+        { status: backendStatus },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
+      candidato.estado = nuevoEstado;
+      if (nuevoEstado === 'Entrevista') {
+        showToast('Candidato en Entrevista', `Se notificó por mail a ${candidato.nombre} los pasos a seguir.`, 'info');
+      } else if (nuevoEstado === 'Aceptado') {
+        showToast('¡Candidato Aceptado!', `Se envió propuesta formal a ${candidato.nombre} a su correo.`, 'success');
+      } else if (nuevoEstado === 'Rechazado') {
+        showToast('Candidato Rechazado', `Se envió mail de agradecimiento a ${candidato.nombre}.`, 'error');
+      }
+      applyPostulantesFilters(); // recarga
+    } catch (err) {
+      console.error("Error al actualizar estado", err);
+      alert("Error al actualizar estado del candidato");
+      applyPostulantesFilters(); // recarga original si falla
     }
-    applyPostulantesFilters(); // recarga
   };
 
   if (nuevoEstado === 'Aceptado' || nuevoEstado === 'Rechazado') {
@@ -604,13 +621,75 @@ function renderFormOferta(containerId) {
 
 let ofertaActivaId = null;
 
-function verPostulantes(ofertaId) {
-  ofertaActivaId = ofertaId;
-  const oferta = OFERTAS.find(o => o.id === ofertaId);
-  navigateTo('postulantes', oferta ? oferta.titulo : '');
+async function loadDashboardData() {
+  try {
+    const rawUser = localStorage.getItem('ApplyAI.currentUser');
+    if (!rawUser) return;
+    const user = JSON.parse(rawUser);
+
+    const res = await axios.get('http://localhost:3000/api/jobs/me/offers', {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+
+    OFERTAS = res.data.map(job => ({
+      id: job.id,
+      titulo: job.title,
+      descripcion: job.description,
+      area: 'Tecnología',
+      modalidad: job.modality === 'HYBRID' ? 'Hibrido' : job.modality === 'ONSITE' ? 'Presencial' : 'Remoto',
+      experiencia: job.minExperience > 0 ? `${job.minExperience} años` : 'Sin experiencia',
+      ubicacion: job.location || 'No especificada',
+      skills: job.skillsRequired || [],
+      estado: job.isActive ? 'activa' : 'cerrada',
+      postulantes: job._count?.applications || 0,
+      fecha: new Date(job.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
+    }));
+
+    if (seccionActual === 'resumen') renderResumen();
+    if (seccionActual === 'ofertas') renderOfertas();
+  } catch (err) {
+    console.error("Error loading dashboard data", err);
+  }
 }
 
-function publicarOferta() {
+async function verPostulantes(ofertaId) {
+  ofertaActivaId = ofertaId;
+  const oferta = OFERTAS.find(o => o.id === ofertaId);
+  if (!oferta) return;
+
+  try {
+    const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+    const res = await axios.get(`http://localhost:3000/api/applications/offer/${ofertaId}`, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+
+    POSTULANTES = res.data.map(app => {
+      const p = app.candidate;
+      return {
+        id: app.id,
+        nombre: p.user?.fullName || p.name || 'Desconocido',
+        rol: p.bio || 'Sin rol',
+        iniciales: (p.user?.fullName || p.name || 'D').substring(0, 2).toUpperCase(),
+        skills: p.skills || [],
+        match: app.matchScore || 0,
+        ofertaId: ofertaId,
+        experiencia: p.experience || 'Sin experiencia',
+        estudio: p.education || 'Sin educación',
+        favorito: false,
+        estado: app.status === 'PENDING' ? 'Revisión' : app.status === 'ACCEPTED' ? 'Aceptado' : app.status === 'VIEWED' ? 'Entrevista' : 'Rechazado',
+        rating: app.matchScore ? (app.matchScore / 10).toFixed(1) : '0.0',
+        applicationId: app.id
+      };
+    });
+  } catch (err) {
+    console.error("Error loading applicants", err);
+    POSTULANTES = [];
+  }
+
+  navigateTo('postulantes', oferta.titulo);
+}
+
+async function publicarOferta() {
   const tituloEl = document.getElementById('oferta-titulo');
   const descEl   = document.getElementById('oferta-desc');
   const areaEl   = document.getElementById('oferta-area');
@@ -632,25 +711,32 @@ function publicarOferta() {
     return;
   }
 
-  // Parsear skills (separadas por coma)
   const skillsRaw = skillsEl?.value || '';
   const parsedSkills = skillsRaw.split(',').map(s => s.trim()).filter(s => s);
+  
+  const payload = {
+    title: titulo,
+    description: desc,
+    modality: modEl?.value === 'Hibrido' ? 'HYBRID' : modEl?.value === 'Presencial' ? 'ONSITE' : 'REMOTE',
+    minExperience: parseInt(expEl?.value) || 0,
+    location: ubicEl?.value.trim() || 'No especificada',
+    skillsRequired: parsedSkills
+  };
 
-  OFERTAS.unshift({
-    id: OFERTAS.length + 1,
-    titulo,
-    descripcion: desc,
-    area:        areaEl?.value || 'Otro',
-    modalidad:   modEl?.value || 'Remoto',
-    experiencia: expEl?.value || 'Sin experiencia',
-    ubicacion:   ubicEl?.value.trim() || 'No especificada',
-    skills:      parsedSkills,
-    estado:      'activa',
-    postulantes: 0,
-    fecha:       new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }),
-  });
-
-  navigateTo('ofertas');
+  try {
+    const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+    await axios.post('http://localhost:3000/api/jobs', payload, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+    
+    // Reload dashboard data and redirect
+    await loadDashboardData();
+    navigateTo('ofertas');
+    showToast('¡Oferta publicada!', 'Tu oferta de empleo se creó con éxito y ya está visible para los candidatos.', 'success');
+  } catch (error) {
+    console.error("Error al publicar la oferta", error);
+    showToast('Error al publicar', 'Hubo un problema al crear tu oferta. Intentalo de nuevo.', 'error');
+  }
 }
 
 function cancelarOferta() {
@@ -697,11 +783,16 @@ function eliminarOferta(id) {
 
   modal.querySelector('#conf-cancelar').addEventListener('click', cleanup);
   
-  modal.querySelector('#conf-eliminar').addEventListener('click', () => {
-    const index = OFERTAS.findIndex(o => o.id === id);
-    if (index > -1) {
-      OFERTAS.splice(index, 1);
-      filtrarOfertas();
+  modal.querySelector('#conf-eliminar').addEventListener('click', async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+      await axios.delete(`http://localhost:3000/api/jobs/${id}`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      await loadDashboardData();
+    } catch (err) {
+      console.error("Error al eliminar la oferta", err);
+      alert("No se pudo eliminar la oferta.");
     }
     cleanup();
   });
@@ -777,7 +868,7 @@ function abrirModalEditarOferta(ofertaId) {
       </div>
       <div class="modal-panel__footer">
         <button class="btn btn--ghost" onclick="cerrarModalEditarOferta()">Cancelar</button>
-        <button class="btn btn--primary" onclick="guardarOferta(${ofertaId})">Guardar cambios</button>
+        <button class="btn btn--primary" onclick="guardarOferta('${ofertaId}')">Guardar cambios</button>
       </div>
     </div>
   `;
@@ -809,7 +900,7 @@ function cerrarModalEditarOferta() {
   setTimeout(() => modal.remove(), 250);
 }
 
-function guardarOferta(ofertaId) {
+async function guardarOferta(ofertaId) {
   const oferta = OFERTAS.find(o => o.id === ofertaId);
   if (!oferta) return;
 
@@ -819,23 +910,35 @@ function guardarOferta(ofertaId) {
     return;
   }
 
-  const skillsRaw = document.getElementById('edit-oferta-skills')?.value || '';
+  const areaEl       = document.getElementById('edit-oferta-area');
+  const modEl        = document.getElementById('edit-oferta-modalidad');
+  const expEl        = document.getElementById('edit-oferta-exp');
+  const estadoEl     = document.getElementById('edit-oferta-estado');
+  const ubicEl       = document.getElementById('edit-oferta-ubicacion');
+  const descEl       = document.getElementById('edit-oferta-desc');
+  const skillsRaw    = document.getElementById('edit-oferta-skills')?.value || '';
 
-  oferta.titulo      = nuevoTitulo;
-  oferta.area        = document.getElementById('edit-oferta-area')?.value            || oferta.area;
-  oferta.modalidad   = document.getElementById('edit-oferta-modalidad')?.value       || oferta.modalidad;
-  oferta.experiencia = document.getElementById('edit-oferta-exp')?.value             || oferta.experiencia;
-  oferta.estado      = document.getElementById('edit-oferta-estado')?.value          || oferta.estado;
-  oferta.ubicacion   = document.getElementById('edit-oferta-ubicacion')?.value.trim() || oferta.ubicacion;
-  oferta.descripcion = document.getElementById('edit-oferta-desc')?.value.trim()      || oferta.descripcion;
-  oferta.skills      = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
+  const payload = {
+    title: nuevoTitulo,
+    description: descEl?.value.trim() || '',
+    modality: modEl?.value === 'Hibrido' ? 'HYBRID' : modEl?.value === 'Presencial' ? 'ONSITE' : 'REMOTE',
+    minExperience: parseInt(expEl?.value) || 0,
+    location: ubicEl?.value.trim() || 'No especificada',
+    skillsRequired: skillsRaw.split(',').map(s => s.trim()).filter(Boolean),
+    isActive: estadoEl?.value === 'activa' || estadoEl?.value === 'Activa'
+  };
 
-  cerrarModalEditarOferta();
-
-  if (seccionActual === 'resumen') {
-    renderOfertasTable('ofertas-resumen-container');
-  } else if (seccionActual === 'ofertas') {
-    filtrarOfertas();
+  try {
+    const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+    await axios.post(`http://localhost:3000/api/jobs/${ofertaId}`, payload, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+    
+    await loadDashboardData();
+    cerrarModalEditarOferta();
+  } catch (error) {
+    console.error("Error al guardar cambios de oferta", error);
+    alert('Ocurrió un error al guardar los cambios.');
   }
 }
 

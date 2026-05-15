@@ -4,26 +4,7 @@
     applications: 'ApplyAI.applications',
   };
 
-  const OFFERS = [
-    {
-      id: 'offer-frontend-jr',
-      title: 'Desarrollador Frontend Jr',
-      company: 'NovaTech',
-      location: 'Remoto / AR',
-    },
-    {
-      id: 'offer-backend-node',
-      title: 'Backend Node.js',
-      company: 'ByteWorks',
-      location: 'Córdoba, AR',
-    },
-    {
-      id: 'offer-qa-manual',
-      title: 'QA Manual',
-      company: 'QualityLab',
-      location: 'Híbrido',
-    },
-  ];
+  let OFFERS = [];
 
   function safeJsonParse(value, fallback) {
     try {
@@ -35,14 +16,13 @@
 
   function normalizeRole(value) {
     const normalized = String(value || '').trim().toLowerCase();
-    if (normalized === 'candidato' || normalized === 'cliente') return 'candidato';
-    if (normalized === 'empresa') return 'empresa';
+    if (normalized === 'candidato' || normalized === 'cliente' || normalized === 'candidate') return 'candidato';
+    if (normalized === 'empresa' || normalized === 'company') return 'empresa';
     return '';
   }
 
   function getCurrentUser() {
-    const raw =
-      localStorage.getItem(STORAGE_KEYS.currentUser);
+    const raw = localStorage.getItem(STORAGE_KEYS.currentUser);
     if (!raw) return null;
     const parsed = safeJsonParse(raw, null);
     if (!parsed || typeof parsed !== 'object') return null;
@@ -64,7 +44,30 @@
     localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(apps));
   }
 
+  
+  async function fetchMyApplications() {
+    try {
+      const rawUser = localStorage.getItem('ApplyAI.currentUser');
+      const token = rawUser ? JSON.parse(rawUser).token : '';
+      if (!token) return [];
+      const res = await axios.get('http://localhost:3000/api/applications', { headers: { Authorization: 'Bearer ' + token } });
+      
+      const apps = res.data.map(a => ({
+        id: a.id,
+        offerId: a.jobOfferId,
+        offerTitle: a.jobOffer?.title || 'Oferta',
+        company: a.jobOffer?.company?.email || 'Empresa',
+        location: a.jobOffer?.location || 'Remoto',
+        status: a.status === 'PENDING' ? 'En revisión' : a.status === 'ACCEPTED' ? 'Aceptado' : a.status === 'VIEWED' ? 'Entrevista' : 'Rechazado',
+        appliedAt: a.createdAt
+      }));
+      localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(apps));
+      return apps;
+    } catch(e) { return []; }
+  }
+
   function getApplicationsForEmail(email) {
+
     const normalized = String(email || '').trim().toLowerCase();
     return getAllApplications().filter((a) => String(a?.email || '').toLowerCase() === normalized);
   }
@@ -262,6 +265,91 @@
     });
   }
 
+  async function renderApplications(email) {
+    if(email) { await fetchMyApplications(); }
+
+    const listEl = document.getElementById('applicationsList');
+    const countEl = document.getElementById('applicationsCount');
+    if (!listEl) return;
+
+    const apps = email ? getApplicationsForEmail(email) : [];
+    const sorted = apps.slice().sort((a, b) => String(b?.appliedAt || '').localeCompare(String(a?.appliedAt || '')));
+
+    if (countEl) countEl.textContent = String(sorted.length);
+
+    if (!sorted.length) {
+      listEl.innerHTML = emptyStateHtml('Aún no te postulaste', 'Elegí una oferta y presioná “Postularme”.');
+      return;
+    }
+
+    listEl.innerHTML = `
+      <div class="applications-list">
+        ${sorted
+          .map((app) => {
+            const badgeClass = badgeClassForStatus(app.status);
+            const canWithdraw = canWithdrawApplication(app);
+
+            const companyName = String(app.company || '').trim();
+            const companyId = slugify(companyName);
+            const locationPart = app.location ? ` • ${app.location}` : '';
+
+            const actions = [];
+
+            if (companyId) {
+              actions.push(
+                `<button class="btn btn--secondary btn--sm applications-list__action-btn applications-list__action-btn--company" type="button" data-action="view-company" data-company-id="${companyId}">Ver empresa</button>`
+              );
+            }
+
+            if (canWithdraw) {
+              actions.push(
+                `<button class="btn btn--danger btn--sm applications-list__action-btn applications-list__action-btn--withdraw" type="button" data-action="withdraw" data-offer-id="${app.offerId}">Despostularme</button>`
+              );
+            }
+
+            const actionsHtml = actions.length
+              ? `<div class="applications-list__actions">${actions.join('')}</div>`
+              : '';
+
+            return `
+              <div class="applications-list__item" data-offer-id="${app.offerId}">
+                <div class="applications-list__top">
+                  <div class="applications-list__meta">
+                    <div class="applications-list__title">${app.offerTitle || 'Oferta'}</div>
+                    <div class="text-xs text-muted">${companyName}${locationPart}</div>
+                  </div>
+                  <span class="badge ${badgeClass}">${app.status || '—'}</span>
+                </div>
+                ${actionsHtml}
+              </div>
+            `;
+          })
+          .join('')}
+      </div>
+    `;
+
+    listEl.querySelectorAll('button[data-company-id][data-action="view-company"]').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const companyId = String(btn.getAttribute('data-company-id') || '').trim();
+        if (!companyId) return;
+        window.location.href = companyProfileUrl(companyId);
+      });
+    });
+
+    listEl.querySelectorAll('button[data-offer-id][data-action="withdraw"]').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const offerId = btn.getAttribute('data-offer-id');
+        if (!offerId || !email) return;
+        const existingApp = getApplication(email, offerId);
+        if (existingApp && canWithdrawApplication(existingApp)) {
+          removeApplication(email, offerId);
+          renderOffers(email, true);
+          renderApplications(email);
+        }
+      });
+    });
+  }
+
   function renderApplications(email) {
     const listEl = document.getElementById('applicationsList');
     const countEl = document.getElementById('applicationsCount');
@@ -339,6 +427,7 @@
         const existingApp = getApplication(email, offerId);
         if (existingApp && canWithdrawApplication(existingApp)) {
           removeApplication(email, offerId);
+          showToast('Postulación retirada', 'Te has despostulado correctamente.', 'info');
           renderOffers(email, true);
           renderApplications(email);
         }
@@ -346,7 +435,68 @@
     });
   }
 
-  function init() {
+  
+function showToast(title, subtitle = '', type = 'success') {
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = 'position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px;';
+    document.body.appendChild(toastContainer);
+  }
+
+  const toast = document.createElement('div');
+  const typeColors = {
+    success: { bg: '#10B981', color: 'white', icon: '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>' },
+    info: { bg: '#3B82F6', color: 'white', icon: '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"></path></svg>' },
+    error: { bg: '#EF4444', color: 'white', icon: '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>' }
+  };
+
+  const styleDef = typeColors[type] || typeColors.success;
+
+  toast.style.cssText = `
+    background: ${styleDef.bg};
+    color: ${styleDef.color};
+    padding: 14px 20px;
+    border-radius: 10px;
+    box-shadow: 0 14px 20px -5px rgba(0, 0, 0, 0.15), 0 5px 7px -3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    font-family: inherit;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  `;
+  
+  toast.innerHTML = `
+    <div style="flex-shrink: 0; padding-top: 1px;">
+      ${styleDef.icon}
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-weight: 600; line-height: 1.2;">${title}</span>
+      ${subtitle ? `<span style="font-size: 13px; opacity: 0.85; line-height: 1.4;">${subtitle}</span>` : ''}
+    </div>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+  });
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      if (toastContainer.contains(toast)) toastContainer.removeChild(toast);
+    }, 350);
+  }, 4000);
+}
+
+  async function init() {
     const alertEl = document.getElementById('candidateDashboardAlert');
 
     const currentUser = getCurrentUser();
@@ -354,10 +504,41 @@
 
     if (alertEl) alertEl.hidden = isAllowed;
 
+    try {
+      const res = await axios.get('http://localhost:3000/api/jobs');
+      OFFERS = res.data.map(job => ({
+        id: job.id,
+        title: job.title,
+        company: job.company?.user?.fullName || job.company?.email || 'Empresa',
+        location: job.location || 'Remoto'
+      }));
+
+      const rawUser = localStorage.getItem('ApplyAI.currentUser');
+      if (rawUser) {
+        const token = JSON.parse(rawUser).token;
+        if (token) {
+          const appsRes = await axios.get('http://localhost:3000/api/applications', { headers: { Authorization: 'Bearer ' + token } });
+          const mappedApps = appsRes.data.map(app => ({
+            id: app.id,
+            email: currentUser.email,
+            offerId: app.jobOfferId,
+            offerTitle: app.jobOffer?.title || 'Oferta',
+            company: app.jobOffer?.company?.user?.fullName || app.jobOffer?.company?.email || 'Empresa',
+            location: app.jobOffer?.location || 'Remoto',
+            status: app.status === 'PENDING' ? 'En revisión' : app.status === 'VIEWED' ? 'En Entrevista' : app.status === 'ACCEPTED' ? 'Aceptado' : 'Rechazado',
+            appliedAt: app.createdAt
+          }));
+          localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(mappedApps));
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching data', e);
+    }
+
     const email = isAllowed ? currentUser.email : '';
 
+    await renderApplications(email);
     renderOffers(email, isAllowed);
-    renderApplications(email);
 
     if (!isAllowed) {
       // Deshabilitar botones para evitar acciones sin login.

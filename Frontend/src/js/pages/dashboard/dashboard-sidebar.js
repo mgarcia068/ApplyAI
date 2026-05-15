@@ -785,8 +785,12 @@ function closeMobileSidebar() {
   document.getElementById('sidebar-overlay')?.classList.remove('visible');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   syncPerfilEmpresaIdentityUi();
+
+  if (typeof loadDashboardData === 'function') {
+    await loadDashboardData();
+  }
 
   if (window.location.search.includes('editProfile=1')) {
     navigateTo('perfil');

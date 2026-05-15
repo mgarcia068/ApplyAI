@@ -2,6 +2,7 @@
 <html lang="es">
   <head>
     <script src="../../js/core/middlewares/auth-guard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Panel candidato</title>
@@ -107,7 +108,8 @@
         display: flex;
         align-items: center;
         gap: var(--space-3);
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        flex-shrink: 0;
       }
 
       /* ── HEADER + FILTROS (compacto) ──────────────────────── */
@@ -239,8 +241,9 @@
         }
 
         .offer-detail__actions .btn {
-          width: 100%;
+          flex: 1;
           justify-content: center;
+          white-space: nowrap;
         }
 
         .offer-detail__grid {
