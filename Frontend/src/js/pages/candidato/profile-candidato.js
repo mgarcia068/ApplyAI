@@ -91,6 +91,7 @@
       email: String(parsed.email || '').trim().toLowerCase(),
       role: normalizeRole(parsed.role),
       fullName: String(parsed.fullName || '').trim(),
+      token: String(parsed.token || '').trim(),
     };
   }
 
@@ -1277,58 +1278,92 @@
         return;
       }
 
-      const dataUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.onerror = () => reject(new Error('No se pudo leer el PDF'));
-        reader.readAsDataURL(file);
-      }).catch(() => '');
-
-      if (!dataUrl) {
-        showCvError('No se pudo cargar el PDF.');
+      const currentUser = getCurrentUser();
+      const token = currentUser?.token;
+      if (!token) {
+        showCvError('No estás autenticado.');
         return;
       }
 
-      commitPendingTokenDrafts();
-      const tokenFields = buildTokenProfileFields();
+      if (cvInput) cvInput.disabled = true;
+      if (removeCvBtn) removeCvBtn.disabled = true;
+      showCvError('Subiendo CV, por favor esperá...'); // Loading state
 
-      const existing = existingProfile;
-      const nowIso = new Date().toISOString();
-      saveCandidateProfile(userEmail, {
-        version: PROFILE_VERSION,
-        email: userEmail,
-        fullName: String(fullName?.value || userName || '').trim(),
-        headline: String(headline?.value || '').trim(),
-        academicBackground: String(academicBackground?.value || '').trim(),
-        workExperience: String(workExperience?.value || '').trim(),
-        technicalSkills: tokenFields.technicalSkills,
-        technicalSkillsList: tokenFields.technicalSkillsList,
-        languages: tokenFields.languages,
-        languagesList: tokenFields.languagesList,
-        location: String(location?.value || '').trim(),
-        phone: String(phone?.value || '').trim(),
-        about: String(about?.value || '').trim(),
-        photoDataUrl: String(existing.photoDataUrl || ''),
-        cvDataUrl: dataUrl,
-        cvFileName: file.name || 'CV.pdf',
-        cvSize: Number(file.size || 0),
-        cvUpdatedAt: nowIso,
-        updatedAt: nowIso,
-        createdAt: existing.createdAt || nowIso,
-      });
+      try {
+        const formData = new FormData();
+        formData.append('cv', file);
 
-      if (cvInfo) cvInfo.hidden = false;
-      if (cvFileName) cvFileName.textContent = file.name || 'CV.pdf';
-      if (cvUpdatedAt) cvUpdatedAt.textContent = `Actualizado: ${new Date(nowIso).toLocaleString()}`;
-      if (cvViewLink) {
-        cvViewLink.href = dataUrl;
-        cvViewLink.hidden = false;
-        cvViewLink.setAttribute('download', file.name || 'CV.pdf');
+        const response = await fetch('http://localhost:3000/cv/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          let errorMsg = 'Error al subir el CV.';
+          try {
+            const errBody = await response.json();
+            errorMsg = errBody.message || errorMsg;
+          } catch(e) {}
+          throw new Error(errorMsg);
+        }
+
+        const data = await response.json();
+        const cvUrl = data.cvUrl; // URL from backend
+        clearCvError(); // Clear loading message
+
+        commitPendingTokenDrafts();
+        const tokenFields = buildTokenProfileFields();
+
+        const existing = existingProfile;
+        const nowIso = data.updatedAt || new Date().toISOString();
+        saveCandidateProfile(userEmail, {
+          version: PROFILE_VERSION,
+          email: userEmail,
+          fullName: String(fullName?.value || userName || '').trim(),
+          headline: String(headline?.value || '').trim(),
+          academicBackground: String(academicBackground?.value || '').trim(),
+          workExperience: String(workExperience?.value || '').trim(),
+          technicalSkills: tokenFields.technicalSkills,
+          technicalSkillsList: tokenFields.technicalSkillsList,
+          languages: tokenFields.languages,
+          languagesList: tokenFields.languagesList,
+          location: String(location?.value || '').trim(),
+          phone: String(phone?.value || '').trim(),
+          about: String(about?.value || '').trim(),
+          photoDataUrl: String(existing.photoDataUrl || ''),
+          cvDataUrl: cvUrl,
+          cvFileName: file.name || 'CV.pdf',
+          cvSize: Number(file.size || 0),
+          cvUpdatedAt: nowIso,
+          updatedAt: nowIso,
+          createdAt: existing.createdAt || nowIso,
+        });
+
+        if (cvInfo) cvInfo.hidden = false;
+        if (cvFileName) cvFileName.textContent = file.name || 'CV.pdf';
+        if (cvUpdatedAt) cvUpdatedAt.textContent = `Actualizado: ${new Date(nowIso).toLocaleString()}`;
+        if (cvViewLink) {
+          cvViewLink.href = cvUrl;
+          cvViewLink.hidden = false;
+          cvViewLink.setAttribute('download', file.name || 'CV.pdf');
+        }
+
+        if (cvInput) cvInput.value = '';
+        syncCvUi({ ...existing, cvDataUrl: cvUrl });
+        renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
+
+        showCvError('¡CV subido con éxito!');
+        setTimeout(() => clearCvError(), 3000);
+
+      } catch (error) {
+        showCvError(error.message || 'Ocurrió un error al subir el archivo.');
+      } finally {
+        if (cvInput) cvInput.disabled = false;
+        if (removeCvBtn) removeCvBtn.disabled = false;
       }
-
-      if (cvInput) cvInput.value = '';
-      syncCvUi({ ...existing, cvDataUrl: dataUrl });
-      renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
     }
 
     if (photoInput) {
