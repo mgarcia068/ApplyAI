@@ -52,4 +52,32 @@ export class AppConfigService {
   get googleClientId(): string | undefined {
     return this.getOptional('GOOGLE_CLIENT_ID');
   }
+
+  get awsRegion(): string {
+    return this.getOptional('AWS_REGION') ?? 'us-east-1';
+  }
+
+  get awsAccessKeyId(): string | undefined {
+    return this.getOptional('AWS_ACCESS_KEY_ID') ?? this.getOptional('AWS_ACCESS_KEY');
+  }
+
+  get awsSecretAccessKey(): string | undefined {
+    return this.getOptional('AWS_SECRET_ACCESS_KEY');
+  }
+
+  get s3Bucket(): string | undefined {
+    return (
+      this.getOptional('S3_BUCKET') ??
+      this.getOptional('AWS_BUCKET_NAME') ??
+      this.getOptional('AWS_BUCKET')
+    );
+  }
+
+  get s3CvPrefix(): string | undefined {
+    return this.getOptional('S3_CV_PREFIX');
+  }
+
+  get s3PublicBaseUrl(): string | undefined {
+    return this.getOptional('S3_PUBLIC_BASE_URL');
+  }
 }

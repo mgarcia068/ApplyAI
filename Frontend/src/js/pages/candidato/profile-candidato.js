@@ -1756,20 +1756,19 @@
     }
 
     if (photoCropSaveBtn) {
-      photoCropSaveBtn.addEventListener('click', function () {
+      photoCropSaveBtn.addEventListener('click', async function () {
         if (!pendingPhotoDataUrl) {
           closePhotoModal();
           return;
         }
 
         const savedPhotoDataUrl = pendingPhotoDataUrl;
-
         const profile = getCandidateProfile(userEmail) || {};
         const nowIso = new Date().toISOString();
         commitPendingTokenDrafts();
         const tokenFields = buildTokenProfileFields();
 
-        // Aplicar al avatar y persistir.
+        // Aplicar al avatar visualmente de inmediato (optimistic UI).
         if (avatarPreview && avatarFallback) {
           avatarPreview.src = savedPhotoDataUrl;
           avatarPreview.hidden = false;
@@ -1784,6 +1783,10 @@
           }
         }
 
+        if (photoInput) photoInput.value = '';
+        closePhotoModal();
+
+        // Guardar localmente con el base64 como photoDataUrl (para uso offline/previo a la subida)
         const profileToSave = {
           version: PROFILE_VERSION,
           email: userEmail,
@@ -1811,13 +1814,43 @@
         };
 
         saveCandidateProfile(userEmail, profileToSave);
-        void syncProfileWithBackend(profileToSave);
-
-        if (photoInput) photoInput.value = '';
-        closePhotoModal();
 
         const next = { ...profile, photoDataUrl: savedPhotoDataUrl };
         syncPhotoUi(next);
+
+        // Subir la foto a S3 via el endpoint dedicado (multipart)
+        const currentUser = getCurrentUser();
+        const token = currentUser?.token;
+        if (token) {
+          try {
+            // Convertir el base64 dataUrl a un Blob
+            const res = await fetch(savedPhotoDataUrl);
+            const blob = await res.blob();
+            const ext = blob.type.split('/')[1] || 'jpg';
+            const formData = new FormData();
+            formData.append('photo', blob, `photo.${ext}`);
+
+            const uploadRes = await fetch('http://localhost:3000/api/users/me/photo', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` },
+              body: formData,
+            });
+
+            if (uploadRes.ok) {
+              const data = await uploadRes.json();
+              // Actualizar el localStorage con la URL de S3 (no el base64)
+              const updatedProfile = getCandidateProfile(userEmail) || {};
+              updatedProfile.photoUrl = data.photoUrl;
+              saveCandidateProfile(userEmail, updatedProfile);
+              console.log('[Photo] Subida a S3 con éxito:', data.photoUrl);
+            } else {
+              const errBody = await uploadRes.json().catch(() => ({}));
+              console.error('[Photo] Error al subir a S3:', errBody.message || uploadRes.status);
+            }
+          } catch (err) {
+            console.error('[Photo] Error al subir la foto:', err);
+          }
+        }
       });
     }
 
