@@ -61,9 +61,11 @@ model CandidateProfile {
   experience String?
   skills     String[]
   languages  String[]
-  cvUrl      String?
+  cvUrl          String?
+  cvOriginalName String?
+  photoUrl       String?
 
-  createdAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   applications Application[]

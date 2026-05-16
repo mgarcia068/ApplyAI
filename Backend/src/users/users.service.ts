@@ -13,7 +13,13 @@ export class UsersService {
   async me(user: JwtPayload) {
     const userData = await this.prisma.user.findUnique({
       where: { id: user.sub },
-      include: { candidateProfile: true },
+      include: {
+        candidateProfile: {
+          include: {
+            cvAnalysis: true,
+          },
+        },
+      },
     });
 
     if (!userData) {
@@ -25,7 +31,7 @@ export class UsersService {
   }
 
   async updateProfile(user: JwtPayload, dto: UpdateProfileDto) {
-    const { fullName, name, location, bio, education, experience, skills, languages, cvUrl } = dto;
+    const { fullName, name, location, bio, education, experience, skills, languages, cvUrl, cvOriginalName, photoUrl } = dto;
 
     // Update user info
     if (fullName !== undefined) {
@@ -46,6 +52,8 @@ export class UsersService {
       if (skills !== undefined) candidateProfileData.skills = skills;
       if (languages !== undefined) candidateProfileData.languages = languages;
       if (cvUrl !== undefined) candidateProfileData.cvUrl = cvUrl;
+      if (cvOriginalName !== undefined) candidateProfileData.cvOriginalName = cvOriginalName;
+      if (photoUrl !== undefined) candidateProfileData.photoUrl = photoUrl;
 
       // Check if profile exists to determine if we need to provide `name` for creation
       const existingProfile = await this.prisma.candidateProfile.findUnique({

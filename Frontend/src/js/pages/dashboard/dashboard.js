@@ -619,19 +619,39 @@ function renderFormOferta(containerId) {
   }
 }
 
+const DASHBOARD_CACHE_KEYS = {
+  offers: 'ApplyAI.dashboard.offers',
+  applicants: 'ApplyAI.dashboard.applicants_prefix_', // Se usará con ofertaId
+};
+
 let ofertaActivaId = null;
 
-async function loadDashboardData() {
-  try {
-    const rawUser = localStorage.getItem('ApplyAI.currentUser');
-    if (!rawUser) return;
-    const user = JSON.parse(rawUser);
+// Inicialización instantánea desde caché
+(function initCache() {
+  const cachedOffers = localStorage.getItem(DASHBOARD_CACHE_KEYS.offers);
+  if (cachedOffers) {
+    try {
+      OFERTAS = JSON.parse(cachedOffers);
+    } catch(e) {}
+  }
+})();
 
+async function loadDashboardData() {
+  const rawUser = localStorage.getItem('ApplyAI.currentUser');
+  if (!rawUser) return;
+  const user = JSON.parse(rawUser);
+
+  // 1. Dibujar lo que ya tenemos (Caché)
+  if (seccionActual === 'resumen') renderResumen();
+  if (seccionActual === 'ofertas') renderOfertas();
+
+  // 2. Sincronizar con el Backend en segundo plano
+  try {
     const res = await axios.get('http://localhost:3000/api/jobs/me/offers', {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
-    OFERTAS = res.data.map(job => ({
+    const freshOffers = res.data.map(job => ({
       id: job.id,
       titulo: job.title,
       descripcion: job.description,
@@ -645,10 +665,14 @@ async function loadDashboardData() {
       fecha: new Date(job.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
     }));
 
+    OFERTAS = freshOffers;
+    localStorage.setItem(DASHBOARD_CACHE_KEYS.offers, JSON.stringify(freshOffers));
+
+    // Redibujar con datos frescos si seguimos en la misma sección
     if (seccionActual === 'resumen') renderResumen();
     if (seccionActual === 'ofertas') renderOfertas();
   } catch (err) {
-    console.error("Error loading dashboard data", err);
+    console.error("Error sync dashboard data", err);
   }
 }
 
@@ -657,13 +681,28 @@ async function verPostulantes(ofertaId) {
   const oferta = OFERTAS.find(o => o.id === ofertaId);
   if (!oferta) return;
 
+  // 1. Cargar desde Caché si existe para esta oferta específica
+  const cacheKey = DASHBOARD_CACHE_KEYS.applicants + ofertaId;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      POSTULANTES = JSON.parse(cached);
+    } catch(e) {}
+  } else {
+    POSTULANTES = []; // Opcional: podrías dejar los anteriores o vaciar
+  }
+
+  // Navegar inmediatamente con lo que tengamos
+  navigateTo('postulantes', oferta.titulo);
+
+  // 2. Sincronizar con el Backend
   try {
     const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
     const res = await axios.get(`http://localhost:3000/api/applications/offer/${ofertaId}`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
-    POSTULANTES = res.data.map(app => {
+    const freshApplicants = res.data.map(app => {
       const p = app.candidate;
       return {
         id: app.id,
@@ -681,12 +720,17 @@ async function verPostulantes(ofertaId) {
         applicationId: app.id
       };
     });
-  } catch (err) {
-    console.error("Error loading applicants", err);
-    POSTULANTES = [];
-  }
 
-  navigateTo('postulantes', oferta.titulo);
+    POSTULANTES = freshApplicants;
+    localStorage.setItem(cacheKey, JSON.stringify(freshApplicants));
+
+    // Si el usuario sigue viendo esta oferta, refrescamos la vista
+    if (seccionActual === 'postulantes' && ofertaActivaId === ofertaId) {
+       renderPostulantes('postulantes-container', ofertaId);
+    }
+  } catch (err) {
+    console.error("Error sync applicants", err);
+  }
 }
 
 async function publicarOferta() {
@@ -946,6 +990,7 @@ async function guardarOferta(ofertaId) {
 
 function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', rating = '0.0') {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const backendOrigin = 'http://localhost:3000';
 
   const overlay = document.createElement('div');
   overlay.id = 'cv-preview-overlay';
@@ -954,7 +999,12 @@ function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/
   const modal = document.createElement('div');
   modal.style.cssText = `background: #fff; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); width: ${isMobile ? '100%' : '90vw'}; max-width: 1000px; height: ${isMobile ? 'calc(100vh - 24px)' : '90vh'}; max-height: calc(100vh - 24px); display: flex; flex-direction: column; overflow: hidden;`;
   
-  const docUrl = urlOriginal || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+  let docUrl = urlOriginal || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+  
+  // Si es una ruta local (empieza con /api o /cv), le anteponemos el origen del backend
+  if (docUrl.startsWith('/')) {
+    docUrl = `${backendOrigin}${docUrl}`;
+  }
 
   // Calcular color según rating IA (Idéntica lógica a la tarjeta)
   const ratingNum = parseFloat(rating);

@@ -113,6 +113,43 @@
     localStorage.setItem(key, JSON.stringify(profile));
   }
 
+  async function syncProfileWithBackend(profile) {
+    const currentUser = getCurrentUser();
+    if (!currentUser || !currentUser.token || currentUser.role !== 'candidato') return;
+
+    try {
+      // Map frontend fields to backend DTO
+      const payload = {
+        fullName: profile.fullName,
+        name: profile.fullName,
+        location: profile.location,
+        bio: profile.about,
+        education: profile.academicBackground,
+        experience: profile.workExperience,
+        skills: profile.technicalSkillsList || [],
+        languages: profile.languagesList || [],
+        cvUrl: profile.cvDataUrl && profile.cvDataUrl.trim() !== '' ? profile.cvDataUrl : undefined,
+        cvOriginalName: profile.cvFileName || undefined,
+        photoUrl: profile.photoUrl || profile.photoDataUrl || undefined,
+      };
+
+      const response = await fetch('http://localhost:3000/api/users/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to sync profile with backend');
+      }
+    } catch (error) {
+      console.error('Error syncing profile with backend:', error);
+    }
+  }
+
   function initialsFromName(name) {
     const clean = String(name || '').trim();
     if (!clean) return '?';
@@ -191,6 +228,81 @@
     imgEl.style.setProperty('--photo-pan-x', `${tx}px`);
     imgEl.style.setProperty('--photo-pan-y', `${ty}px`);
     imgEl.style.setProperty('--photo-pan-scale', String(scale || 1));
+  }
+
+  function visualizarCV(nombreCandidato, urlOriginal, rating = '0.0') {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const backendOrigin = 'http://localhost:3000';
+    
+    let docUrl = urlOriginal || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+    
+    // Si es una ruta local (empieza con /api o /cv), le anteponemos el origen del backend
+    if (docUrl.startsWith('/')) {
+      docUrl = `${backendOrigin}${docUrl}`;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'cv-preview-overlay';
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 100500; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px); padding: 12px;';
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `background: #fff; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); width: ${isMobile ? '100%' : '90vw'}; max-width: 1000px; height: ${isMobile ? 'calc(100vh - 24px)' : '90vh'}; max-height: calc(100vh - 24px); display: flex; flex-direction: column; overflow: hidden;`;
+    
+    // Calcular color según rating (usamos lógica similar para el dashboard)
+    const ratingNum = parseFloat(rating);
+    let ratingColor = '#3B82F6';
+    let ratingBg = 'rgba(59, 130, 246, 0.1)';
+
+    if (ratingNum >= 8.5) {
+      ratingColor = '#10B981';
+      ratingBg = 'rgba(16, 185, 129, 0.1)';
+    } else if (ratingNum >= 5.5) {
+      ratingColor = '#F59E0B';
+      ratingBg = 'rgba(245, 158, 11, 0.1)';
+    } else {
+      ratingColor = '#EF4444';
+      ratingBg = 'rgba(239, 68, 68, 0.1)';
+    }
+
+    modal.innerHTML = `
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 20px 24px; border-bottom: 1px solid #e5e7eb; background: #fff;">
+        <div style="display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1;">
+          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center; color: #3B82F6; flex-shrink: 0;">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"></path></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; min-width: 0; flex: 1;">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.2;">CV de ${nombreCandidato}</h3>
+            <p style="margin: 0; font-size: 14px; color: #6B7280;">Previsualización del documento PDF</p>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: ${ratingBg}; border: 3px solid ${ratingColor}; font-size: 15px; font-weight: 700; color: ${ratingColor}; margin-left: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;" title="Puntuación del CV">
+            ${rating}
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; margin-left: auto;">
+          <a href="${docUrl}" target="_blank" style="padding: 8px 16px; background: #f3f4f6; color: #374151; font-weight: 500; font-size: 13px; border-radius: 6px; text-decoration: none; display: flex; align-items: center; gap: 6px; border: 1px solid #d1d5db;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"></path></svg>
+            Abrir original
+          </a>
+          <button id="cv-close-btn" style="padding: 8px; width: 36px; height: 36px; background: none; border: none; color: #6B7280; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px;" onmouseover="this.style.background='#f3f4f6'; this.style.color='#ef4444';" onmouseout="this.style.background='none'; this.style.color='#6b7280';">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div style="flex: 1; background: #525659; display: flex; align-items: center; justify-content: center;">
+        <object data="${docUrl}" type="application/pdf" width="100%" height="100%">
+          <iframe src="${docUrl}" width="100%" height="100%" style="border: none;">
+            <p>Tu navegador no soporta PDFs embebidos. <a href="${docUrl}">Descarga el PDF aquí</a>.</p>
+          </iframe>
+        </object>
+      </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const close = () => overlay.remove();
+    modal.querySelector('#cv-close-btn').onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
   }
 
   function init() {
@@ -363,6 +475,9 @@
     const cvAiExperienceFill = document.getElementById('cvAiExperienceFill');
     const cvAiStatus = document.getElementById('cvAiStatus');
     const runCvAiEvalBtn = document.getElementById('runCvAiEvalBtn');
+    const cvAiFeedback = document.getElementById('cvAiFeedback');
+    const cvAiStrengths = document.getElementById('cvAiStrengths');
+    const cvAiWeaknesses = document.getElementById('cvAiWeaknesses');
 
     const avatarPreview = document.getElementById('avatarPreview');
     const avatarFallback = document.getElementById('avatarFallback');
@@ -778,10 +893,10 @@
 
     function describeCvScore(score) {
       const safe = clampNumber(score, 0, 100);
-      if (safe >= 85) return 'Excelente perfil';
-      if (safe >= 70) return 'Perfil sólido';
-      if (safe >= 55) return 'Buen potencial';
-      return 'En desarrollo';
+      if (safe >= 85) return 'Excelente calidad';
+      if (safe >= 70) return 'CV profesional';
+      if (safe >= 55) return 'CV aceptable';
+      return 'Mejorable';
     }
 
     function scoreBand(score) {
@@ -818,17 +933,14 @@
       if (!evaluation) return 'Sin datos de evaluación todavía.';
 
       if (evaluation.aiData) {
-        const d = evaluation.aiData;
-        let txt = d.summary ? `${d.summary} ` : '';
-        if (d.strengths && d.strengths.length) txt += ` Puntos fuertes: ${d.strengths.join(', ')}. `;
-        if (d.weaknesses && d.weaknesses.length) txt += ` Para mejorar: ${d.weaknesses.join(', ')}.`;
-        return txt || 'Análisis completado sin feedback detallado.';
+        // Ya no devolvemos el summary (el párrafo largo), solo los puntos clave que se renderizan aparte.
+        return '';
       }
 
       const metrics = [
-        { key: 'clarity', label: 'claridad', value: Number(evaluation.clarity || 0) },
-        { key: 'skills', label: 'habilidades', value: Number(evaluation.skills || 0) },
-        { key: 'experience', label: 'experiencia', value: Number(evaluation.experience || 0) },
+        { key: 'clarity', label: 'claridad y formato', value: Number(evaluation.clarity || 0) },
+        { key: 'skills', label: 'impacto de habilidades', value: Number(evaluation.skills || 0) },
+        { key: 'experience', label: 'relevancia de experiencia', value: Number(evaluation.experience || 0) },
       ];
 
       const strongest = metrics.slice().sort((a, b) => b.value - a.value)[0];
@@ -926,11 +1038,27 @@
       }
       if (cvAiOverallScore) cvAiOverallScore.textContent = String(overall);
       if (cvAiScoreLabel) cvAiScoreLabel.textContent = describeCvScore(overall);
-      if (cvAiInsight) cvAiInsight.textContent = buildCvAiInsight(evaluation);
+      
+      const insightText = buildCvAiInsight(evaluation);
+      if (cvAiInsight) {
+        cvAiInsight.textContent = insightText;
+        cvAiInsight.hidden = !insightText;
+      }
 
       setCvAiMetric(cvAiClarityValue, cvAiClarityFill, evaluation.clarity);
       setCvAiMetric(cvAiSkillsValue, cvAiSkillsFill, evaluation.skills);
       setCvAiMetric(cvAiExperienceValue, cvAiExperienceFill, evaluation.experience);
+
+      if (cvAiFeedback && cvAiStrengths && cvAiWeaknesses) {
+        if (evaluation.aiData) {
+          const d = evaluation.aiData;
+          cvAiStrengths.innerHTML = (d.strengths || []).map(s => `<li style="list-style:none;">- ${s}</li>`).join('');
+          cvAiWeaknesses.innerHTML = (d.weaknesses || []).map(w => `<li style="list-style:none;">- ${w}</li>`).join('');
+          cvAiFeedback.hidden = false;
+        } else {
+          cvAiFeedback.hidden = true;
+        }
+      }
 
       if (cvAiStatus) {
         const baseStatus = String(evaluation.status || 'Evaluación visual lista.');
@@ -981,7 +1109,7 @@
         const currentUser = getCurrentUser();
         if (!currentUser?.token) throw new Error("No estás autenticado.");
 
-        const res = await fetch('http://localhost:3000/cv/analyze/me', {
+        const res = await fetch('http://localhost:3000/api/cv/analyze/me', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${currentUser.token}` }
         });
@@ -1001,7 +1129,7 @@
         // Map backend analysis to frontend UI
         const score = data.overallScore || 70;
         const evaluation = {
-          clarity: clampNumber(score + 5, 0, 100), // mocked sub-metrics based on overall
+          clarity: clampNumber(score + 5, 0, 100),
           skills: clampNumber(score - 2, 0, 100),
           experience: clampNumber(score, 0, 100),
           overall: score,
@@ -1010,6 +1138,13 @@
         };
 
         renderCvAiEvaluation(evaluation);
+
+        // PERSISTENCIA: Guardar la evaluación en el perfil local
+        const existing = getCandidateProfile(userEmail) || {};
+        saveCandidateProfile(userEmail, {
+          ...existing,
+          cvAiEvaluation: evaluation
+        });
 
       } catch (error) {
         console.error(error);
@@ -1086,8 +1221,9 @@
       setFieldValue('phone', storedProfile.phone || '');
       setFieldValue('about', storedProfile.about || '');
 
-      if (storedProfile.photoDataUrl && avatarPreview && avatarFallback) {
-        avatarPreview.src = storedProfile.photoDataUrl;
+      const profilePhoto = storedProfile.photoUrl || storedProfile.photoDataUrl;
+      if (profilePhoto && avatarPreview && avatarFallback) {
+        avatarPreview.src = profilePhoto;
         avatarPreview.hidden = false;
         avatarFallback.hidden = true;
 
@@ -1106,9 +1242,13 @@
           cvUpdatedAt.textContent = dateText ? `Actualizado: ${dateText}` : '';
         }
         if (cvViewLink) {
-          cvViewLink.href = storedProfile.cvDataUrl;
+          cvViewLink.href = '#';
           cvViewLink.hidden = false;
-          cvViewLink.setAttribute('download', storedProfile.cvFileName || 'CV.pdf');
+          cvViewLink.onclick = (e) => {
+            e.preventDefault();
+            const score = storedProfile.cvAiEvaluation ? (storedProfile.cvAiEvaluation.overall / 10).toFixed(1) : '0.0';
+            visualizarCV(userName || 'Candidato', storedProfile.cvDataUrl, score);
+          };
         }
       }
 
@@ -1119,7 +1259,14 @@
 
     syncPhotoUi(storedProfile);
     syncCvUi(storedProfile);
-    renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
+    
+    // PERSISTENCIA: Cargar evaluación previa si existe
+    if (storedProfile && storedProfile.cvAiEvaluation) {
+      renderCvAiEvaluation(storedProfile.cvAiEvaluation);
+    } else {
+      renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
+    }
+    
     syncCvAiDailyLimitUi();
 
     if (typeof geoService !== 'undefined') {
@@ -1127,6 +1274,84 @@
     }
 
     initConfirmModalOnce();
+
+    async function hydrateFromBackend() {
+      const currentUser = getCurrentUser();
+      if (!currentUser || !currentUser.token || currentUser.role !== 'candidato') return;
+
+      try {
+        const response = await fetch('http://localhost:3000/api/users/me', {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          const p = userData.candidateProfile;
+          if (p) {
+            const email = userData.email || currentUser.email;
+            const existing = getCandidateProfile(email) || {};
+            
+            const merged = {
+              ...existing,
+              version: PROFILE_VERSION,
+              email: email,
+              fullName: userData.fullName || existing.fullName,
+              location: p.location || existing.location,
+              about: p.bio || existing.about,
+              academicBackground: p.education || existing.academicBackground,
+              workExperience: p.experience || existing.workExperience,
+              technicalSkillsList: p.skills || existing.technicalSkillsList,
+              languagesList: p.languages || existing.languagesList,
+              cvDataUrl: p.cvUrl || existing.cvDataUrl,
+              cvFileName: p.cvOriginalName || existing.cvFileName,
+              photoUrl: p.photoUrl || existing.photoUrl,
+            };
+
+            // Mapear análisis desde el servidor si existe
+            if (p.cvAnalysis) {
+              const score = p.cvAnalysis.overallScore || 70;
+              merged.cvAiEvaluation = {
+                clarity: clampNumber(score + 5, 0, 100),
+                skills: clampNumber(score - 2, 0, 100),
+                experience: clampNumber(score, 0, 100),
+                overall: score,
+                status: 'Análisis recuperado del servidor.',
+                aiData: p.cvAnalysis
+              };
+            }
+
+            merged.technicalSkills = stringifyTokenList(merged.technicalSkillsList);
+            merged.languages = stringifyTokenList(merged.languagesList);
+
+            saveCandidateProfile(email, merged);
+
+            // Update UI
+            setFieldValue('fullName', merged.fullName);
+            setFieldValue('location', merged.location);
+            setFieldValue('about', merged.about);
+            setFieldValue('academicBackground', merged.academicBackground);
+            setFieldValue('workExperience', merged.workExperience);
+            
+            hydrateTokenFieldsFromProfile(merged);
+            syncCvUi(merged);
+            
+            const nameForHeader = String(merged.fullName || '').trim();
+            setText('profileName', nameForHeader || '—');
+            if (avatarInitials) avatarInitials.textContent = initialsFromName(nameForHeader);
+            
+            if (merged.cvAiEvaluation) {
+              renderCvAiEvaluation(merged.cvAiEvaluation);
+            } else {
+              renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error hydrating from backend:', error);
+      }
+    }
+
+    void hydrateFromBackend();
 
     function updateHeaderFromFullName() {
       const value = String(fullName?.value || '').trim();
@@ -1333,7 +1558,7 @@
         const formData = new FormData();
         formData.append('cv', file);
 
-        const response = await fetch('http://localhost:3000/cv/upload', {
+        const response = await fetch('http://localhost:3000/api/cv/upload', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -1352,47 +1577,40 @@
 
         const data = await response.json();
         const cvUrl = data.cvUrl; // URL from backend
-        clearCvError(); // Clear loading message
+        const originalName = data.cvOriginalName || file.name || 'CV.pdf';
 
-        commitPendingTokenDrafts();
-        const tokenFields = buildTokenProfileFields();
-
-        const existing = existingProfile;
-        const nowIso = data.updatedAt || new Date().toISOString();
-        saveCandidateProfile(userEmail, {
+        const profileToSave = {
+          ...existingProfile,
           version: PROFILE_VERSION,
           email: userEmail,
-          fullName: String(fullName?.value || userName || '').trim(),
-          headline: String(headline?.value || '').trim(),
-          academicBackground: String(academicBackground?.value || '').trim(),
-          workExperience: String(workExperience?.value || '').trim(),
-          technicalSkills: tokenFields.technicalSkills,
-          technicalSkillsList: tokenFields.technicalSkillsList,
-          languages: tokenFields.languages,
-          languagesList: tokenFields.languagesList,
-          location: String(location?.value || '').trim(),
-          phone: String(phone?.value || '').trim(),
-          about: String(about?.value || '').trim(),
-          photoDataUrl: String(existing.photoDataUrl || ''),
           cvDataUrl: cvUrl,
-          cvFileName: file.name || 'CV.pdf',
-          cvSize: Number(file.size || 0),
-          cvUpdatedAt: nowIso,
-          updatedAt: nowIso,
-          createdAt: existing.createdAt || nowIso,
-        });
+          cvFileName: originalName,
+          cvSize: file.size,
+          cvUpdatedAt: data.updatedAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdAt: existingProfile.createdAt || new Date().toISOString(),
+        };
+
+        saveCandidateProfile(userEmail, profileToSave);
+        void syncProfileWithBackend(profileToSave);
 
         if (cvInfo) cvInfo.hidden = false;
-        if (cvFileName) cvFileName.textContent = file.name || 'CV.pdf';
-        if (cvUpdatedAt) cvUpdatedAt.textContent = `Actualizado: ${new Date(nowIso).toLocaleString()}`;
+        if (cvFileName) cvFileName.textContent = originalName;
+        if (cvUpdatedAt) {
+          const dateText = new Date(profileToSave.cvUpdatedAt).toLocaleString();
+          cvUpdatedAt.textContent = `Actualizado: ${dateText}`;
+        }
         if (cvViewLink) {
-          cvViewLink.href = cvUrl;
+          cvViewLink.href = '#';
           cvViewLink.hidden = false;
-          cvViewLink.setAttribute('download', file.name || 'CV.pdf');
+          cvViewLink.onclick = (e) => {
+            e.preventDefault();
+            visualizarCV(userName || 'Candidato', cvUrl);
+          };
         }
 
         if (cvInput) cvInput.value = '';
-        syncCvUi({ ...existing, cvDataUrl: cvUrl });
+        syncCvUi({ ...existingProfile, cvDataUrl: cvUrl });
         renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
 
         showCvError('¡CV subido con éxito!');
@@ -1566,7 +1784,7 @@
           }
         }
 
-        saveCandidateProfile(userEmail, {
+        const profileToSave = {
           version: PROFILE_VERSION,
           email: userEmail,
           fullName: String(fullName?.value || userName || '').trim(),
@@ -1587,9 +1805,13 @@
           cvFileName: String(profile.cvFileName || ''),
           cvSize: Number(profile.cvSize || 0),
           cvUpdatedAt: String(profile.cvUpdatedAt || ''),
+          cvAiEvaluation: profile.cvAiEvaluation || undefined,
           updatedAt: nowIso,
           createdAt: profile.createdAt || nowIso,
-        });
+        };
+
+        saveCandidateProfile(userEmail, profileToSave);
+        void syncProfileWithBackend(profileToSave);
 
         if (photoInput) photoInput.value = '';
         closePhotoModal();
@@ -1634,7 +1856,7 @@
             cvViewLink.removeAttribute('download');
           }
 
-          saveCandidateProfile(userEmail, {
+          const profileToSave = {
             ...existing,
             version: PROFILE_VERSION,
             email: userEmail,
@@ -1644,7 +1866,10 @@
             cvUpdatedAt: '',
             updatedAt: new Date().toISOString(),
             createdAt: existing.createdAt || new Date().toISOString(),
-          });
+          };
+
+          saveCandidateProfile(userEmail, profileToSave);
+          void syncProfileWithBackend(profileToSave);
 
           syncCvUi({ ...existing, cvDataUrl: '' });
           renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
@@ -1691,19 +1916,26 @@
         cvFileName: String(existing.cvFileName || ''),
         cvSize: Number(existing.cvSize || 0),
         cvUpdatedAt: String(existing.cvUpdatedAt || ''),
+        cvAiEvaluation: existing.cvAiEvaluation || undefined,
         updatedAt: new Date().toISOString(),
         createdAt: existing.createdAt || new Date().toISOString(),
       };
 
       try {
         saveCandidateProfile(userEmail, nextProfile);
+        void syncProfileWithBackend(nextProfile);
       } catch (_) {
         // ignore
       }
 
       setText('profileName', nextProfile.fullName || '—');
       if (avatarInitials) avatarInitials.textContent = initialsFromName(nextProfile.fullName);
-      renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
+      
+      if (nextProfile.cvAiEvaluation) {
+        renderCvAiEvaluation(nextProfile.cvAiEvaluation);
+      } else {
+        renderCvAiEvaluation(buildCvAiEvaluation({ withJitter: false }));
+      }
 
       if (typeof updateNavbarActions === 'function') {
         updateNavbarActions();
