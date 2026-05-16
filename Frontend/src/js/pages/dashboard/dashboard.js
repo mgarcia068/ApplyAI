@@ -946,6 +946,7 @@ async function guardarOferta(ofertaId) {
 
 function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', rating = '0.0') {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const backendOrigin = 'http://localhost:3000';
 
   const overlay = document.createElement('div');
   overlay.id = 'cv-preview-overlay';
@@ -954,7 +955,12 @@ function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/
   const modal = document.createElement('div');
   modal.style.cssText = `background: #fff; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); width: ${isMobile ? '100%' : '90vw'}; max-width: 1000px; height: ${isMobile ? 'calc(100vh - 24px)' : '90vh'}; max-height: calc(100vh - 24px); display: flex; flex-direction: column; overflow: hidden;`;
   
-  const docUrl = urlOriginal || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+  let docUrl = urlOriginal || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+  
+  // Si es una ruta local (empieza con /api o /cv), le anteponemos el origen del backend
+  if (docUrl.startsWith('/')) {
+    docUrl = `${backendOrigin}${docUrl}`;
+  }
 
   // Calcular color según rating IA (Idéntica lógica a la tarjeta)
   const ratingNum = parseFloat(rating);

@@ -37,6 +37,14 @@ export class UpdateProfileDto {
   languages?: string[];
 
   @IsOptional()
-  @IsUrl()
+  @IsString()
   cvUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  cvOriginalName?: string;
+
+  @IsOptional()
+  @IsString()
+  photoUrl?: string;
 }

@@ -100,11 +100,11 @@ export class CvStorageService {
     const fileId = randomUUID();
     const fileName = `${fileId}.pdf`;
 
-    // Si tenemos S3, usamos S3
+    // Si tenemos S3, intentamos usarlo
     if (this.bucket && this.s3) {
       const objectKey = `${this.keyPrefix}/${safeUserId}/${fileName}`;
-      await this.s3
-        .send(
+      try {
+        await this.s3.send(
           new PutObjectCommand({
             Bucket: this.bucket,
             Key: objectKey,
@@ -114,16 +114,16 @@ export class CvStorageService {
               originalname: String(file.originalname || 'CV.pdf').slice(0, 200),
             },
           }),
-        )
-        .catch((error: unknown) => {
-          console.error('Error subiendo CV a S3:', error);
-          throw new InternalServerErrorException('No se pudo subir el CV al almacenamiento en la nube.');
-        });
+        );
 
-      return {
-        key: objectKey,
-        url: this.buildPublicUrl(objectKey),
-      };
+        return {
+          key: objectKey,
+          url: this.buildPublicUrl(objectKey),
+        };
+      } catch (error: unknown) {
+        this.logger.error(`Error subiendo CV a S3, reintentando con almacenamiento local: ${(error as Error).message}`);
+        // No lanzamos error, dejamos que siga al flujo local de abajo
+      }
     }
 
     // Fallback: almacenamiento local
@@ -135,7 +135,7 @@ export class CvStorageService {
       const filePath = path.join(userDir, fileName);
       await fs.promises.writeFile(filePath, buffer);
       
-      const localUrl = `/cv/file/${safeUserId}/${fileName}`;
+      const localUrl = `/api/cv/file/${safeUserId}/${fileName}`;
       return {
         key: path.join(safeUserId, fileName),
         url: localUrl,

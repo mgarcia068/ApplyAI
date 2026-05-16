@@ -220,7 +220,6 @@
                           autocomplete="email"
                           readonly
                         />
-                        <div class="form-hint">Se toma del usuario logueado.</div>
                       </div>
 
                       <div class="divider" style="margin: var(--space-2) 0">Curriculum</div>
@@ -266,7 +265,6 @@
                             <p class="text-xs text-muted">Puntuación visual basada en claridad, habilidades y experiencia.</p>
                             <p class="text-xs text-muted">Límite IA: 3 análisis diarios (solo para este análisis de CV).</p>
                           </div>
-                          <span class="badge badge--accent cv-ai__badge">Demo IA</span>
                         </header>
 
                         <div class="cv-ai__body">
@@ -280,7 +278,7 @@
                           <div class="cv-ai__metrics">
                             <div class="cv-ai__metric">
                               <div class="cv-ai__metric-top">
-                                <span>Claridad</span>
+                                <span>Claridad y Formato</span>
                                 <span id="cvAiClarityValue">0</span>
                               </div>
                               <div class="cv-ai__meter-track">
@@ -290,7 +288,7 @@
 
                             <div class="cv-ai__metric">
                               <div class="cv-ai__metric-top">
-                                <span>Habilidades</span>
+                                <span>Impacto de Habilidades</span>
                                 <span id="cvAiSkillsValue">0</span>
                               </div>
                               <div class="cv-ai__meter-track">
@@ -300,7 +298,7 @@
 
                             <div class="cv-ai__metric">
                               <div class="cv-ai__metric-top">
-                                <span>Experiencia</span>
+                                <span>Relevancia de Exp.</span>
                                 <span id="cvAiExperienceValue">0</span>
                               </div>
                               <div class="cv-ai__meter-track">
@@ -310,11 +308,28 @@
                           </div>
                         </div>
 
+                        <div id="cvAiFeedback" class="cv-ai__feedback" hidden>
+                          <div class="cv-ai__feedback-section">
+                            <h4 class="text-xs font-semibold uppercase tracking-wider text-success mb-2 flex items-center gap-1">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                              Puntos Fuertes del CV
+                            </h4>
+                            <ul id="cvAiStrengths" class="text-sm list-disc pl-4 space-y-1"></ul>
+                          </div>
+                          <div class="cv-ai__feedback-section">
+                            <h4 class="text-xs font-semibold uppercase tracking-wider text-error mb-2 flex items-center gap-1">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                              Puntos a Mejorar (CV)
+                            </h4>
+                            <ul id="cvAiWeaknesses" class="text-sm list-disc pl-4 space-y-1"></ul>
+                          </div>
+                        </div>
+
                         <footer class="cv-ai__footer">
                           <div class="cv-ai__footer-copy">
                             <span class="text-xs text-muted cv-ai__status" id="cvAiStatus">Todavía no ejecutaste la evaluación visual del CV.</span>
-                            <p class="cv-ai__insight cv-ai__insight--footer text-xs text-muted" id="cvAiInsight">
-                              Tu insight IA aparecerá acá cuando ejecutes el análisis visual del CV.
+                            <p class="cv-ai__insight cv-ai__insight--footer text-xs" id="cvAiInsight">
+                              Tu resumen profesional generado por IA aparecerá acá.
                             </p>
                           </div>
                           <button class="btn btn--secondary btn--sm cv-ai__action" type="button" id="runCvAiEvalBtn">Analizar CV con IA</button>

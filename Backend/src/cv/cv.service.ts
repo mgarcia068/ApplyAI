@@ -45,18 +45,23 @@ export class CvService {
     const candidateProfile = await this.prisma.candidateProfile
       .upsert({
         where: { userId },
-        update: { cvUrl },
+        update: { 
+          cvUrl,
+          cvOriginalName: file.originalname || 'CV.pdf'
+        },
         create: {
           userId,
           name: nameFallback,
           skills: [],
           languages: [],
           cvUrl,
+          cvOriginalName: file.originalname || 'CV.pdf'
         },
         select: {
           id: true,
           userId: true,
           cvUrl: true,
+          cvOriginalName: true,
           updatedAt: true,
         },
       })
@@ -66,6 +71,7 @@ export class CvService {
 
     return {
       cvUrl: candidateProfile.cvUrl,
+      cvOriginalName: candidateProfile.cvOriginalName,
       updatedAt: candidateProfile.updatedAt,
     };
   }
@@ -242,8 +248,8 @@ export class CvService {
     // Compatibilidad con la arquitectura anterior y con el nuevo endpoint de descargas locales
     let filePath: string;
     
-    // Si la URL es de nuestro endpoint local (ej: /cv/file/userId/file.pdf)
-    if (trimmed.startsWith('/cv/file/')) {
+    // Si la URL es de nuestro endpoint local (ej: /api/cv/file/userId/file.pdf)
+    if (trimmed.startsWith('/cv/file/') || trimmed.startsWith('/api/cv/file/')) {
       const parts = trimmed.split('/');
       const filename = parts.pop() || '';
       const userId = parts.pop() || '';

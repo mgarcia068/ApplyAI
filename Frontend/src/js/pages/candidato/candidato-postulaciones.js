@@ -2,6 +2,7 @@
   const STORAGE_KEYS = {
     currentUser: 'ApplyAI.currentUser',
     applications: 'ApplyAI.applications',
+    offers: 'ApplyAI.offers',
   };
 
   let OFFERS = [];
@@ -498,26 +499,50 @@ function showToast(title, subtitle = '', type = 'success') {
 
   async function init() {
     const alertEl = document.getElementById('candidateDashboardAlert');
-
     const currentUser = getCurrentUser();
     const isAllowed = Boolean(currentUser && currentUser.email && currentUser.role === 'candidato');
+    const email = isAllowed ? currentUser.email : '';
 
     if (alertEl) alertEl.hidden = isAllowed;
 
+    // --- PASO 1: Carga Híbrida (Instantánea desde LocalStorage) ---
+    const cachedOffers = localStorage.getItem(STORAGE_KEYS.offers);
+    if (cachedOffers) {
+      OFFERS = safeJsonParse(cachedOffers, []);
+      renderOffers(email, isAllowed);
+    }
+
+    const cachedApps = localStorage.getItem(STORAGE_KEYS.applications);
+    if (cachedApps && email) {
+      // Nota: renderApplications es async, pero aquí lo llamamos sin await 
+      // para no bloquear la carga inicial si hay datos en caché.
+      void renderApplications(email);
+    }
+
+    // --- PASO 2: Sincronización en segundo plano (Fetch desde Backend) ---
     try {
+      // 1. Sincronizar Ofertas
       const res = await axios.get('http://localhost:3000/api/jobs');
-      OFFERS = res.data.map(job => ({
+      const freshOffers = res.data.map(job => ({
         id: job.id,
         title: job.title,
         company: job.company?.user?.fullName || job.company?.email || 'Empresa',
         location: job.location || 'Remoto'
       }));
+      
+      OFFERS = freshOffers;
+      localStorage.setItem(STORAGE_KEYS.offers, JSON.stringify(freshOffers));
+      renderOffers(email, isAllowed);
 
+      // 2. Sincronizar Postulaciones si el usuario está logueado
       const rawUser = localStorage.getItem('ApplyAI.currentUser');
-      if (rawUser) {
+      if (rawUser && isAllowed) {
         const token = JSON.parse(rawUser).token;
         if (token) {
-          const appsRes = await axios.get('http://localhost:3000/api/applications', { headers: { Authorization: 'Bearer ' + token } });
+          const appsRes = await axios.get('http://localhost:3000/api/applications', { 
+            headers: { Authorization: 'Bearer ' + token } 
+          });
+          
           const mappedApps = appsRes.data.map(app => ({
             id: app.id,
             email: currentUser.email,
@@ -528,20 +553,16 @@ function showToast(title, subtitle = '', type = 'success') {
             status: app.status === 'PENDING' ? 'En revisión' : app.status === 'VIEWED' ? 'En Entrevista' : app.status === 'ACCEPTED' ? 'Aceptado' : 'Rechazado',
             appliedAt: app.createdAt
           }));
+          
           localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(mappedApps));
+          await renderApplications(email);
         }
       }
     } catch (e) {
-      console.error('Error fetching data', e);
+      console.error('Error sincronizando datos con el servidor:', e);
     }
 
-    const email = isAllowed ? currentUser.email : '';
-
-    await renderApplications(email);
-    renderOffers(email, isAllowed);
-
     if (!isAllowed) {
-      // Deshabilitar botones para evitar acciones sin login.
       const offersList = document.getElementById('offersList');
       if (offersList) {
         offersList.querySelectorAll('button').forEach((b) => (b.disabled = true));
