@@ -46,7 +46,7 @@
   }
 
   
-  async function fetchMyApplications() {
+  async function fetchMyApplications(email) {
     try {
       const rawUser = localStorage.getItem('ApplyAI.currentUser');
       const token = rawUser ? JSON.parse(rawUser).token : '';
@@ -55,14 +55,15 @@
       
       const apps = res.data.map(a => ({
         id: a.id,
+        email: email,
         offerId: a.jobOfferId,
         offerTitle: a.jobOffer?.title || 'Oferta',
-        company: a.jobOffer?.company?.email || 'Empresa',
+        company: a.jobOffer?.company?.user?.fullName || a.jobOffer?.company?.email || 'Empresa',
         location: a.jobOffer?.location || 'Remoto',
         status: a.status === 'PENDING' ? 'En revisión' : a.status === 'ACCEPTED' ? 'Aceptado' : a.status === 'VIEWED' ? 'Entrevista' : 'Rechazado',
         appliedAt: a.createdAt
       }));
-      localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(apps));
+      saveAllApplications(apps);
       return apps;
     } catch(e) { return []; }
   }
@@ -129,8 +130,49 @@
     );
   }
 
-  function createApplication(email, offer) {
+  async function createApplication(email, offer) {
     const apps = getAllApplications();
+    if (hasApplied(email, offer.id)) return;
+    const tempId = `temp_${Date.now()}`;
+    const newApp = {
+      id: tempId,
+      email: String(email || '').trim().toLowerCase(),
+      offerId: offer.id,
+      offerTitle: offer.title,
+      company: offer.company,
+      location: offer.location,
+      status: 'En revisión',
+      appliedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    apps.push(newApp);
+    saveAllApplications(apps);
+    renderApplications(email);
+    try {
+      const rawUser = localStorage.getItem('ApplyAI.currentUser');
+      const token = rawUser ? JSON.parse(rawUser).token : '';
+      const res = await axios.post('http://localhost:3000/api/applications', 
+        { jobOfferId: offer.id },
+        { headers: { Authorization: 'Bearer ' + token } }
+      );
+      const currentApps = getAllApplications();
+      const index = currentApps.findIndex(a => a.id === tempId);
+      if (index !== -1) {
+        currentApps[index].id = res.data.id;
+        saveAllApplications(currentApps);
+      }
+      showToast('¡Postulación exitosa!', `Te has postulado a ${offer.title}`);
+    } catch (e) {
+      const rolledBack = getAllApplications().filter(a => a.id !== tempId);
+      saveAllApplications(rolledBack);
+      renderApplications(email);
+      showToast('Error', 'No se pudo procesar la postulación.', 'error');
+    }
+  }
+
+  /* Dummy replacement to delete old lines */
+  function old_createApplication_lines() {
+
 
     if (hasApplied(email, offer.id)) return;
 
@@ -258,6 +300,9 @@
 
         if (action === 'apply') {
           createApplication(email, offer);
+          renderOffers(email, isAllowed);
+          renderApplications(email);
+          return;
         }
 
         renderOffers(email, isAllowed);
@@ -266,8 +311,8 @@
     });
   }
 
-  async function renderApplications(email) {
-    if(email) { await fetchMyApplications(); }
+  function renderApplications(email) {
+
 
     const listEl = document.getElementById('applicationsList');
     const countEl = document.getElementById('applicationsCount');
@@ -497,6 +542,26 @@ function showToast(title, subtitle = '', type = 'success') {
   }, 4000);
 }
 
+  // --- INICIO DE EMERGENCIA: PRIORIDAD ALTA ---
+  function immediateRender() {
+    const currentUser = getCurrentUser();
+    const email = currentUser?.email || '';
+    const isAllowed = !!email;
+
+    // 1. Mostrar ofertas de caché YA
+    const cachedOffers = localStorage.getItem(STORAGE_KEYS.offers);
+    if (cachedOffers) {
+      OFFERS = safeJsonParse(cachedOffers, []);
+      renderOffers(email, isAllowed);
+    }
+
+    // 2. Mostrar postulaciones de caché YA
+    const cachedApps = localStorage.getItem(STORAGE_KEYS.applications);
+    if (cachedApps && email) {
+      renderApplications(email);
+    }
+  }
+
   async function init() {
     const alertEl = document.getElementById('candidateDashboardAlert');
     const currentUser = getCurrentUser();
@@ -505,70 +570,35 @@ function showToast(title, subtitle = '', type = 'success') {
 
     if (alertEl) alertEl.hidden = isAllowed;
 
-    // --- PASO 1: Carga Híbrida (Instantánea desde LocalStorage) ---
-    const cachedOffers = localStorage.getItem(STORAGE_KEYS.offers);
-    if (cachedOffers) {
-      OFFERS = safeJsonParse(cachedOffers, []);
-      renderOffers(email, isAllowed);
-    }
+    // Renderizado inmediato por si falla el setTimeout
+    immediateRender();
 
-    const cachedApps = localStorage.getItem(STORAGE_KEYS.applications);
-    if (cachedApps && email) {
-      // Nota: renderApplications es async, pero aquí lo llamamos sin await 
-      // para no bloquear la carga inicial si hay datos en caché.
-      void renderApplications(email);
-    }
+    // Sincronización en ultra-segundo plano
+    setTimeout(() => {
+      // Sincronizar Ofertas
+      axios.get('http://localhost:3000/api/jobs').then(res => {
+        const fresh = res.data.map(job => ({
+          id: job.id,
+          title: job.title,
+          company: job.company?.user?.fullName || job.company?.email || 'Empresa',
+          location: job.location || 'Remoto'
+        }));
+        OFFERS = fresh;
+        localStorage.setItem(STORAGE_KEYS.offers, JSON.stringify(fresh));
+        renderOffers(email, isAllowed);
+      }).catch(() => {});
 
-    // --- PASO 2: Sincronización en segundo plano (Fetch desde Backend) ---
-    try {
-      // 1. Sincronizar Ofertas
-      const res = await axios.get('http://localhost:3000/api/jobs');
-      const freshOffers = res.data.map(job => ({
-        id: job.id,
-        title: job.title,
-        company: job.company?.user?.fullName || job.company?.email || 'Empresa',
-        location: job.location || 'Remoto'
-      }));
-      
-      OFFERS = freshOffers;
-      localStorage.setItem(STORAGE_KEYS.offers, JSON.stringify(freshOffers));
-      renderOffers(email, isAllowed);
-
-      // 2. Sincronizar Postulaciones si el usuario está logueado
-      const rawUser = localStorage.getItem('ApplyAI.currentUser');
-      if (rawUser && isAllowed) {
-        const token = JSON.parse(rawUser).token;
-        if (token) {
-          const appsRes = await axios.get('http://localhost:3000/api/applications', { 
-            headers: { Authorization: 'Bearer ' + token } 
-          });
-          
-          const mappedApps = appsRes.data.map(app => ({
-            id: app.id,
-            email: currentUser.email,
-            offerId: app.jobOfferId,
-            offerTitle: app.jobOffer?.title || 'Oferta',
-            company: app.jobOffer?.company?.user?.fullName || app.jobOffer?.company?.email || 'Empresa',
-            location: app.jobOffer?.location || 'Remoto',
-            status: app.status === 'PENDING' ? 'En revisión' : app.status === 'VIEWED' ? 'En Entrevista' : app.status === 'ACCEPTED' ? 'Aceptado' : 'Rechazado',
-            appliedAt: app.createdAt
-          }));
-          
-          localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(mappedApps));
-          await renderApplications(email);
-        }
+      // Sincronizar Postulaciones
+      if (email && isAllowed) {
+        fetchMyApplications(email).then(() => {
+          renderApplications(email);
+        });
       }
-    } catch (e) {
-      console.error('Error sincronizando datos con el servidor:', e);
-    }
-
-    if (!isAllowed) {
-      const offersList = document.getElementById('offersList');
-      if (offersList) {
-        offersList.querySelectorAll('button').forEach((b) => (b.disabled = true));
-      }
-    }
+    }, 300);
   }
+
+  // Ejecutar instantáneamente
+  immediateRender();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
