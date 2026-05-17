@@ -47,4 +47,31 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   photoUrl?: string;
+
+  // Company profile fields
+  @IsOptional()
+  @IsString()
+  rubro?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  web?: string;
+
+  @IsOptional()
+  @IsString()
+  employees?: string;
+
+  @IsOptional()
+  @IsString()
+  foundation?: string;
+
+  @IsOptional()
+  photoPanX?: number;
+
+  @IsOptional()
+  photoPanY?: number;
 }

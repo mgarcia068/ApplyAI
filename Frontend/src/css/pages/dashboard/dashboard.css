@@ -1087,3 +1087,41 @@
 .gap-16 { gap: 16px; }
 .mb-24 { margin-bottom: 24px; }
 
+/* ── TARJETA DE POSTULANTE (Custom) ─────────────────────────── */
+.applicant-card {
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-surface);
+  border-radius: 16px;
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.applicant-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+}
+
+.applicant-card .skill-chip {
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: #3B82F6 !important;
+  border: none !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+.applicant-card__footer {
+  margin-top: auto !important;
+}
+
+[data-theme="light"] .applicant-card .skill-chip {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #2563EB !important;
+}
+

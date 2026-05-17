@@ -222,47 +222,48 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
         }
 
         return `
-        <div class="applicant-card card-relative-col">
-          <div class="card-top-right">
-            <button onclick="abrirModalExplicacionIA('${p.nombre}', '${p.rating}', '${ratingColor}', '${ratingBg}', '${(p.skills || []).join(', ')}')" style="display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: ${ratingBg}; border: 2px solid ${ratingColor}; font-size: 11px; font-weight: 700; color: ${ratingColor}; cursor: pointer; padding: 0; outline: none; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Ver análisis de la IA">
+        <div class="applicant-card">
+          <div class="card-top-right" style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; align-items: center;">
+            <button onclick="abrirModalExplicacionIA('${p.id}')" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: ${ratingBg}; border: 2px solid ${ratingColor}; font-size: 12px; font-weight: 700; color: ${ratingColor}; cursor: pointer; padding: 0;" title="Ver análisis de la IA">
               ${p.rating}
             </button>
             <button class="btn btn--ghost btn--sm cursor-pointer" 
-               style="padding: var(--space-1); width: 32px; height: 32px; color: ${p.favorito ? 'var(--color-primary)' : 'var(--color-text-muted)'}" 
+               style="padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: ${p.favorito ? 'var(--color-primary)' : 'var(--color-text-muted)'}" 
                onclick="toggleCandidatoFavorito('${p.id}')" title="${p.favorito ? 'Quitar de favoritos' : 'Añadir a favoritos'}">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="${p.favorito ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="${p.favorito ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
             </button>
           </div>
-          <div class="applicant-card__header">
-            ${buildAvatarInitials(p.iniciales)}
-            <div class="applicant-card__info pr-12">
-              <div class="applicant-card__name font-semibold">${p.nombre}</div>
-              <div class="applicant-card__role text-xs text-muted mb-1">${p.rol}</div>
-              <div class="flex items-center gap-2 text-xs text-muted flex-wrap">
-                ${p.experiencia ? `<span class="badge-small">${p.experiencia}</span>` : ''}
-                ${p.estudio ? `<span class="badge-small">${p.estudio}</span>` : ''}
+          <div class="applicant-card__header flex gap-4 items-start mb-4">
+            ${p.photoUrl ? `<img src="${p.photoUrl}" class="avatar avatar--lg" style="width: 56px; height: 56px; border-radius: 12px; object-fit: cover;" alt="Foto de ${p.nombre}">` : `<div class="avatar avatar--lg" style="width: 56px; height: 56px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">${p.iniciales}</div>`}
+            <div class="applicant-card__info flex-1 min-w-0">
+              <div class="font-semibold text-base color-text mb-1">${p.nombre}</div>
+              <div class="text-xs text-muted mb-1">${p.rol}</div>
+              <div class="flex flex-col text-xs text-muted" style="gap: 2px;">
+                ${p.experiencia ? `<div class="flex items-center gap-1"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg><span>${p.experiencia}</span></div>` : ''}
+                ${p.estudio ? `<div class="flex items-center gap-1"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.825-3.055 12.083 12.083 0 01.665-6.479L12 14z"></path></svg><span>${p.estudio}</span></div>` : ''}
               </div>
             </div>
           </div>
-          <div class="applicant-card__skills my-2-4">
-            ${buildSkillChips(p.skills)}
+          <div class="applicant-card__skills flex flex-wrap gap-2 my-3">
+            ${p.skills.map(s => `<span class="skill-chip">${s}</span>`).join('')}
           </div>
-          <div class="applicant-card__footer card-footer-auto">
-            <div class="text-ellipsis-11">
+          <div class="applicant-card__footer card__footer flex justify-between items-center mt-auto pt-3">
+            <div class="text-xs">
               <span class="text-muted">Postulado a:</span><br>
-              <strong class="text-primary font-semibold">${puestoOferta}</strong>
+              <strong class="text-accent font-semibold">${puestoOferta}</strong>
             </div>
             <div class="flex items-center gap-2">
-              <button class="btn btn--secondary cursor-pointer btn-sm-32" onclick="visualizarCV('${p.nombre}', null, '${p.rating || '0.0'}')">Ver CV</button>
-              <select class="form-select cursor-pointer select-sm-32" 
+              <button class="btn btn--secondary btn--sm cursor-pointer" onclick="visualizarCV('${p.nombre}', '${p.cvUrl}', '${p.cvRating || '0.0'}')">Ver CV</button>
+              <select class="form-select cursor-pointer" 
+                style="width: auto; padding: var(--space-1) var(--space-3); font-size: var(--text-xs);"
                 onchange="cambiarEstadoCandidato('${p.id}', this.value)"
                 ${p.estado === 'Aceptado' || p.estado === 'Rechazado' ? 'disabled' : ''}>
-                <option value="Revisión" ${p.estado === 'Revisión' ? 'selected' : ''} ${p.estado === 'Entrevista' ? 'disabled' : ''}>En revisión</option>
-                <option value="Entrevista" ${p.estado === 'Entrevista' ? 'selected' : ''}>Entrevista</option>
-                <option value="Aceptado" ${p.estado === 'Aceptado' ? 'selected' : ''} ${p.estado === 'Revisión' ? 'disabled' : ''}>Aceptado</option>
-                <option value="Rechazado" ${p.estado === 'Rechazado' ? 'selected' : ''}>Rechazado</option>
+                <option value="Revisión" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Revisión' ? 'selected' : ''} ${p.estado === 'Entrevista' ? 'disabled' : ''}>En revisión</option>
+                <option value="Entrevista" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Entrevista' ? 'selected' : ''}>Entrevista</option>
+                <option value="Aceptado" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Aceptado' ? 'selected' : ''} ${p.estado === 'Revisión' ? 'disabled' : ''}>Aceptado</option>
+                <option value="Rechazado" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Rechazado' ? 'selected' : ''}>Rechazado</option>
               </select>
             </div>
           </div>
@@ -279,47 +280,77 @@ function toggleCandidatoFavorito(id) {
   applyPostulantesFilters(); // recarga la grilla según el último filtro
 }
 
-function abrirModalExplicacionIA(nombre, rating, color, bg, skillsStr) {
-  const ratingNum = parseFloat(rating);
-  let explicacion = '';
+function abrirModalExplicacionIA(postulanteId) {
+  const p = POSTULANTES.find(cand => cand.id === postulanteId);
+  if (!p) return;
+
+  const ratingNum = parseFloat(p.rating);
+  let color = '#EF4444';
+  let bg = 'rgba(239, 68, 68, 0.1)';
   
   if (ratingNum >= 8.5) {
-    explicacion = `<b>¡Excelente compatibilidad!</b> El perfil de ${nombre} se alinea en gran medida con los requerimientos de la vacante. Cuenta con dominio sólido comprobado en herramientas clave (${skillsStr || 'requeridas'}) y su trayectoria previa sugiere que podrá asumir el rol rápidamente minimizando la curva de aprendizaje.`;
+    color = '#10B981';
+    bg = 'rgba(16, 185, 129, 0.1)';
   } else if (ratingNum >= 7.0) {
-    explicacion = `<b>Buen encaje con potencial.</b> ${nombre} cumple con la mayor parte de las competencias solicitadas, mostrando experiencia en ${skillsStr || 'el área'}. Sería valioso profundizar en la entrevista sobre algunos de los requisitos faltantes, pero en general es un perfil viable para la posición.`;
+    color = '#F59E0B';
+    bg = 'rgba(245, 158, 11, 0.1)';
+  }
+
+  let explicacion = '';
+  if (ratingNum >= 8.5) {
+    explicacion = `<b>¡Excelente compatibilidad!</b> El perfil de ${p.nombre} se alinea en gran medida con los requerimientos de la vacante. Cuenta con un dominio sólido comprobado en las herramientas clave y su trayectoria previa sugiere un desempeño exitoso.`;
+  } else if (ratingNum >= 7.0) {
+    explicacion = `<b>Buen encaje con potencial.</b> ${p.nombre} cumple con la mayor parte de las competencias solicitadas. Sería valioso profundizar en la entrevista sobre algunos requisitos específicos, pero es un perfil viable.`;
   } else {
-    explicacion = `<b>Perfil con oportunidades de desarrollo.</b> Actualmente, el perfil no parece cubrir los requisitos core que exige la postulación. Existe una escasez de las habilidades tecnológicas principales solicitadas y una divergencia en la experiencia requerida según nuestras ponderaciones predictivas.`;
+    explicacion = `<b>Perfil con oportunidades de desarrollo.</b> Actualmente, el perfil no parece cubrir los requisitos core que exige la postulación. Existe una brecha en las habilidades tecnológicas principales solicitadas.`;
   }
 
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.3s;';
   
   const modal = document.createElement('div');
-  modal.style.cssText = 'background: var(--color-bg, #fff); color: var(--color-text, #111827); padding: 28px; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-width: 480px; width: 90%; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;';
+  modal.style.cssText = 'background: var(--color-bg, #fff); color: var(--color-text, #111827); padding: 32px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-width: 600px; width: 90%; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;';
   
+  const prosHtml = (p.strengths || []).map(s => `<li style="margin-bottom: 8px; color: #10B981; display: flex; align-items: flex-start; gap: 6px;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:2px;"><path d="M5 13l4 4L19 7"></path></svg><span>${s}</span></li>`).join('');
+  const contrasHtml = (p.weaknesses || []).map(w => `<li style="margin-bottom: 8px; color: #EF4444; display: flex; align-items: flex-start; gap: 6px;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:2px;"><path d="M6 18L18 6M6 6l12 12"></path></svg><span>${w}</span></li>`).join('');
+
   modal.innerHTML = `
-    <button id="ia-close-btn" class="btn-close-top-right" onmouseover="this.style.background='var(--color-bg-3, #f3f4f6)'" onmouseout="this.style.background='none'">
+    <button id="ia-close-btn" class="btn-close-top-right" style="position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--color-text-muted); cursor: pointer; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='none'">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
     </button>
-    <div class="flex items-center gap-16 mb-24">
-      <div style="width: 56px; height: 56px; border-radius: 50%; background: ${bg}; border: 3px solid ${color}; display: flex; align-items: center; justify-content: center; color: ${color}; font-size: 18px; font-weight: 800; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-        ${rating}
+    <div style="display: flex; align-items: center; gap: 16px; mb-24; margin-bottom: 24px;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: ${bg}; border: 3px solid ${color}; display: flex; align-items: center; justify-content: center; color: ${color}; font-size: 18px; font-weight: 800; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;">
+        ${p.rating}
       </div>
       <div>
         <div style="display: flex; align-items: center; gap: 6px;">
-          <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: var(--color-text, #111827);">Análisis del Match</h3>
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: #8B5CF6;"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--color-text, #111827);">Análisis del Match</h3>
+          <span style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">Powered by ApplyAI</span>
         </div>
-        <p style="margin: 4px 0 0 0; font-size: 14px; color: var(--color-text-muted, #6B7280);">Justificación de IA para <strong style="color: var(--color-text, #111827);">${nombre}</strong></p>
+        <p style="margin: 4px 0 0; color: var(--color-text-muted, #6B7280); font-size: 14px;">Evaluación detallada para ${p.nombre}</p>
       </div>
     </div>
-    <div style="background: var(--color-bg-3, rgba(243, 244, 246, 0.8)); padding: 20px; border-radius: 8px; border-left: 4px solid ${color}; font-size: 14px; line-height: 1.6; color: var(--color-text, #374151);">
-      <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-        <span style="font-weight: 600; color: ${color}; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Resumen del Modelo Inteligente</span>
+    
+    <div style="margin-bottom: 24px; font-size: 15px; line-height: 1.6; color: var(--color-text, #374151);">
+      ${explicacion}
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+      <div>
+        <h4 style="margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #10B981; display: flex; align-items: center; gap: 6px;">
+          Puntos Fuertes (CV)
+        </h4>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 14px;">
+          ${prosHtml || '<li style="color: var(--color-text-muted);">No se identificaron puntos fuertes específicos.</li>'}
+        </ul>
       </div>
-      <div style="margin-top: 8px;">
-        ${explicacion}
+      <div>
+        <h4 style="margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #EF4444; display: flex; align-items: center; gap: 6px;">
+          Áreas de Mejora (CV)
+        </h4>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 14px;">
+          ${contrasHtml || '<li style="color: var(--color-text-muted);">No se identificaron áreas de mejora críticas.</li>'}
+        </ul>
       </div>
     </div>
   `;
@@ -717,6 +748,11 @@ async function verPostulantes(ofertaId) {
         favorito: false,
         estado: app.status === 'PENDING' ? 'Revisión' : app.status === 'ACCEPTED' ? 'Aceptado' : app.status === 'VIEWED' ? 'Entrevista' : 'Rechazado',
         rating: app.matchScore ? (app.matchScore / 10).toFixed(1) : '0.0',
+        cvRating: p.cvAnalysis?.overallScore ? (p.cvAnalysis.overallScore / 10).toFixed(1) : '0.0',
+        cvUrl: p.cvUrl || '',
+        photoUrl: p.photoUrl || '',
+        strengths: app.matchPros || [],
+        weaknesses: app.matchCons || [],
         applicationId: app.id
       };
     });
@@ -1032,7 +1068,7 @@ function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/
           <h3 style="margin: 0; font-size: ${isMobile ? '16px' : '18px'}; font-weight: 600; color: #111827; line-height: 1.2; word-break: break-word;">CV de ${nombreCandidato}</h3>
           <p style="margin: 0; font-size: ${isMobile ? '13px' : '14px'}; color: #6B7280;">Previsualizacion del documento pdf</p>
         </div>
-        <div style="display: flex; align-items: center; justify-content: center; width: ${isMobile ? '38px' : '44px'}; height: ${isMobile ? '38px' : '44px'}; border-radius: 50%; background: ${ratingBg}; border: 3px solid ${ratingColor}; font-size: ${isMobile ? '13px' : '15px'}; font-weight: 700; color: ${ratingColor}; margin-left: ${isMobile ? '4px' : '12px'}; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;" title="Calidad del CV evaluada por IA separada del match">
+        <div style="display: flex; align-items: center; justify-content: center; width: ${isMobile ? '38px' : '44px'}; height: ${isMobile ? '38px' : '44px'}; border-radius: 50%; background: ${ratingBg}; border: 3px solid ${ratingColor}; font-size: ${isMobile ? '13px' : '15px'}; font-weight: 700; color: ${ratingColor}; margin-left: ${isMobile ? '4px' : '12px'}; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;" title="Calidad de CV evaluada por IA">
           ${rating}
         </div>
       </div>

@@ -1,6 +1,8 @@
 (function () {
-  document.addEventListener('DOMContentLoaded', () => {
-    const company = resolveCompanyContext();
+  document.addEventListener('DOMContentLoaded', async () => {
+    const company = await resolveCompanyContext();
+    if (!company) return;
+    
     checkAccess(company);
     renderCompanyHeader(company);
     initFollowAndFavorite(company);
@@ -188,48 +190,96 @@
     }
   }
 
-  function resolveCompanyContext() {
+  async function resolveCompanyContext() {
     const requested = String(getQueryParam('company') || '').trim();
-    const requestedId = requested ? slugify(requested) : '';
+    
+    if (requested) {
+      try {
+        let searchKey = requested;
+        if (!searchKey.includes('@')) {
+           // Caso especial para el ejemplo del usuario o si se quitaron puntos y arrobas
+           if (searchKey.includes('gmailcom')) {
+             searchKey = searchKey.replace('gmailcom', '@gmail.com');
+           } else if (searchKey.includes('hotmailcom')) {
+             searchKey = searchKey.replace('hotmailcom', '@hotmail.com');
+           }
+        }
 
+        const res = await axios.get(`http://localhost:3000/api/users/company/${searchKey}`);
+        const data = res.data;
+        const profile = data.companyProfile;
+
+        if (profile) {
+          // Si encontramos la empresa, devolvemos sus datos reales
+          return {
+            id: profile.id,
+            name: profile.name || data.fullName || 'Empresa',
+            tagline: profile.rubro || 'Perfil de empresa', // Usamos rubro como tagline si no hay
+            description: profile.description || 'Sin descripción disponible.',
+            industry: profile.rubro || 'No especificada',
+            location: profile.location || 'No especificada',
+            website: profile.web || '',
+            photoDataUrl: profile.photoUrl || '',
+            photoPanX: profile.photoPanX || 0,
+            photoPanY: profile.photoPanY || 0,
+            offers: (data.jobOffers || []).map(jo => ({
+              id: jo.id,
+              title: jo.title,
+              type: jo.modality === 'HYBRID' ? 'Híbrido' : jo.modality === 'ONSITE' ? 'Presencial' : 'Remoto',
+              date: new Date(jo.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
+            }))
+          };
+        }
+      } catch (err) {
+        console.warn("No se encontró la empresa en el backend o error de conexión.", err);
+      }
+    }
+
+    // Si no hay parámetro, probamos con el usuario logueado (Mi Perfil)
     if (!requested) {
       try {
         const currentUserRaw = localStorage.getItem('ApplyAI.currentUser');
         if (currentUserRaw) {
           const currentUser = JSON.parse(currentUserRaw);
           if (normalizeRole(currentUser.role) === 'empresa') {
-            const companyEmail = currentUser.email;
-            let companyName = currentUser.fullName || currentUser.email.split('@')[0] || 'Mi Empresa';
+            const response = await axios.get('http://localhost:3000/api/users/me', {
+              headers: { Authorization: `Bearer ${currentUser.token}` }
+            });
+            const data = response.data;
+            const profile = data.companyProfile;
 
-            let profile = mapSavedProfileToPublic(null, companyName, slugify(companyName), true);
-
-            const savedRaw = localStorage.getItem(`ApplyAI.perfilEmpresa_${companyEmail}`);
-            if (savedRaw) {
-              const saved = safeJsonParse(savedRaw, null);
-              if (saved) {
-                profile = mapSavedProfileToPublic(saved, companyName, requestedId || slugify(companyName), true);
-              }
+            if (profile) {
+              return {
+                id: profile.id,
+                name: profile.name || data.fullName || 'Mi Empresa',
+                tagline: profile.description || 'Perfil de empresa',
+                description: profile.description || 'Sin descripción disponible.',
+                industry: profile.rubro || 'Tecnología',
+                location: profile.location || 'No especificada',
+                website: profile.web || '#',
+                photoDataUrl: profile.photoUrl || '',
+                photoPanX: profile.photoPanX || 0,
+                photoPanY: profile.photoPanY || 0,
+                isOwnProfile: true,
+                offers: (data.jobOffers || []).map(jo => ({
+                  id: jo.id,
+                  title: jo.title,
+                  type: jo.modality === 'HYBRID' ? 'Híbrido' : jo.modality === 'ONSITE' ? 'Presencial' : 'Remoto',
+                  date: new Date(jo.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
+                }))
+              };
             }
-            return profile;
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Error cargando perfil propio", e);
+      }
     }
 
-    const fallback = {
-      ...COMPANY_CATALOG.techcorp,
-      description: 'En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida...',
-      photoDataUrl: '',
-      photoPanX: 0,
-      photoPanY: 0,
-    };
-
-    const savedFromStorage = requestedId ? findSavedCompanyProfileById(requestedId) : null;
-    if (savedFromStorage) {
-      return mapSavedProfileToPublic(savedFromStorage, requested, requestedId, false);
-    }
-
+    // Fallback al catálogo estático si todo lo anterior falla
+    const requestedId = requested ? slugify(requested) : '';
     const fromCatalog = requestedId && COMPANY_CATALOG[requestedId] ? COMPANY_CATALOG[requestedId] : null;
+    
     if (fromCatalog) {
       return {
         ...fromCatalog,
@@ -240,23 +290,13 @@
       };
     }
 
-    if (requested) {
-      return {
-        id: requestedId || slugify(requested) || 'empresa',
-        name: requested,
-        tagline: 'Perfil de empresa',
-        description: 'Perfil público de ' + requested,
-        industry: '—',
-        location: '—',
-        website: '#',
-        offers: [],
-        photoDataUrl: '',
-        photoPanX: 0,
-        photoPanY: 0,
-      };
-    }
-
-    return fallback;
+    return {
+      ...COMPANY_CATALOG.techcorp,
+      description: 'En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida...',
+      photoDataUrl: '',
+      photoPanX: 0,
+      photoPanY: 0,
+    };
   }
 
   // Función para mostrar mensajes temporales "Toast"
