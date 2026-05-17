@@ -719,6 +719,10 @@ function togglePerfilEdit(editar) {
       });
     }, 200);
     if (btn) btn.style.display = 'none';
+
+    if (typeof geoService !== 'undefined') {
+      geoService.setupAutocomplete('#edit-ubicacion');
+    }
   } else {
     edit.style.opacity = '0';
     edit.style.transform = 'translateY(-8px)';
@@ -736,34 +740,76 @@ function togglePerfilEdit(editar) {
   }
 }
 
-function guardarPerfil() {
-  PERFIL_EMPRESA.nombre      = document.getElementById('edit-nombre')?.value.trim()      || PERFIL_EMPRESA.nombre;
-  PERFIL_EMPRESA.rubro       = document.getElementById('edit-rubro')?.value.trim()       || PERFIL_EMPRESA.rubro;
-  PERFIL_EMPRESA.descripcion = document.getElementById('edit-descripcion')?.value.trim() || PERFIL_EMPRESA.descripcion;
-  PERFIL_EMPRESA.web         = document.getElementById('edit-web')?.value.trim()         || PERFIL_EMPRESA.web;
-  PERFIL_EMPRESA.ubicacion   = document.getElementById('edit-ubicacion')?.value.trim()   || PERFIL_EMPRESA.ubicacion;
-  PERFIL_EMPRESA.empleados   = document.getElementById('edit-empleados')?.value          || PERFIL_EMPRESA.empleados;
-  PERFIL_EMPRESA.fundacion   = document.getElementById('edit-fundacion')?.value          || PERFIL_EMPRESA.fundacion;
+async function guardarPerfil() {
+  const saveBtn = document.querySelector('#perfil-edit .btn--primary');
+  const originalText = saveBtn ? saveBtn.textContent : 'Guardar cambios';
+  if (saveBtn) {
+    saveBtn.textContent = 'Guardando...';
+    saveBtn.disabled = true;
+  }
+
+  const payload = {
+    name:        document.getElementById('edit-nombre')?.value.trim()      || PERFIL_EMPRESA.nombre,
+    rubro:       document.getElementById('edit-rubro')?.value.trim()       || PERFIL_EMPRESA.rubro,
+    description: document.getElementById('edit-descripcion')?.value.trim() || PERFIL_EMPRESA.descripcion,
+    web:         document.getElementById('edit-web')?.value.trim()         || PERFIL_EMPRESA.web,
+    location:    document.getElementById('edit-ubicacion')?.value.trim()   || PERFIL_EMPRESA.ubicacion,
+    employees:   document.getElementById('edit-empleados')?.value          || PERFIL_EMPRESA.empleados,
+    foundation:  document.getElementById('edit-fundacion')?.value          || PERFIL_EMPRESA.fundacion,
+  };
 
   const photoDraft = getPerfilEmpresaDraft();
-  PERFIL_EMPRESA.photoDataUrl = String(photoDraft.photoDataUrl || '');
-  PERFIL_EMPRESA.photoPanX = clampCompanyNumber(photoDraft.photoPanX, -1, 1);
-  PERFIL_EMPRESA.photoPanY = clampCompanyNumber(photoDraft.photoPanY, -1, 1);
+  payload.photoUrl = String(photoDraft.photoDataUrl || '');
+  payload.photoPanX = clampCompanyNumber(photoDraft.photoPanX, -1, 1);
+  payload.photoPanY = clampCompanyNumber(photoDraft.photoPanY, -1, 1);
 
-  if (PERFIL_EMPRESA.web && !/^https?:\/\//i.test(PERFIL_EMPRESA.web)) {
-    PERFIL_EMPRESA.web = `https://${PERFIL_EMPRESA.web}`;
+  if (payload.web && !/^https?:\/\//i.test(payload.web)) {
+    payload.web = `https://${payload.web}`;
   }
 
   try {
-    localStorage.setItem(`ApplyAI.perfilEmpresa_${companyEmail}`, JSON.stringify(PERFIL_EMPRESA));
+    const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+    const response = await axios.patch('http://localhost:3000/api/users/me', payload, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+
+    const freshUser = response.data;
+    const profile = freshUser.companyProfile;
+
+    if (profile) {
+      PERFIL_EMPRESA = {
+        nombre:      profile.name || freshUser.fullName || PERFIL_EMPRESA.nombre,
+        rubro:       profile.rubro || PERFIL_EMPRESA.rubro,
+        descripcion: profile.description || PERFIL_EMPRESA.descripcion,
+        web:         profile.web || PERFIL_EMPRESA.web,
+        ubicacion:   profile.location || PERFIL_EMPRESA.ubicacion,
+        empleados:   profile.employees || PERFIL_EMPRESA.empleados,
+        fundacion:   profile.foundation || PERFIL_EMPRESA.foundation,
+        photoDataUrl: profile.photoUrl || '',
+        photoPanX:   profile.photoPanX || 0,
+        photoPanY:   profile.photoPanY || 0,
+      };
+      
+      localStorage.setItem(`ApplyAI.perfilEmpresa_${companyEmail}`, JSON.stringify(PERFIL_EMPRESA));
+    }
+
     syncPerfilEmpresaIdentityUi();
+    syncPerfilEmpresaViewFields();
+    syncPerfilEmpresaAvatars();
+    togglePerfilEdit(false);
+    
+    if (typeof showToast === 'function') {
+      showToast('Perfil actualizado', 'Los cambios se guardaron correctamente en la base de datos.', 'success');
+    }
   } catch (e) {
     console.error('Error saving company profile:', e);
+    alert('Error al guardar el perfil en el servidor.');
+  } finally {
+    if (saveBtn) {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }
   }
-
-  syncPerfilEmpresaViewFields();
-  syncPerfilEmpresaAvatars();
-  togglePerfilEdit(false);
 }
 
 const style = document.createElement('style');
@@ -786,6 +832,34 @@ function closeMobileSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Intentar cargar datos frescos del perfil al iniciar
+  try {
+    const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+    if (user && user.token) {
+      const response = await axios.get('http://localhost:3000/api/users/me', {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      const profile = response.data.companyProfile;
+      if (profile) {
+        PERFIL_EMPRESA = {
+          nombre:      profile.name || response.data.fullName || PERFIL_EMPRESA.nombre,
+          rubro:       profile.rubro || PERFIL_EMPRESA.rubro,
+          descripcion: profile.description || PERFIL_EMPRESA.descripcion,
+          web:         profile.web || PERFIL_EMPRESA.web,
+          ubicacion:   profile.location || PERFIL_EMPRESA.ubicacion,
+          empleados:   profile.employees || PERFIL_EMPRESA.empleados,
+          fundacion:   profile.foundation || PERFIL_EMPRESA.foundation,
+          photoDataUrl: profile.photoUrl || '',
+          photoPanX:   profile.photoPanX || 0,
+          photoPanY:   profile.photoPanY || 0,
+        };
+        localStorage.setItem(`ApplyAI.perfilEmpresa_${companyEmail}`, JSON.stringify(PERFIL_EMPRESA));
+      }
+    }
+  } catch (err) {
+    console.warn("No se pudo sincronizar el perfil con el backend, usando local.", err);
+  }
+
   syncPerfilEmpresaIdentityUi();
 
   if (typeof loadDashboardData === 'function') {
