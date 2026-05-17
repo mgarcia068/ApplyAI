@@ -10,6 +10,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AwsModule } from './aws/aws.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AppService } from './app.service';
       envFilePath: ['.env', 'Backend/.env', '../.env'],
     }),
     AppConfigModule,
+    AwsModule,
     PrismaModule,
     AuthModule,
     UsersModule,

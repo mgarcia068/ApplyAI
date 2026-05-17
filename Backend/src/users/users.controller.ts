@@ -1,5 +1,8 @@
-import { Controller, Get, Patch, Delete, Param, Body, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Delete, Param, Body, Query, UseGuards, HttpCode, HttpStatus, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import type { Request } from 'express';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -7,12 +10,16 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UsersService } from './users.service';
+import { PhotoStorageService } from './photo-storage.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { FilterCandidatesDto } from './dto/filter-candidates.dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly photoStorageService: PhotoStorageService,
+  ) {}
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
@@ -27,6 +34,39 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(user, dto);
+  }
+
+  @Post('me/photo')
+  @Roles(Role.CANDIDATE)
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+      fileFilter: (
+        _req: Request,
+        file: Express.Multer.File,
+        cb: (error: Error | null, acceptFile: boolean) => void,
+      ) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (allowed.includes(file.mimetype?.toLowerCase())) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('Solo se permiten imágenes JPG, PNG, WebP o GIF'), false);
+        }
+      },
+    }),
+  )
+  async uploadPhoto(
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Seleccioná una imagen para subir.');
+    }
+    const { url } = await this.photoStorageService.uploadProfilePhoto({ userId: user.sub, file });
+    // Actualizar el perfil con la nueva URL
+    await this.usersService.updateProfile(user, { photoUrl: url });
+    return { photoUrl: url };
   }
 
   @Delete('me')
