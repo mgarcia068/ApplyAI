@@ -1,5 +1,5 @@
 import { InternalServerErrorException, Injectable, Logger } from '@nestjs/common';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -124,6 +124,85 @@ export class CvStorageService {
     } catch (error) {
       this.logger.error('Error guardando CV localmente:', error);
       throw new InternalServerErrorException('No se pudo guardar el CV localmente.');
+    }
+  }
+
+  async getBufferFromUrl(url: string): Promise<Buffer> {
+    const trimmed = String(url || '').trim();
+    if (!trimmed) {
+      throw new InternalServerErrorException('URL de CV vacía.');
+    }
+
+    const bucket = this.appConfig.s3Bucket;
+
+    // Si es una URL de S3, intentamos descargarla usando el SDK (más seguro si el bucket es privado)
+    if (bucket && (trimmed.includes('.amazonaws.com') || (this.appConfig.s3PublicBaseUrl && trimmed.startsWith(this.appConfig.s3PublicBaseUrl)))) {
+      try {
+        let objectKey = '';
+        if (this.appConfig.s3PublicBaseUrl && trimmed.startsWith(this.appConfig.s3PublicBaseUrl)) {
+          objectKey = trimmed.replace(this.appConfig.s3PublicBaseUrl, '').replace(/^\/+/, '');
+        } else {
+          // Extraer key de URL estándar de S3
+          // https://bucket.s3.region.amazonaws.com/key o https://s3.region.amazonaws.com/bucket/key
+          const urlObj = new URL(trimmed);
+          const path = urlObj.pathname.replace(/^\/+/, '');
+          if (trimmed.includes(`/${bucket}/`)) {
+            objectKey = path.substring(path.indexOf(bucket) + bucket.length + 1);
+          } else {
+            objectKey = path;
+          }
+        }
+
+        if (objectKey) {
+          const response = await this.s3Service.client.send(
+            new GetObjectCommand({
+              Bucket: bucket,
+              Key: decodeURIComponent(objectKey),
+            }),
+          );
+
+          const streamToBuffer = async (stream: any): Promise<Buffer> => {
+            return new Promise((resolve, reject) => {
+              const chunks: any[] = [];
+              stream.on('data', (chunk: any) => chunks.push(chunk));
+              stream.on('error', reject);
+              stream.on('end', () => resolve(Buffer.concat(chunks)));
+            });
+          };
+
+          return await streamToBuffer(response.Body);
+        }
+      } catch (error) {
+        this.logger.error(`Error descargando desde S3 (${trimmed}):`, error);
+        // Fallback a fetch si falla la extracción de la key o el SDK
+      }
+    }
+
+    // Fallback para URLs locales (/api/cv/file/...)
+    if (trimmed.startsWith('/api/cv/file/') || trimmed.startsWith('/cv/file/')) {
+      try {
+        const parts = trimmed.split('/');
+        const filename = parts.pop() || '';
+        const userId = parts.pop() || '';
+        const filePath = path.join(__dirname, '..', '..', 'uploads', 'cvs', userId, filename);
+        return await fs.promises.readFile(filePath);
+      } catch (error) {
+        this.logger.error(`Error leyendo archivo local (${trimmed}):`, error);
+        throw new InternalServerErrorException('No se pudo leer el archivo del CV local.');
+      }
+    }
+
+    // Fallback genérico usando fetch (para URLs externas que no sean S3 o si falló lo anterior)
+    try {
+      const response = await fetch(trimmed);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (error: any) {
+      this.logger.error(`Error en fetch final (${trimmed}):`, error.message);
+      throw new InternalServerErrorException('No se pudo descargar el CV desde el almacenamiento.');
     }
   }
 }

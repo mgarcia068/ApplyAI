@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <script src="../../js/core/middlewares/auth-guard.js?v=1.2"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mi CV — ApplyAI</title>
+    <meta name="description" content="Subí tu currículum y analizalo con inteligencia artificial para mejorar tus chances de conseguir trabajo." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="../../css/core/base.css?v=1.1" />
+    <link rel="stylesheet" href="../../css/components/components.css?v=1.1" />
+    <link rel="stylesheet" href="../../css/pages/profile.css?v=1.1" />
+
+    <style>
+      /* ── PAGE LAYOUT ─────────────────────────────────────────── */
+      .micv-shell {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+
+      .micv-header {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+      }
+
+      .micv-header__icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-lg);
+        background: var(--color-accent-soft);
+        color: var(--color-accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .micv-header__text h1 {
+        font-family: var(--font-display);
+        font-size: var(--text-2xl);
+        font-weight: var(--weight-bold);
+        margin: 0 0 var(--space-1);
+        color: var(--color-text);
+      }
+
+      .micv-header__text p {
+        font-size: var(--text-sm);
+        color: var(--color-text-muted);
+        margin: 0;
+      }
+
+      /* ── UPLOAD CARD ─────────────────────────────────────────── */
+      .micv-upload-card {
+        padding: var(--space-6);
+        margin-bottom: var(--space-5);
+      }
+
+      .micv-upload-zone {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        flex-wrap: wrap;
+      }
+
+      .micv-upload-zone .form-file {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .micv-cv-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        background: var(--color-bg-3);
+        border: 1px solid var(--color-surface);
+        border-radius: var(--radius-md);
+        margin-top: var(--space-3);
+        flex-wrap: wrap;
+      }
+
+      .micv-cv-info__meta {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+      }
+
+      .micv-cv-info__actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+
+      /* ── NO CV EMPTY STATE ───────────────────────────────────── */
+      .micv-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-10) var(--space-6);
+        text-align: center;
+        gap: var(--space-3);
+      }
+
+      .micv-empty__icon {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-full);
+        background: var(--color-bg-3);
+        border: 2px dashed var(--color-surface);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-text-muted);
+        font-size: 28px;
+      }
+
+      .micv-empty__title {
+        font-family: var(--font-display);
+        font-size: var(--text-md);
+        font-weight: var(--weight-semibold);
+        color: var(--color-text);
+      }
+
+      .micv-empty__text {
+        font-size: var(--text-sm);
+        color: var(--color-text-muted);
+        max-width: 36ch;
+      }
+
+      /* ── AI SECTION ──────────────────────────────────────────── */
+      .micv-ai-card {
+        padding: var(--space-6);
+      }
+
+      .micv-ai-locked {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-8) var(--space-6);
+        gap: var(--space-3);
+        text-align: center;
+      }
+
+      .micv-ai-locked__icon {
+        width: 52px;
+        height: 52px;
+        border-radius: var(--radius-full);
+        background: var(--color-bg-3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-text-muted);
+      }
+
+      .micv-ai-locked__title {
+        font-family: var(--font-display);
+        font-size: var(--text-base);
+        font-weight: var(--weight-semibold);
+        color: var(--color-text);
+      }
+
+      .micv-ai-locked__text {
+        font-size: var(--text-sm);
+        color: var(--color-text-muted);
+        max-width: 34ch;
+      }
+    </style>
+
+    <script src="../../js/services/theme.js?v=1.1"></script>
+    <script src="../../js/core/components.js?v=1.5" defer></script>
+    <script src="../../js/pages/candidato/mi-cv.js" defer></script>
+  </head>
+  <body>
+    <div id="navbar-placeholder"></div>
+    <main class="page-wrapper">
+      <section class="section section--sm">
+        <div class="container micv-shell">
+
+          <!-- Header -->
+          <div class="micv-header">
+            <div class="micv-header__icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div class="micv-header__text">
+              <h1>Mi CV</h1>
+              <p>Subí tu currículum en PDF y analizalo con inteligencia artificial.</p>
+            </div>
+          </div>
+
+          <!-- Auth alert -->
+          <div id="micvAuthAlert" class="alert alert--info flex-col" hidden style="margin-bottom: var(--space-5)">
+            <strong>Necesitás iniciar sesión.</strong>
+            <span class="text-sm text-muted">Iniciá sesión para poder subir y analizar tu CV.</span>
+            <div style="margin-top: var(--space-3)">
+              <a class="btn btn--primary btn--sm" href="../auth/login.html">Ir a login</a>
+            </div>
+          </div>
+
+          <!-- Upload card -->
+          <div class="card micv-upload-card">
+            <header class="card__header" style="margin-bottom: var(--space-4)">
+              <div class="flex flex-col" style="gap: var(--space-1)">
+                <span class="label">Currículum</span>
+                <h2 class="card__title">Archivo PDF</h2>
+              </div>
+            </header>
+
+            <div class="micv-upload-zone">
+              <label class="form-file" for="cvFile" id="cvUploadLabel">
+                <div class="text-sm">Subir CV</div>
+                <div class="text-xs text-muted">PDF (máx. 3MB)</div>
+                <input id="cvFile" name="cv" type="file" accept="application/pdf" />
+              </label>
+            </div>
+
+            <p class="text-xs text-muted" style="margin-top: var(--space-2)" id="cvAiUploadHint">
+              Subí tu CV en PDF para habilitarlo y poder analizarlo con IA.
+            </p>
+
+            <div class="form-error" id="cvFileError" style="margin-top: var(--space-2)"></div>
+
+            <!-- CV info (shown when a CV is uploaded) -->
+            <div class="micv-cv-info" id="cvInfo" hidden>
+              <div class="micv-cv-info__meta">
+                <div class="flex items-center gap-2">
+                  <span class="badge badge--neutral">PDF</span>
+                  <span class="text-sm" id="cvFileName">—</span>
+                </div>
+                <div class="text-xs text-muted" id="cvUpdatedAt">—</div>
+              </div>
+
+              <div class="micv-cv-info__actions">
+                <a class="btn btn--ghost btn--sm" id="cvViewLink" href="#" hidden>Ver CV</a>
+                <button class="btn btn--secondary btn--sm" type="button" id="removeCvBtn">Quitar CV</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Evaluation card -->
+          <div class="card micv-ai-card">
+            <header class="card__header" style="margin-bottom: var(--space-4)">
+              <div class="flex flex-col" style="gap: var(--space-1)">
+                <span class="label">Análisis asistido</span>
+                <h2 class="card__title">Evaluación con IA</h2>
+              </div>
+            </header>
+
+            <!-- Empty state: no CV uploaded -->
+            <div id="micvAiEmptyState" class="micv-ai-locked">
+              <div class="micv-ai-locked__icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <div class="micv-ai-locked__title">Subí tu CV primero</div>
+              <p class="micv-ai-locked__text">Para usar el análisis de IA necesitás tener un CV en PDF subido.</p>
+            </div>
+
+            <!-- AI evaluator (shown when CV is uploaded) -->
+            <section class="cv-ai card card--flat" id="cvAiEvaluator" aria-label="Evaluación de currículum con IA" hidden>
+              <header class="cv-ai__header">
+                <div class="cv-ai__title-wrap">
+                  <div class="cv-ai__eyebrow">Analisis asistido</div>
+                  <h3 class="text-display" style="font-size: var(--text-md)">Score del currículum</h3>
+                  <p class="text-xs text-muted">Puntuación visual basada en claridad, habilidades y experiencia.</p>
+                  <p class="text-xs text-muted">Límite IA: 3 análisis diarios (solo para este análisis de CV).</p>
+                </div>
+              </header>
+
+              <div class="cv-ai__body">
+                <div class="cv-ai__score">
+                  <div class="cv-ai__score-ring" id="cvAiScoreRing" style="--cv-ai-score: 0">
+                    <span id="cvAiOverallScore">0</span>
+                  </div>
+                  <div class="text-xs text-muted" id="cvAiScoreLabel">Sin analizar</div>
+                </div>
+
+                <div class="cv-ai__metrics">
+                  <div class="cv-ai__metric">
+                    <div class="cv-ai__metric-top">
+                      <span>Claridad y Formato</span>
+                      <span id="cvAiClarityValue">0</span>
+                    </div>
+                    <div class="cv-ai__meter-track">
+                      <div class="cv-ai__meter-fill" id="cvAiClarityFill" style="width: 0%"></div>
+                    </div>
+                  </div>
+
+                  <div class="cv-ai__metric">
+                    <div class="cv-ai__metric-top">
+                      <span>Impacto de Habilidades</span>
+                      <span id="cvAiSkillsValue">0</span>
+                    </div>
+                    <div class="cv-ai__meter-track">
+                      <div class="cv-ai__meter-fill" id="cvAiSkillsFill" style="width: 0%"></div>
+                    </div>
+                  </div>
+
+                  <div class="cv-ai__metric">
+                    <div class="cv-ai__metric-top">
+                      <span>Relevancia de Exp.</span>
+                      <span id="cvAiExperienceValue">0</span>
+                    </div>
+                    <div class="cv-ai__meter-track">
+                      <div class="cv-ai__meter-fill" id="cvAiExperienceFill" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="cvAiFeedback" class="cv-ai__feedback" hidden>
+                <div class="cv-ai__feedback-section">
+                  <h4 class="text-xs font-semibold uppercase tracking-wider text-success mb-2 flex items-center gap-1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    Puntos Fuertes del CV
+                  </h4>
+                  <ul id="cvAiStrengths" class="text-sm list-disc pl-4 space-y-1"></ul>
+                </div>
+                <div class="cv-ai__feedback-section">
+                  <h4 class="text-xs font-semibold uppercase tracking-wider text-error mb-2 flex items-center gap-1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Puntos a Mejorar (CV)
+                  </h4>
+                  <ul id="cvAiWeaknesses" class="text-sm list-disc pl-4 space-y-1"></ul>
+                </div>
+              </div>
+
+              <footer class="cv-ai__footer">
+                <div class="cv-ai__footer-copy">
+                  <span class="text-xs text-muted cv-ai__status" id="cvAiStatus">Todavía no ejecutaste la evaluación visual del CV.</span>
+                  <p class="cv-ai__insight cv-ai__insight--footer text-xs" id="cvAiInsight">
+                    Tu resumen profesional generado por IA aparecerá acá.
+                  </p>
+                </div>
+                <button class="btn btn--secondary btn--sm cv-ai__action" type="button" id="runCvAiEvalBtn">Analizar CV con IA</button>
+              </footer>
+            </section>
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+  </body>
+</html>

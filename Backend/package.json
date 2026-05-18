@@ -5,6 +5,7 @@
   "description": "ApplyAI Backend (NestJS + Prisma)",
   "scripts": {
     "start": "node dist/main.js",
+    "prestart:dev": "npx kill-port 3000",
     "start:dev": "nest start --watch",
     "build": "nest build",
     "prisma:generate": "node scripts/prisma-generate.js"

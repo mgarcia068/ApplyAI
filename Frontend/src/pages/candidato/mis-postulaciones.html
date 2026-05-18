@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
-    <script src="../../js/core/middlewares/auth-guard.js"></script>
+    <script src="../../js/core/middlewares/auth-guard.js?v=1.2"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mis postulaciones</title>
@@ -21,7 +21,10 @@
     <script src="../../js/services/theme.js?v=1.1"></script>
     <script src="../../js/core/components.js?v=1.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../../js/pages/candidato/candidato-postulaciones.js?v=1.1" defer></script>
+    <script
+      src="../../js/pages/candidato/candidato-postulaciones.js?v=1.2"
+      defer
+    ></script>
   </head>
 
   <body class="candidate-page candidate-page--applications">
@@ -35,19 +38,38 @@
               <div class="candidate-hub__top">
                 <div class="candidate-hub__title-wrap">
                   <div class="label">Candidato</div>
-                  <h1 class="card__title candidate-hub__title">Mis postulaciones</h1>
+                  <h1 class="card__title candidate-hub__title">
+                    Mis postulaciones
+                  </h1>
                 </div>
-                <span class="badge badge--neutral candidate-hub__count" id="applicationsCount">0</span>
+                <span
+                  class="badge badge--neutral candidate-hub__count"
+                  id="applicationsCount"
+                  >0</span
+                >
               </div>
 
-              <p class="text-sm text-muted candidate-hub__intro">Acá podés visualizar las ofertas a las que te postulaste y revisar su estado actual.</p>
+              <p class="text-sm text-muted candidate-hub__intro">
+                Ac&aacute; pod&eacute;s visualizar las ofertas a las que te
+                postulaste y revisar su estado actual.
+              </p>
 
               <div class="candidate-hub__panel">
-                <div id="candidateDashboardAlert" class="alert alert--info flex-col" hidden>
+                <div
+                  id="candidateDashboardAlert"
+                  class="alert alert--info flex-col"
+                  hidden
+                >
                   <strong>Necesitás iniciar sesión como candidato.</strong>
-                  <span class="text-sm text-muted">Para ver tus postulaciones, primero iniciá sesión.</span>
+                  <span class="text-sm text-muted"
+                    >Para ver tus postulaciones, primero iniciá sesión.</span
+                  >
                   <div class="mt-3">
-                    <a class="btn btn--primary btn--sm" href="../auth/login.html">Ir a login</a>
+                    <a
+                      class="btn btn--primary btn--sm"
+                      href="../auth/login.html"
+                      >Ir a login</a
+                    >
                   </div>
                 </div>
 

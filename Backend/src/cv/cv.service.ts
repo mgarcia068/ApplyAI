@@ -214,8 +214,21 @@ export class CvService {
     }
   }
 
-  private isHttpUrl(value: string): boolean {
-    return /^https?:\/\//i.test(value);
+  async getMyCvBuffer(userId: string): Promise<Buffer> {
+    return this.getCvBufferForUser(userId);
+  }
+
+  async getCvBufferForUser(userId: string): Promise<Buffer> {
+    const profile = await this.prisma.candidateProfile.findUnique({
+      where: { userId },
+      select: { cvUrl: true },
+    });
+
+    if (!profile || !profile.cvUrl) {
+      throw new NotFoundException('El candidato no tiene un CV subido.');
+    }
+
+    return this.loadPdfBuffer(profile.cvUrl);
   }
 
   private async loadPdfBuffer(cvUrl: string): Promise<Buffer> {
@@ -224,46 +237,14 @@ export class CvService {
       throw new NotFoundException('El candidato no tiene un CV subido.');
     }
 
-    // CV alojado en Cloud Storage (URL externa)
-    if (this.isHttpUrl(trimmed)) {
-      try {
-        const response = await fetch(trimmed, {
-          method: 'GET',
-          signal: AbortSignal.timeout(15_000),
-        });
-
-        if (!response.ok) {
-          throw new NotFoundException('No se pudo descargar el CV desde el almacenamiento en la nube.');
-        }
-
-        const arrayBuffer = await response.arrayBuffer();
-        return Buffer.from(arrayBuffer);
-      } catch (error) {
-        if (error instanceof NotFoundException) throw error;
-        console.error('Error descargando CV desde URL:', error);
-        throw new InternalServerErrorException('No se pudo descargar el CV desde el almacenamiento en la nube.');
-      }
+    try {
+      return await this.cvStorageService.getBufferFromUrl(trimmed);
+    } catch (error: any) {
+      console.error('Error al cargar PDF:', error.message);
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(
+        error.message || 'No se pudo descargar el CV desde el almacenamiento.'
+      );
     }
-
-    // Compatibilidad con la arquitectura anterior y con el nuevo endpoint de descargas locales
-    let filePath: string;
-    
-    // Si la URL es de nuestro endpoint local (ej: /api/cv/file/userId/file.pdf)
-    if (trimmed.startsWith('/cv/file/') || trimmed.startsWith('/api/cv/file/')) {
-      const parts = trimmed.split('/');
-      const filename = parts.pop() || '';
-      const userId = parts.pop() || '';
-      filePath = join(__dirname, '..', '..', 'uploads', 'cvs', userId, filename);
-    } else {
-      // Compatibilidad con la arquitectura anterior (ruta relativa en /uploads)
-      const safeRelative = trimmed.replace(/^\/+/, '');
-      filePath = join(__dirname, '..', '..', safeRelative);
-    }
-
-    if (!existsSync(filePath)) {
-      throw new NotFoundException('El archivo físico del CV no existe en el servidor.');
-    }
-
-    return readFileSync(filePath);
   }
 }

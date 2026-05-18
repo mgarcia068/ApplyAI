@@ -428,6 +428,26 @@ h6 { font-size: var(--text-md);  font-weight: var(--weight-medium); }
 
 .btn--full { width: 100%; }
 
+.btn--ai {
+  background: linear-gradient(135deg, var(--color-accent), #6b9ac1);
+  background-size: 150% 150%;
+  color: #fff;
+  border-color: transparent;
+  animation: gradient-shift 8s ease infinite;
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+}
+.btn--ai:hover {
+  box-shadow: 0 2px 10px var(--shadow-accent);
+  transform: translateY(-1px);
+}
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 /* --- Cards --- */
 .card {
   background-color: var(--color-bg-2);
@@ -980,6 +1000,91 @@ h6 { font-size: var(--text-md);  font-weight: var(--weight-medium); }
   justify-content: flex-start;
 }
 
+/* --- Botón destacado IA (Navbar) --- */
+.btn--ai-prominent {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  font-weight: 600;
+  font-size: 13.5px;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-right: 12px;
+  position: relative;
+  overflow: hidden;
+  height: 38px;
+}
+
+.btn--ai-prominent:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.45);
+  filter: brightness(1.1);
+}
+
+.btn--ai-prominent:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn--ai-prominent__icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 5px;
+  border-radius: 8px;
+}
+
+.btn--ai-prominent__sparkles {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  color: #fbbf24;
+  animation: ai-sparkle 2s infinite ease-in-out;
+  filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.8));
+}
+
+@keyframes ai-sparkle {
+  0%, 100% { transform: scale(0.8) rotate(0deg); opacity: 0.5; }
+  50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+}
+
+.btn--ai-prominent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: none;
+}
+
+.btn--ai-prominent:hover::before {
+  left: 100%;
+  transition: left 0.7s ease-in-out;
+}
+
+@media (max-width: 640px) {
+  .btn--ai-prominent__text {
+    display: none;
+  }
+  .btn--ai-prominent {
+    padding: 8px;
+    margin-right: 8px;
+    gap: 0;
+  }
+}
 
 /* Loader profesional para botones */
 .btn.is-loading {
