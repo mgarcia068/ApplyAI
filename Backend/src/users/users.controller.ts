@@ -15,7 +15,6 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { FilterCandidatesDto } from './dto/filter-candidates.dto';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
@@ -23,11 +22,13 @@ export class UsersController {
   ) {}
 
   @Get('me')
+  @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: JwtPayload) {
     return this.usersService.me(user);
   }
 
   @Patch('me')
+  @UseGuards(JwtAuthGuard)
   updateProfile(
     @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateProfileDto,
@@ -69,20 +70,28 @@ export class UsersController {
   }
 
   @Delete('me')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteAccount(@CurrentUser() user: JwtPayload) {
     return this.usersService.deleteAccount(user);
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.COMPANY)
   findAllCandidates(@Query() filters: FilterCandidatesDto) {
     return this.usersService.findAllCandidates(filters);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.COMPANY)
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
+  }
+
+  @Get('company/:email')
+  findCompany(@Param('email') email: string) {
+    return this.usersService.findCompanyByEmail(email);
   }
 }

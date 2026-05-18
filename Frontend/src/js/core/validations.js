@@ -252,6 +252,8 @@
       cancel_on_tap_outside: true,
     });
 
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+
     const renderOptions = {
       theme: 'outline',
       size: 'large',
@@ -270,7 +272,7 @@
     if (googleSignupButton) {
       window.google.accounts.id.renderButton(googleSignupButton, {
         ...renderOptions,
-        text: 'signup_with',
+        text: 'signin_with',
       });
     }
   }

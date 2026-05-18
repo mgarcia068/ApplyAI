@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f3f4f6;
+      margin: 0;
+      padding: 0;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background-color: #111827;
+      padding: 30px 40px;
+      text-align: center;
+    }
+    .header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+    }
+    .header h1 span {
+      color: #3b82f6;
+    }
+    .content {
+      padding: 40px;
+    }
+    .greeting {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #111827;
+    }
+    .message {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      color: #4b5563;
+    }
+    .action-btn {
+      display: inline-block;
+      background-color: #3b82f6;
+      color: #ffffff;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 16px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #9ca3af;
+      border-top: 1px solid #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Apply<span>AI</span></h1>
+    </div>
+    
+    <div class="content">
+      <div class="greeting">¡Hola, {{userName}}! 👋</div>
+      
+      <div class="message">
+        Te damos la bienvenida a <strong>ApplyAI</strong>, la plataforma que revoluciona el proceso de selección con inteligencia artificial. Estamos muy emocionados de tenerte con nosotros.
+      </div>
+
+      {{#if isCompany}}
+      <div class="message">
+        Como empresa, podrás publicar ofertas, encontrar el talento perfecto utilizando nuestro análisis de compatibilidad (Match Score) y gestionar todo el flujo de tus entrevistas.
+      </div>
+      <div style="text-align: center;">
+        <a href="http://127.0.0.1:5500/Frontend/src/pages/auth/login.html" class="action-btn">Ir a mi Panel de Empresa</a>
+      </div>
+      {{else}}
+      <div class="message">
+        Como candidato, podrás buscar ofertas ideales para ti y nuestra inteligencia artificial analizará tu CV para destacar tus mejores habilidades frente a los reclutadores.
+      </div>
+      <div style="text-align: center;">
+        <a href="http://127.0.0.1:5500/Frontend/src/pages/auth/login.html" class="action-btn">Completar mi Perfil</a>
+      </div>
+      {{/if}}
+
+      <div class="message">
+        Si tienes alguna pregunta o necesitas ayuda, no dudes en escribirnos.
+      </div>
+      
+      <div class="message">
+        ¡Que tengas mucho éxito!<br>
+        <strong>El equipo de ApplyAI</strong>
+      </div>
+    </div>
+    
+    <div class="footer">
+      Este es un correo automático generado por ApplyAI.
+    </div>
+  </div>
+</body>
+</html>

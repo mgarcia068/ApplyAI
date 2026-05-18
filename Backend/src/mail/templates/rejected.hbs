@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f3f4f6;
+      margin: 0;
+      padding: 0;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background-color: #111827;
+      padding: 30px 40px;
+      text-align: center;
+    }
+    .header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+    }
+    .header h1 span {
+      color: #3b82f6;
+    }
+    .content {
+      padding: 40px;
+    }
+    .greeting {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #111827;
+    }
+    .message {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      color: #4b5563;
+    }
+    .highlight {
+      font-weight: 600;
+      color: #111827;
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #9ca3af;
+      border-top: 1px solid #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Apply<span>AI</span></h1>
+    </div>
+    
+    <div class="content">
+      <div class="greeting">Hola, {{candidateName}}</div>
+      
+      <div class="message">
+        Queremos agradecerte por tu tiempo y tu interés en el puesto de <span class="highlight">{{offerTitle}}</span>.
+      </div>
+
+      <div class="message">
+        El equipo de <span class="highlight">{{companyName}}</span> ha revisado detalladamente tu perfil y experiencia. En esta ocasión, han decidido avanzar con otros candidatos cuyos perfiles se ajustan un poco más a las necesidades técnicas actuales del rol.
+      </div>
+
+      <div class="message">
+        Tu perfil es muy valioso y estamos seguros de que encontrarás una oportunidad excelente pronto. Te animamos a seguir usando ApplyAI, optimizar tu CV con nuestras herramientas de inteligencia artificial y seguir postulándote.
+      </div>
+      
+      <div class="message">
+        Saludos cordiales,<br>
+        <strong>El equipo de ApplyAI</strong>
+      </div>
+    </div>
+    
+    <div class="footer">
+      Este es un correo automático generado por ApplyAI en representación de {{companyName}}.
+    </div>
+  </div>
+</body>
+</html>
