@@ -1,12 +1,18 @@
 (function () {
-  document.addEventListener('DOMContentLoaded', async () => {
-    const company = await resolveCompanyContext();
-    if (!company) return;
-    
-    checkAccess(company);
-    renderCompanyHeader(company);
-    initFollowAndFavorite(company);
-    renderCompanyOffers(company);
+  document.addEventListener('DOMContentLoaded', () => {
+    loadCompanyData(company => {
+      const loader = document.getElementById('page-loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.remove(), 300);
+      }
+
+      if (!company) return;
+      checkAccess(company);
+      renderCompanyHeader(company);
+      initFollowAndFavorite(company);
+      renderCompanyOffers(company);
+    });
   });
 
   const COMPANY_CATALOG = {
@@ -190,31 +196,81 @@
     }
   }
 
-  async function resolveCompanyContext() {
-    const requested = String(getQueryParam('company') || '').trim();
-    
-    if (requested) {
-      try {
-        let searchKey = requested;
-        if (!searchKey.includes('@')) {
-           // Caso especial para el ejemplo del usuario o si se quitaron puntos y arrobas
-           if (searchKey.includes('gmailcom')) {
-             searchKey = searchKey.replace('gmailcom', '@gmail.com');
-           } else if (searchKey.includes('hotmailcom')) {
-             searchKey = searchKey.replace('hotmailcom', '@hotmail.com');
-           }
-        }
+  function fallbackToCatalog(requested, callback) {
+    const requestedId = requested ? slugify(requested) : '';
+    const fromCatalog = requestedId && COMPANY_CATALOG[requestedId] ? COMPANY_CATALOG[requestedId] : null;
+    if (fromCatalog) {
+      callback({
+        ...fromCatalog,
+        description: fromCatalog.tagline,
+        photoDataUrl: '', photoPanX: 0, photoPanY: 0,
+      });
+      return;
+    }
+    callback({
+      ...COMPANY_CATALOG.techcorp,
+      description: 'En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida...',
+      photoDataUrl: '', photoPanX: 0, photoPanY: 0,
+    });
+  }
 
-        const res = await axios.get(`http://localhost:3000/api/users/company/${searchKey}`);
+  function loadCompanyData(callback) {
+    const requested = String(getQueryParam('company') || '').trim();
+    const isOwnProfile = !requested;
+    
+    let searchKey = requested;
+    if (requested && !searchKey.includes('@')) {
+       if (searchKey.includes('gmailcom')) searchKey = searchKey.replace('gmailcom', '@gmail.com');
+       else if (searchKey.includes('hotmailcom')) searchKey = searchKey.replace('hotmailcom', '@hotmail.com');
+    }
+
+    const cacheKey = isOwnProfile ? 'ApplyAI.ownCompanyProfile' : `ApplyAI.publicCompanyProfile_${searchKey}`;
+    const cachedRaw = localStorage.getItem(cacheKey);
+    let hasLoadedFromCache = false;
+
+    if (cachedRaw) {
+      try {
+        const cachedCompany = JSON.parse(cachedRaw);
+        if (cachedCompany) {
+          hasLoadedFromCache = true;
+          callback(cachedCompany);
+        }
+      } catch(e) {}
+    }
+
+    const onFreshData = (company) => {
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(company));
+      } catch (err) {
+        if (err.name === 'QuotaExceededError') {
+          console.warn("Caché llena. Limpiando datos antiguos para liberar espacio...");
+          // Limpiamos todo lo cacheado previamente excepto la sesión actual del usuario
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('ApplyAI.') && key !== 'ApplyAI.currentUser' && key !== cacheKey) {
+              localStorage.removeItem(key);
+            }
+          }
+          // Reintentamos guardar
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(company));
+          } catch (e) {
+            console.warn("Aún limpiando, no hay espacio suficiente en caché.");
+          }
+        }
+      }
+      callback(company);
+    };
+
+    if (requested) {
+      axios.get(`http://localhost:3000/api/users/company/${searchKey}`).then(res => {
         const data = res.data;
         const profile = data.companyProfile;
-
         if (profile) {
-          // Si encontramos la empresa, devolvemos sus datos reales
-          return {
+          onFreshData({
             id: profile.id,
             name: profile.name || data.fullName || 'Empresa',
-            tagline: profile.rubro || 'Perfil de empresa', // Usamos rubro como tagline si no hay
+            tagline: profile.rubro || 'Perfil de empresa',
             description: profile.description || 'Sin descripción disponible.',
             industry: profile.rubro || 'No especificada',
             location: profile.location || 'No especificada',
@@ -228,29 +284,27 @@
               type: jo.modality === 'HYBRID' ? 'Híbrido' : jo.modality === 'ONSITE' ? 'Presencial' : 'Remoto',
               date: new Date(jo.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
             }))
-          };
+          });
+        } else {
+          if (!hasLoadedFromCache) fallbackToCatalog(requested, callback);
         }
-      } catch (err) {
-        console.warn("No se encontró la empresa en el backend o error de conexión.", err);
-      }
-    }
-
-    // Si no hay parámetro, probamos con el usuario logueado (Mi Perfil)
-    if (!requested) {
-      try {
-        const currentUserRaw = localStorage.getItem('ApplyAI.currentUser');
-        if (currentUserRaw) {
-          const currentUser = JSON.parse(currentUserRaw);
-          if (normalizeRole(currentUser.role) === 'empresa') {
-            const response = await axios.get('http://localhost:3000/api/users/me', {
-              headers: { Authorization: `Bearer ${currentUser.token}` }
-            });
+      }).catch(err => {
+        console.warn("No se encontró la empresa o error.", err);
+        if (!hasLoadedFromCache) fallbackToCatalog(requested, callback);
+      });
+    } else {
+      const currentUserRaw = localStorage.getItem('ApplyAI.currentUser');
+      if (currentUserRaw) {
+        const currentUser = JSON.parse(currentUserRaw);
+        if (normalizeRole(currentUser.role) === 'empresa') {
+          axios.get('http://localhost:3000/api/users/me', {
+            headers: { Authorization: `Bearer ${currentUser.token}` }
+          }).then(response => {
             const data = response.data;
-            const profile = data.companyProfile;
-
-            if (profile) {
-              return {
-                id: profile.id,
+            const profile = data.companyProfile || {};
+            if (data) {
+              onFreshData({
+                id: profile.id || 'me',
                 name: profile.name || data.fullName || 'Mi Empresa',
                 tagline: profile.description || 'Perfil de empresa',
                 description: profile.description || 'Sin descripción disponible.',
@@ -267,36 +321,21 @@
                   type: jo.modality === 'HYBRID' ? 'Híbrido' : jo.modality === 'ONSITE' ? 'Presencial' : 'Remoto',
                   date: new Date(jo.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
                 }))
-              };
+              });
+            } else {
+              if (!hasLoadedFromCache) fallbackToCatalog('', callback);
             }
-          }
+          }).catch(e => {
+            console.error("Error cargando perfil propio", e);
+            if (!hasLoadedFromCache) fallbackToCatalog('', callback);
+          });
+        } else if (!hasLoadedFromCache) {
+          fallbackToCatalog('', callback);
         }
-      } catch (e) {
-        console.error("Error cargando perfil propio", e);
+      } else if (!hasLoadedFromCache) {
+        fallbackToCatalog('', callback);
       }
     }
-
-    // Fallback al catálogo estático si todo lo anterior falla
-    const requestedId = requested ? slugify(requested) : '';
-    const fromCatalog = requestedId && COMPANY_CATALOG[requestedId] ? COMPANY_CATALOG[requestedId] : null;
-    
-    if (fromCatalog) {
-      return {
-        ...fromCatalog,
-        description: fromCatalog.tagline,
-        photoDataUrl: '',
-        photoPanX: 0,
-        photoPanY: 0,
-      };
-    }
-
-    return {
-      ...COMPANY_CATALOG.techcorp,
-      description: 'En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida...',
-      photoDataUrl: '',
-      photoPanX: 0,
-      photoPanY: 0,
-    };
   }
 
   // Función para mostrar mensajes temporales "Toast"

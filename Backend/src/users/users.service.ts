@@ -20,6 +20,11 @@ export class UsersService {
           },
         },
         companyProfile: true,
+        jobOffers: {
+          where: { isActive: true },
+          take: 10,
+          orderBy: { createdAt: 'desc' }
+        },
       },
     });
 

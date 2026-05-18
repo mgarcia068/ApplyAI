@@ -1125,3 +1125,62 @@
   color: #2563EB !important;
 }
 
+/* ── SISTEMA DE ETIQUETAS (TAGS) PARA SKILLS ───────────────── */
+.tags-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-2);
+  cursor: text;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tags-input-field {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  flex: 1;
+  min-width: 120px;
+  padding: 0 !important;
+  height: auto !important;
+}
+
+.tag-chip {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+[data-theme="light"] .tag-chip {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563EB;
+}
+
+.tag-remove {
+  cursor: pointer;
+  opacity: 0.7;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 1;
+  margin-left: 4px;
+}
+
+.tag-remove:hover {
+  opacity: 1;
+  color: var(--color-error);
+}
+

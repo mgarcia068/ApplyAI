@@ -147,7 +147,7 @@ function renderOfertasTable(containerId, ofertasList = OFERTAS) {
         <div class="offers-table__actions">
           <button class="btn btn--ghost btn--sm" onclick="verPostulantes('${o.id}')">Ver postulantes</button>
           <button class="btn btn--ghost btn--sm" onclick="abrirModalEditarOferta('${o.id}')">Editar</button>
-          <button class="btn btn--ghost btn--sm" onclick="eliminarOferta('${o.id}')" class="text-error">Eliminar</button>
+          <button class="btn btn--ghost btn--sm text-error" onclick="eliminarOferta('${o.id}')">Eliminar</button>
         </div>
       </td>
     </tr>
@@ -189,7 +189,7 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
       <div class="empty-box">
         <svg class="empty-box__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         <div class="empty-box__title">Sin postulantes todavia</div>
-        <p class="empty-box__text">No hay candidatos o no coinciden con tus filtros.</p>
+        <p class="empty-box__text">Aún no hay candidatos para esta oferta o ninguno coincide con tus filtros.</p>
       </div>
     `;
     return;
@@ -543,6 +543,12 @@ function limpiarPostulantesFilters() {
   applyPostulantesFilters();
 }
 
+window.cambiarOfertaFiltro = function(ofertaId) {
+  if (ofertaId) {
+    verPostulantes(ofertaId);
+  }
+};
+
 function applyPostulantesFilters() {
   const tech = document.getElementById('filter-tech')?.value.toLowerCase().trim() || '';
   const exp = document.getElementById('filter-exp')?.value || '';
@@ -631,7 +637,9 @@ function renderFormOferta(containerId) {
         </div>
         <div class="form-group">
           <label class="form-label">Habilidades requeridas</label>
-          <input class="form-input" type="text" placeholder="ej: React, Node.js, SQL" id="oferta-skills">
+          <input class="form-input" type="text" id="oferta-skills-input" placeholder="ej: React, Node.js">
+          <div class="flex flex-wrap gap-2 mt-2" id="skills-tags-container"></div>
+          <input type="hidden" id="oferta-skills" value="">
         </div>
         <div class="form-group form-grid--full">
           <label class="form-label">Descripcion del puesto *</label>
@@ -648,6 +656,55 @@ function renderFormOferta(containerId) {
   if (typeof geoService !== 'undefined') {
     geoService.setupAutocomplete('#oferta-ubicacion');
   }
+
+  // Inicializar sistema de etiquetas
+  setupTagsInput('skills-tags-container', 'oferta-skills-input', 'oferta-skills');
+}
+
+function setupTagsInput(containerId, inputId, hiddenId, initialTags = []) {
+  const container = document.getElementById(containerId);
+  const input = document.getElementById(inputId);
+  const hiddenInput = document.getElementById(hiddenId);
+  
+  if (!container || !input) return;
+
+  let tags = [...initialTags];
+
+  function render() {
+    container.innerHTML = tags.map(t => `
+      <span class="skill-chip">
+        ${t}
+        <span class="tag-remove" data-tag="${t}">&times;</span>
+      </span>
+    `).join('');
+
+    // Add click listeners to remove buttons
+    container.querySelectorAll('.tag-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tag = e.target.getAttribute('data-tag');
+        tags = tags.filter(t => t !== tag);
+        render();
+      });
+    });
+
+    if (hiddenInput) {
+      hiddenInput.value = tags.join(',');
+    }
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = input.value.trim();
+      if (val && !tags.includes(val)) {
+        tags.push(val);
+        render();
+        input.value = '';
+      }
+    }
+  });
+
+  render();
 }
 
 const DASHBOARD_CACHE_KEYS = {
@@ -787,7 +844,7 @@ async function publicarOferta() {
   if (!titulo || !desc) {
     if (!titulo && tituloEl) tituloEl.classList.add('form-input--error');
     if (!desc && descEl) descEl.classList.add('form-input--error');
-    alert('Por favor, completa los campos obligatorios (Título y Descripción).');
+    showToast('Campos incompletos', 'Por favor, completa los campos obligatorios (Título y Descripción).', 'error');
     return;
   }
 
@@ -938,7 +995,9 @@ function abrirModalEditarOferta(ofertaId) {
           </div>
           <div class="form-group">
             <label class="form-label">Habilidades requeridas</label>
-            <input class="form-input" type="text" id="edit-oferta-skills" placeholder="ej: React, Node.js, SQL" value="${(oferta.skills || []).join(', ')}">
+            <input class="form-input" type="text" id="edit-oferta-skills-input" placeholder="ej: React, Node.js">
+            <div class="flex flex-wrap gap-2 mt-2" id="edit-skills-tags-container"></div>
+            <input type="hidden" id="edit-oferta-skills" value="${(oferta.skills || []).join(',')}">
           </div>
           <div class="form-group form-grid--full">
             <label class="form-label">Descripcion del puesto *</label>
@@ -966,6 +1025,9 @@ function abrirModalEditarOferta(ofertaId) {
 
   modal._onKeyDown = (e) => { if (e.key === 'Escape') cerrarModalEditarOferta(); };
   document.addEventListener('keydown', modal._onKeyDown);
+
+  // Inicializar sistema de etiquetas para edición
+  setupTagsInput('edit-skills-tags-container', 'edit-oferta-skills-input', 'edit-oferta-skills', oferta.skills || []);
 }
 
 function cerrarModalEditarOferta() {
@@ -987,6 +1049,7 @@ async function guardarOferta(ofertaId) {
   const nuevoTitulo = document.getElementById('edit-oferta-titulo')?.value.trim();
   if (!nuevoTitulo) {
     document.getElementById('edit-oferta-titulo')?.focus();
+    showToast('Campos incompletos', 'Por favor, completa el título de la oferta.', 'error');
     return;
   }
 
@@ -1018,7 +1081,7 @@ async function guardarOferta(ofertaId) {
     cerrarModalEditarOferta();
   } catch (error) {
     console.error("Error al guardar cambios de oferta", error);
-    alert('Ocurrió un error al guardar los cambios.');
+    showToast('Error', 'Ocurrió un error al guardar los cambios.', 'error');
   }
 }
 
