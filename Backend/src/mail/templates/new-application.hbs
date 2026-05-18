@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f3f4f6;
+      margin: 0;
+      padding: 0;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background-color: #111827;
+      padding: 30px 40px;
+      text-align: center;
+    }
+    .header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+    }
+    .header h1 span {
+      color: #3b82f6;
+    }
+    .content {
+      padding: 40px;
+    }
+    .greeting {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #111827;
+    }
+    .message {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      color: #4b5563;
+    }
+    .highlight {
+      font-weight: 600;
+      color: #111827;
+    }
+    .success-box {
+      background-color: #ecfdf5;
+      border-left: 4px solid #10b981;
+      padding: 20px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 30px;
+    }
+    .success-box p {
+      margin: 0;
+      font-size: 15px;
+      color: #065f46;
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #9ca3af;
+      border-top: 1px solid #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Apply<span>AI</span></h1>
+    </div>
+    
+    <div class="content">
+      <div class="greeting">¡Postulación exitosa, {{candidateName}}! 🚀</div>
+      
+      <div class="success-box">
+        <p>Acabamos de enviar tu perfil a <strong>{{companyName}}</strong> para la oferta de <strong>{{offerTitle}}</strong>.</p>
+      </div>
+
+      <div class="message">
+        Nuestra inteligencia artificial ya analizó tu currículum frente a esta oferta y le ha presentado tus mejores fortalezas al equipo de selección.
+      </div>
+
+      <div class="message">
+        Puedes hacer seguimiento del estado de esta postulación directamente desde tu panel de control en ApplyAI. Te notificaremos inmediatamente por correo si la empresa decide avanzar a la etapa de entrevistas.
+      </div>
+      
+      <div class="message">
+        ¡Mucho éxito en el proceso!<br>
+        <strong>El equipo de ApplyAI</strong>
+      </div>
+    </div>
+    
+    <div class="footer">
+      Este es un correo automático generado por ApplyAI.
+    </div>
+  </div>
+</body>
+</html>
