@@ -32,6 +32,16 @@ function navigateTo(seccion, subtitulo) {
 
   seccionActual = seccion;
 
+  const isProfileIncomplete = !PERFIL_EMPRESA.rubro || !PERFIL_EMPRESA.descripcion;
+  if (isProfileIncomplete && seccion !== 'perfil') {
+    showToast('Perfil Incompleto', 'Debes completar tu perfil de empresa antes de continuar.', 'error');
+    setTimeout(() => {
+      navigateTo('perfil');
+      setTimeout(() => togglePerfilEdit(true), 100);
+    }, 0);
+    return;
+  }
+
   const topbarTitle = document.getElementById('topbar-title');
   if (topbarTitle) {
     topbarTitle.textContent = subtitulo ? `${def.titulo} — ${subtitulo}` : def.titulo;
@@ -127,22 +137,33 @@ function renderOfertas() {
 }
 
 function renderPostulantesView() {
+  if (!ofertaActivaId && OFERTAS && OFERTAS.length > 0) {
+    const defaultOffer = OFERTAS.find(o => o.estado === 'activa') || OFERTAS[0];
+    if (defaultOffer) {
+      setTimeout(() => verPostulantes(defaultOffer.id), 0);
+      return;
+    }
+  }
+
   const oferta = ofertaActivaId ? OFERTAS.find(o => o.id === ofertaActivaId) : null;
   document.getElementById('db-content').innerHTML = `
     <div class="section-header mb-4">
       <div>
         <div class="section-header__title">
-          ${oferta ? `Postulantes — ${oferta.titulo}` : 'Todos los postulantes'}
+          ${oferta ? `Postulantes — ${oferta.titulo}` : 'Postulantes'}
         </div>
         <div class="section-header__sub">Ordenados por compatibilidad segun IA</div>
-      </div>
-      <div class="flex gap-2">
-        ${ofertaActivaId ? `<button class="btn btn--ghost btn--sm" onclick="ofertaActivaId=null;navigateTo('postulantes')">Ver todos</button>` : ''}
       </div>
     </div>
     
     <div id="postulantes-filters" class="mb-6">
       <div class="form-grid grid-cols-auto-200">
+        <div class="form-group mb-0">
+          <label class="form-label text-xs">Oferta</label>
+          <select class="form-select" id="filter-oferta-dropdown" onchange="cambiarOfertaFiltro(this.value)">
+            ${OFERTAS.map(o => `<option value="${o.id}" ${o.id === ofertaActivaId ? 'selected' : ''}>${o.titulo}</option>`).join('')}
+          </select>
+        </div>
         <div class="form-group mb-0">
           <label class="form-label text-xs">Tecnologías (ej: React, Node)</label>
           <input type="text" class="form-input" id="filter-tech" placeholder="Buscar por skill..." onkeyup="applyPostulantesFilters()">
@@ -264,12 +285,12 @@ function getCompanyInitials(name) {
 
 let PERFIL_EMPRESA = {
   nombre:      companyName,
-  rubro:       'Tecnologia & Software',
-  descripcion: 'Empresa de desarrollo de software con foco en soluciones B2B para el mercado latinoamericano.',
-  web:         'https://techcorp.com.ar',
-  ubicacion:   'Buenos Aires, Argentina',
-  empleados:   '50-100',
-  fundacion:   '2018',
+  rubro:       '',
+  descripcion: '',
+  web:         '',
+  ubicacion:   '',
+  empleados:   '',
+  fundacion:   '',
   photoDataUrl:'',
   photoPanX:   0,
   photoPanY:   0,
@@ -799,7 +820,7 @@ async function guardarPerfil() {
     togglePerfilEdit(false);
     
     if (typeof showToast === 'function') {
-      showToast('Perfil actualizado', 'Los cambios se guardaron correctamente en la base de datos.', 'success');
+      showToast('Perfil actualizado', 'Los cambios se guardaron correctamente.', 'success');
     }
   } catch (e) {
     console.error('Error saving company profile:', e);
