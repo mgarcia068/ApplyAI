@@ -17,300 +17,7 @@
     <link rel="stylesheet" href="../../css/core/base.css?v=1.1" />
     <link rel="stylesheet" href="../../css/components/components.css?v=1.1" />
 
-    <style>
-      .employee-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.2fr) minmax(0, 2.2fr);
-        gap: var(--space-6);
-        align-items: start;
-        margin-top: var(--space-6);
-      }
-
-      .offer-list {
-        display: grid;
-        gap: var(--space-3);
-      }
-
-      .offer-list__item {
-        width: 100%;
-        text-align: left;
-        border: 1px solid var(--color-surface);
-        border-radius: var(--radius-lg);
-        background: var(--color-bg-3);
-        padding: var(--space-4);
-        cursor: pointer;
-        transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-      }
-
-      .offer-list__item:hover {
-        border-color: var(--color-accent);
-        box-shadow: 0 0 0 3px var(--color-accent-soft);
-        transform: translateY(-1px);
-      }
-
-      .offer-list__item:focus-visible {
-        outline: none;
-        border-color: var(--color-accent);
-        box-shadow: 0 0 0 3px var(--color-accent-soft);
-      }
-
-      .offer-list__item[aria-selected="true"] {
-        border-color: var(--color-accent);
-        box-shadow: var(--shadow-accent);
-      }
-
-      .offer-list__title {
-        font-family: var(--font-display);
-        font-weight: var(--weight-semibold);
-        font-size: var(--text-base);
-        color: var(--color-text);
-      }
-
-      .offer-list__meta {
-        margin-top: var(--space-1);
-        display: grid;
-        gap: 2px;
-        font-size: var(--text-xs);
-        color: var(--color-text-muted);
-      }
-
-      .offer-detail__grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-4);
-        margin-top: var(--space-4);
-      }
-
-      .offer-detail__kv {
-        padding: var(--space-4);
-        border: 1px solid var(--color-surface);
-        border-radius: var(--radius-lg);
-        background: var(--color-bg-3);
-      }
-
-      .offer-detail__k {
-        font-size: var(--text-xs);
-        color: var(--color-text-muted);
-        margin-bottom: 2px;
-      }
-
-      .offer-detail__v {
-        font-size: var(--text-sm);
-        color: var(--color-text);
-        font-weight: var(--weight-medium);
-      }
-
-      .offer-detail-card .card__header {
-        align-items: flex-start;
-      }
-
-      .offer-detail__actions {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        flex-wrap: nowrap;
-        flex-shrink: 0;
-      }
-
-      /* ── HEADER + FILTROS (compacto) ──────────────────────── */
-      .candidate-panel-card {
-        padding: var(--space-5);
-        border-color: var(--color-surface);
-        background:
-          linear-gradient(180deg, var(--color-accent-soft), transparent 55%),
-          var(--color-bg-2);
-      }
-
-      .candidate-panel-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: var(--space-6);
-        flex-wrap: wrap;
-      }
-
-      .candidate-panel-title {
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        font-family: var(--font-display);
-        font-size: var(--text-md);
-        font-weight: var(--weight-semibold);
-        color: var(--color-text);
-        line-height: var(--leading-snug);
-      }
-
-      .candidate-panel-title svg {
-        flex-shrink: 0;
-        opacity: 0.9;
-      }
-
-      .candidate-panel-subtitle {
-        margin: var(--space-2) 0 0;
-        font-size: var(--text-sm);
-        color: var(--color-text-muted);
-        max-width: 70ch;
-      }
-
-      .candidate-panel-meta {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: var(--space-1);
-      }
-
-      .candidate-panel-meta .badge {
-        min-width: 36px;
-        justify-content: center;
-      }
-
-      .candidate-filters {
-        margin-top: var(--space-4);
-        padding-top: var(--space-4);
-        border-top: 1px solid var(--color-surface);
-      }
-
-      .candidate-filters__label {
-        margin-bottom: var(--space-3);
-      }
-
-      .candidate-filters__grid {
-        gap: var(--space-3);
-      }
-
-      .candidate-filters .form-group {
-        gap: var(--space-1);
-      }
-
-      .candidate-filters .form-label {
-        font-size: var(--text-xs);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
-
-      .candidate-filters .form-input,
-      .candidate-filters .form-select {
-        padding: var(--space-2) var(--space-3);
-      }
-
-      @media (max-width: 900px) {
-        .employee-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .candidate-panel-header {
-          gap: var(--space-4);
-        }
-
-        .candidate-panel-meta {
-          width: fit-content;
-          flex-direction: row;
-          align-items: center;
-          gap: var(--space-2);
-          padding: 6px 10px;
-          border-radius: var(--radius-full);
-          border: 1px solid var(--color-surface);
-          background: color-mix(in srgb, var(--color-bg-3) 84%, transparent);
-        }
-
-        .candidate-panel-meta .label {
-          margin: 0;
-        }
-
-        .employee-grid {
-          gap: var(--space-4);
-          margin-top: var(--space-4);
-        }
-
-        .offer-detail-card .card__header {
-          flex-direction: column;
-          gap: var(--space-3);
-        }
-
-        .offer-detail__actions {
-          width: 100%;
-          align-items: stretch;
-          gap: var(--space-2);
-        }
-
-        .offer-detail__actions .badge {
-          align-self: flex-start;
-        }
-
-        .offer-detail__actions .btn {
-          flex: 1;
-          justify-content: center;
-          white-space: nowrap;
-        }
-
-        .offer-detail__grid {
-          grid-template-columns: 1fr;
-        }
-
-        .offer-detail__title {
-          font-size: var(--text-lg) !important;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .offer-list__item {
-          padding: var(--space-3);
-        }
-
-        .offer-detail__kv {
-          padding: var(--space-3);
-        }
-      }
-
-      /* ── AUTOCOMPLETADO (Georef) ───────────────────────────── */
-      .autocomplete-wrapper {
-        width: 100%;
-      }
-
-      .autocomplete-list {
-        position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        right: 0;
-        background: var(--color-bg-2);
-        border: 1px solid var(--color-surface);
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow-md);
-        max-height: 250px;
-        overflow-y: auto;
-        z-index: 1050;
-        display: none;
-        list-style: none;
-        padding: var(--space-2) 0;
-        margin: 0;
-      }
-
-      .autocomplete-list.show {
-        display: block;
-      }
-
-      .autocomplete-item {
-        padding: var(--space-2) var(--space-4);
-        cursor: pointer;
-        font-size: var(--text-sm);
-        color: var(--color-text);
-        border-bottom: 1px solid var(--color-surface);
-        transition: background var(--transition-fast);
-      }
-
-      .autocomplete-item:last-child {
-        border-bottom: none;
-      }
-
-      .autocomplete-item:hover,
-      .autocomplete-item.active {
-        background: var(--color-bg-3);
-        color: var(--color-accent);
-      }
-    </style>
+    <link rel="stylesheet" href="../../css/pages/dashboard-candidato.css?v=1.0" />
 
     <script src="../../js/services/theme.js?v=1.1"></script>
     <script src="../../js/core/components.js?v=1.4" defer></script>
@@ -394,19 +101,19 @@
               </div>
             </div>
 
-            <div id="employeeDashboardAlert" class="alert alert--info flex-col" hidden style="margin-top: var(--space-4)">
+            <div id="employeeDashboardAlert" class="alert alert--info flex-col db-alert--mt-4" hidden>
               <strong>Necesitás iniciar sesión como candidato.</strong>
               <span class="text-sm text-muted">Para ver las ofertas, primero iniciá sesión.</span>
-              <div style="margin-top: var(--space-3)">
+              <div class="alert-action">
                 <a class="btn btn--primary btn--sm" href="../auth/login.html">Ir a login</a>
               </div>
             </div>
           </div>
 
           <div class="employee-grid">
-            <aside class="card" style="padding: var(--space-4); min-width: 0">
-              <header class="card__header" style="margin-bottom: var(--space-3)">
-                <div class="flex flex-col" style="gap: var(--space-1)">
+            <aside class="card aside-card--custom">
+              <header class="card__header card-header--mb-3">
+                <div class="flex-col--gap-1">
                   <span class="label">Ofertas</span>
                   <h2 class="card__title text-base">Listado</h2>
                 </div>
@@ -415,9 +122,9 @@
               <div id="employeeOffersList" class="offer-list" role="listbox" aria-label="Listado de ofertas"></div>
             </aside>
 
-            <section class="card offer-detail-card" style="min-width: 0">
+            <section class="card offer-detail-card detail-card--custom">
               <header class="card__header">
-                <div class="flex flex-col" style="gap: var(--space-1)">
+                <div class="flex-col--gap-1">
                   <span class="label">Detalle</span>
                   <h2 class="card__title offer-detail__title text-xl" id="offerDetailTitle">Oferta</h2>
                 </div>
@@ -433,8 +140,8 @@
                 </div>
               </header>
 
-              <div class="card__body" style="color: var(--color-text);">
-                <div id="offerDetailEmpty" class="empty-state" style="padding: var(--space-10) var(--space-6)">
+              <div class="card__body detail-body--custom">
+                <div id="offerDetailEmpty" class="empty-state empty-state--padded">
                   <div class="empty-state__icon">✦</div>
                   <div class="empty-state__title">Seleccioná una oferta</div>
                   <div class="empty-state__text">Hacé click en una oferta del listado para ver su información completa.</div>
@@ -442,7 +149,7 @@
 
                 <div id="offerDetail" hidden>
                   <div class="text-xs text-muted" id="offerDetailCompany">—</div>
-                  <p class="text-sm" id="offerDetailDescription" style="margin-top: var(--space-4)"></p>
+                  <p class="text-sm detail-desc--mt-4" id="offerDetailDescription"></p>
 
                   <div class="offer-detail__grid" aria-label="Datos de la oferta">
                     <div class="offer-detail__kv">
@@ -463,12 +170,12 @@
                     </div>
                   </div>
 
-                  <div style="margin-top: var(--space-6)">
-                    <div class="divider" style="margin: var(--space-2) 0">Responsabilidades</div>
-                    <ul id="offerDetailResponsibilities" class="text-sm" style="margin: 0; padding-left: 18px"></ul>
+                  <div class="detail-sections--mt-6">
+                    <div class="divider divider--margin-y-2">Responsabilidades</div>
+                    <ul id="offerDetailResponsibilities" class="text-sm detail-list"></ul>
 
-                    <div class="divider" style="margin: var(--space-6) 0 var(--space-2)">Requisitos</div>
-                    <ul id="offerDetailRequirements" class="text-sm" style="margin: 0; padding-left: 18px"></ul>
+                    <div class="divider divider--margin-top-6">Requisitos</div>
+                    <ul id="offerDetailRequirements" class="text-sm detail-list"></ul>
                   </div>
                 </div>
               </div>

@@ -33,25 +33,25 @@
             <header class="card__header profile-shell__header">
               <div>
                 <div class="label">Candidato</div>
-                <h1 class="card__title" style="font-size: var(--text-2xl)">Mi perfil</h1>
+                <h1 class="card__title card__title--profile-h1">Mi perfil</h1>
               </div>
             </header>
 
             <div class="card__body">
               <p class="text-sm text-muted profile-shell__intro">
                 Completá tu información básica. Para subir tu CV y analizarlo con IA, usá la sección
-                <a id="goToMiCvLink" href="mi-cv.html" style="color: var(--color-accent); text-decoration: underline;">Mi CV</a>.
+                <a id="goToMiCvLink" href="mi-cv.html" class="profile-link--accent">Mi CV</a>.
               </p>
 
-              <div id="profileAlert" class="alert alert--info flex-col" hidden style="margin-top: var(--space-4)">
+              <div id="profileAlert" class="alert alert--info flex-col profile-alert--mt" hidden>
                 <strong>Necesitás iniciar sesión.</strong>
                 <span class="text-sm text-muted">Tu perfil se guarda por usuario.</span>
-                <div style="margin-top: var(--space-3)">
+                <div class="alert__action">
                   <a class="btn btn--primary btn--sm" href="../auth/login.html">Ir a login</a>
                 </div>
               </div>
 
-              <form id="candidateProfileForm" class="profile-form" novalidate style="margin-top: var(--space-8)">
+              <form id="candidateProfileForm" class="profile-form profile-form--mt" novalidate>
                 <div class="grid grid-2 profile-layout">
                   <div class="profile-left-column">
                     <section class="profile-card profile-card--photo">
@@ -70,7 +70,7 @@
                       </div>
 
                       <div class="profile-avatar__meta">
-                        <div class="text-display" id="profileName" style="font-size: var(--text-lg)">—</div>
+                        <div class="text-display profile-name-display" id="profileName">—</div>
                         <div class="text-xs text-muted" id="profileEmail">—</div>
                       </div>
 
@@ -88,7 +88,7 @@
 
                     <section class="profile-cv-card card profile-card--about">
                       <div class="profile-card__extras">
-                        <div class="divider" style="margin: var(--space-2) 0">Sobre mí</div>
+                        <div class="divider profile-card__divider--sm">Sobre mí</div>
 
                         <div class="form-group">
                           <label class="form-label" for="about">Sobre mí</label>
@@ -104,7 +104,7 @@
                   </div>
 
                   <section class="profile-fields profile-fields--panel">
-                    <div class="grid profile-fields-grid" style="grid-template-columns: 1fr; gap: var(--space-4)">
+                    <div class="grid profile-fields-grid profile-fields-grid--single">
                       <div class="form-group cv-upload-group">
                         <label class="form-label" for="fullName">Nombre completo</label>
                         <input
@@ -134,22 +134,20 @@
                       <div class="form-group">
                         <label class="form-label" for="academicBackground">Formación académica</label>
                         <textarea
-                          class="form-textarea"
+                          class="form-textarea form-textarea--md"
                           id="academicBackground"
                           name="academicBackground"
                           placeholder="Ej: Lic. en Sistemas (UNC, 2021), cursos y certificaciones relevantes"
-                          style="min-height: 96px"
                         ></textarea>
                       </div>
 
                       <div class="form-group">
                         <label class="form-label" for="workExperience">Experiencia laboral</label>
                         <textarea
-                          class="form-textarea"
+                          class="form-textarea form-textarea--lg"
                           id="workExperience"
                           name="workExperience"
                           placeholder="Describí tus roles, años de experiencia y logros clave"
-                          style="min-height: 108px"
                         ></textarea>
                       </div>
 
@@ -225,7 +223,7 @@
 
                     </div>
 
-                    <div class="card__footer" style="justify-content: flex-end">
+                    <div class="card__footer card__footer--end">
                       <button class="btn btn--primary" type="submit">Guardar cambios</button>
                     </div>
                   </section>
@@ -250,14 +248,14 @@
         <div class="card__body">
           <p class="text-sm text-muted">Arrastrá la imagen para centrarla dentro del círculo.</p>
 
-          <div class="photo-editor" style="margin-top: var(--space-4)">
+          <div class="photo-editor photo-editor--mt">
             <div id="photoEditorViewport" class="photo-editor__viewport" aria-label="Editor de foto">
               <img id="photoEditorImg" class="photo-editor__img" alt="Previsualización" src="" draggable="false" />
             </div>
           </div>
         </div>
 
-        <footer class="card__footer" style="justify-content: flex-end">
+        <footer class="card__footer card__footer--end">
           <button class="btn btn--secondary btn--sm" type="button" id="photoCropCancelBtn">Cancelar</button>
           <button class="btn btn--primary btn--sm" type="button" id="photoCropSaveBtn">Guardar</button>
         </footer>
@@ -278,7 +276,7 @@
           <p class="text-sm text-muted" id="confirmMessage">Esta acción no se puede deshacer.</p>
         </div>
 
-        <footer class="card__footer" style="justify-content: flex-end">
+        <footer class="card__footer card__footer--end">
           <button class="btn btn--secondary btn--sm" type="button" id="confirmCancelBtn">Cancelar</button>
           <button class="btn btn--primary btn--sm" type="button" id="confirmOkBtn">Confirmar</button>
         </footer>

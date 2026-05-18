@@ -1087,3 +1087,20 @@
 .gap-16 { gap: 16px; }
 .mb-24 { margin-bottom: 24px; }
 
+/* ── Utility overrides (replaces inline styles) ──────── */
+.sidebar-avatar--shrink {
+  flex-shrink: 0;
+}
+
+.db-topbar__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.topbar-user-btn--clean {
+  border: none;
+  outline: none;
+}
+
+

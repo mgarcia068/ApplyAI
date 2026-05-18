@@ -1,0 +1,184 @@
+/* ── PAGE LAYOUT ─────────────────────────────────────────── */
+.micv-shell {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.micv-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.micv-header__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.micv-header__text h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  margin: 0 0 var(--space-1);
+  color: var(--color-text);
+}
+
+.micv-header__text p {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── UPLOAD CARD ─────────────────────────────────────────── */
+.micv-upload-card {
+  padding: var(--space-6);
+  margin-bottom: var(--space-5);
+}
+
+.micv-upload-zone {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.micv-upload-zone .form-file {
+  flex: 1;
+  min-width: 200px;
+}
+
+.micv-cv-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-3);
+  border: 1px solid var(--color-surface);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.micv-cv-info__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.micv-cv-info__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── NO CV EMPTY STATE ───────────────────────────────────── */
+.micv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) var(--space-6);
+  text-align: center;
+  gap: var(--space-3);
+}
+
+.micv-empty__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-3);
+  border: 2px dashed var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 28px;
+}
+
+.micv-empty__title {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.micv-empty__text {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 36ch;
+}
+
+/* ── AI SECTION ──────────────────────────────────────────── */
+.micv-ai-card {
+  padding: var(--space-6);
+}
+
+.micv-ai-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-6);
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.micv-ai-locked__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.micv-ai-locked__title {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.micv-ai-locked__text {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 34ch;
+}
+
+/* ── Static helper classes for inline styles removal ─────── */
+.micv-alert--mb-5 {
+  margin-bottom: var(--space-5);
+}
+
+.card__header--mb-4 {
+  margin-bottom: var(--space-4);
+}
+
+.flex-col--gap-1 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.micv-hint--mt-2 {
+  margin-top: var(--space-2);
+}
+
+.form-error--mt-2 {
+  margin-top: var(--space-2);
+}
+
+.text-display--font-md {
+  font-size: var(--text-md);
+}

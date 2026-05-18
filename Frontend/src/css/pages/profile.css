@@ -804,3 +804,54 @@
   background: var(--color-bg-3);
   color: var(--color-accent);
 }
+
+/* ── Utility overrides (replaces inline styles) ──────── */
+.card__title--profile-h1 {
+  font-size: var(--text-2xl);
+}
+
+.profile-link--accent {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.profile-alert--mt {
+  margin-top: var(--space-4);
+}
+
+.alert__action {
+  margin-top: var(--space-3);
+}
+
+.profile-form--mt {
+  margin-top: var(--space-8);
+}
+
+.profile-name-display {
+  font-size: var(--text-lg);
+}
+
+.profile-fields-grid--single {
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.form-textarea--md {
+  min-height: 96px;
+}
+
+.form-textarea--lg {
+  min-height: 108px;
+}
+
+.card__footer--end {
+  justify-content: flex-end;
+}
+
+.photo-editor--mt {
+  margin-top: var(--space-4);
+}
+
+.profile-card__divider--sm {
+  margin: var(--space-2) 0;
+}

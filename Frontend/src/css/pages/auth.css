@@ -227,3 +227,26 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+/* ── Utility overrides (replaces inline styles) ──────── */
+.auth-divider--mt-5 {
+	margin-top: var(--space-5);
+}
+
+.auth-text--center {
+	text-align: center;
+}
+
+.auth-text--mb-3 {
+	margin-bottom: var(--space-3);
+}
+
+.auth-button-container {
+	display: flex;
+	justify-content: center;
+}
+
+.auth-hint--mt-2 {
+	margin-top: var(--space-2);
+}
+
