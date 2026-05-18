@@ -758,10 +758,8 @@ function togglePerfilEdit(editar) {
 
 async function guardarPerfil() {
   const saveBtn = document.querySelector('#perfil-edit .btn--primary');
-  const originalText = saveBtn ? saveBtn.textContent : 'Guardar cambios';
   if (saveBtn) {
-    saveBtn.textContent = 'Guardando...';
-    saveBtn.disabled = true;
+    saveBtn.classList.add('is-loading');
   }
 
   const payload = {
@@ -822,8 +820,7 @@ async function guardarPerfil() {
     alert('Error al guardar el perfil en el servidor.');
   } finally {
     if (saveBtn) {
-      saveBtn.textContent = originalText;
-      saveBtn.disabled = false;
+      saveBtn.classList.remove('is-loading');
     }
   }
 }

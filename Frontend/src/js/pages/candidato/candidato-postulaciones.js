@@ -147,7 +147,6 @@
     };
     apps.push(newApp);
     saveAllApplications(apps);
-    renderApplications(email);
     try {
       const rawUser = localStorage.getItem('ApplyAI.currentUser');
       const token = rawUser ? JSON.parse(rawUser).token : '';
@@ -299,9 +298,16 @@
         if (!offer || !email) return;
 
         if (action === 'apply') {
-          createApplication(email, offer);
-          renderOffers(email, isAllowed);
-          renderApplications(email);
+          btn.classList.add('is-loading');
+          
+          Promise.all([
+            createApplication(email, offer),
+            new Promise(r => setTimeout(r, 600))
+          ]).finally(() => {
+            renderOffers(email, isAllowed);
+            renderApplications(email);
+          });
+          
           return;
         }
 

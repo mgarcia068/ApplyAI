@@ -35,7 +35,7 @@
             <header class="card__header profile-shell__header">
               <div>
                 <div class="label">Candidato</div>
-                <h1 class="card__title" style="font-size: var(--text-2xl)">Mi perfil</h1>
+                <h1 class="card__title text-2xl">Mi perfil</h1>
               </div>
             </header>
 
@@ -44,15 +44,15 @@
                 Completá tu información básica.
               </p>
 
-              <div id="profileAlert" class="alert alert--info flex-col" hidden style="margin-top: var(--space-4)">
+              <div id="profileAlert" class="alert alert--info flex-col mt-4" hidden>
                 <strong>Necesitás iniciar sesión.</strong>
                 <span class="text-sm text-muted">Tu perfil se guarda por usuario.</span>
-                <div style="margin-top: var(--space-3)">
+                <div class="mt-3">
                   <a class="btn btn--primary btn--sm" href="../auth/login.html">Ir a login</a>
                 </div>
               </div>
 
-              <form id="candidateProfileForm" class="profile-form" novalidate style="margin-top: var(--space-8)">
+              <form id="candidateProfileForm" class="profile-form mt-8" novalidate>
                 <div class="grid grid-2 profile-layout">
                   <div class="profile-left-column">
                     <section class="profile-card profile-card--photo">
@@ -71,7 +71,7 @@
                       </div>
 
                       <div class="profile-avatar__meta">
-                        <div class="text-display" id="profileName" style="font-size: var(--text-lg)">—</div>
+                        <div class="text-display text-lg" id="profileName">—</div>
                         <div class="text-xs text-muted" id="profileEmail">—</div>
                       </div>
 
@@ -89,7 +89,7 @@
 
                     <section class="profile-cv-card card profile-card--about">
                       <div class="profile-card__extras">
-                        <div class="divider" style="margin: var(--space-2) 0">Sobre mí</div>
+                        <div class="divider my-2">Sobre mí</div>
 
                         <div class="form-group">
                           <label class="form-label" for="about">Sobre mí</label>
@@ -105,7 +105,7 @@
                   </div>
 
                   <section class="profile-fields profile-fields--panel">
-                    <div class="grid profile-fields-grid" style="grid-template-columns: 1fr; gap: var(--space-4)">
+                    <div class="grid profile-fields-grid grid-cols-1 gap-4">
                       <div class="form-group cv-upload-group">
                         <label class="form-label" for="fullName">Nombre completo</label>
                         <input
@@ -139,7 +139,7 @@
                           id="academicBackground"
                           name="academicBackground"
                           placeholder="Ej: Lic. en Sistemas (UNC, 2021), cursos y certificaciones relevantes"
-                          style="min-height: 96px"
+                          class="min-h-96"
                         ></textarea>
                       </div>
 
@@ -150,7 +150,7 @@
                           id="workExperience"
                           name="workExperience"
                           placeholder="Describí tus roles, años de experiencia y logros clave"
-                          style="min-height: 108px"
+                          class="min-h-108"
                         ></textarea>
                       </div>
 
@@ -223,7 +223,7 @@
                         />
                       </div>
 
-                      <div class="divider" style="margin: var(--space-2) 0">Curriculum</div>
+                      <div class="divider my-2">Curriculum</div>
 
                       <div class="form-group">
                         <label class="form-label" for="cvFile">Curriculum (PDF)</label>
@@ -241,7 +241,7 @@
                         <div class="form-error" id="cvFileError"></div>
 
                         <div id="cvInfo" class="flex items-center justify-between" hidden>
-                          <div class="flex flex-col" style="gap: var(--space-1)">
+                          <div class="flex flex-col gap-1">
                             <div class="flex items-center gap-2">
                               <span class="badge badge--neutral">PDF</span>
                               <span class="text-sm" id="cvFileName">—</span>
@@ -256,13 +256,13 @@
                         </div>
                       </div>
 
-                      <div class="divider" style="margin: var(--space-2) 0">Evaluación IA del CV</div>
+                      <div class="divider my-2">Evaluación IA del CV</div>
 
                       <section class="cv-ai card card--flat" id="cvAiEvaluator" aria-label="Evaluación de currículum con IA">
                         <header class="cv-ai__header">
                           <div class="cv-ai__title-wrap">
                             <div class="cv-ai__eyebrow">Analisis asistido</div>
-                            <h3 class="text-display" style="font-size: var(--text-md)">Score del currículum</h3>
+                            <h3 class="text-display text-md">Score del currículum</h3>
                             <p class="text-xs text-muted">Puntuación visual basada en claridad, habilidades y experiencia.</p>
                             <p class="text-xs text-muted">Límite IA: 3 análisis diarios (solo para este análisis de CV).</p>
                           </div>
@@ -339,7 +339,7 @@
 
                     </div>
 
-                    <div class="card__footer" style="justify-content: flex-end">
+                    <div class="card__footer justify-end">
                       <button class="btn btn--primary" type="submit">Guardar cambios</button>
                     </div>
                   </section>
@@ -364,14 +364,14 @@
         <div class="card__body">
           <p class="text-sm text-muted">Arrastrá la imagen para centrarla dentro del círculo.</p>
 
-          <div class="photo-editor" style="margin-top: var(--space-4)">
+          <div class="photo-editor mt-4">
             <div id="photoEditorViewport" class="photo-editor__viewport" aria-label="Editor de foto">
               <img id="photoEditorImg" class="photo-editor__img" alt="Previsualización" src="" draggable="false" />
             </div>
           </div>
         </div>
 
-        <footer class="card__footer" style="justify-content: flex-end">
+        <footer class="card__footer justify-end">
           <button class="btn btn--secondary btn--sm" type="button" id="photoCropCancelBtn">Cancelar</button>
           <button class="btn btn--primary btn--sm" type="button" id="photoCropSaveBtn">Guardar</button>
         </footer>
@@ -392,7 +392,7 @@
           <p class="text-sm text-muted" id="confirmMessage">Esta acción no se puede deshacer.</p>
         </div>
 
-        <footer class="card__footer" style="justify-content: flex-end">
+        <footer class="card__footer justify-end">
           <button class="btn btn--secondary btn--sm" type="button" id="confirmCancelBtn">Cancelar</button>
           <button class="btn btn--primary btn--sm" type="button" id="confirmOkBtn">Confirmar</button>
         </footer>

@@ -459,9 +459,7 @@
       const mappedRole = role === 'empresa' ? 'COMPANY' : 'CANDIDATE';
       
       const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = 'Cargando...';
-      submitBtn.disabled = true;
+      if (submitBtn) submitBtn.classList.add('is-loading');
 
       try {
         await axios.post('http://localhost:3000/api/auth/register', {
@@ -478,8 +476,7 @@
           alertEl.hidden = false;
         }
       } finally {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
+        if (submitBtn) submitBtn.classList.remove('is-loading');
       }
     });
   }
@@ -556,9 +553,7 @@
       const passwordValue = password?.value || '';
 
       const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = 'Cargando...';
-      submitBtn.disabled = true;
+      if (submitBtn) submitBtn.classList.add('is-loading');
 
       try {
         const response = await axios.post('http://localhost:3000/api/auth/login', {
@@ -584,8 +579,7 @@
           alertEl.hidden = false;
         }
       } finally {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
+        if (submitBtn) submitBtn.classList.remove('is-loading');
       }
     });
   }

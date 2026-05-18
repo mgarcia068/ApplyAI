@@ -509,10 +509,16 @@ function showToast(title, subtitle = '', type = 'success') {
         const offer = OFFERS.find((o) => o.id === selectedOfferId) || null;
         if (!offer) return;
 
+        applyBtnEl.classList.add('is-loading');
+
         try {
           const rawUser = localStorage.getItem('ApplyAI.currentUser');
           const token = rawUser ? JSON.parse(rawUser).token : '';
-          const res = await axios.post('http://localhost:3000/api/applications', { jobOfferId: offer.id }, { headers: { Authorization: 'Bearer ' + token } });
+          
+          const [res] = await Promise.all([
+            axios.post('http://localhost:3000/api/applications', { jobOfferId: offer.id }, { headers: { Authorization: 'Bearer ' + token } }),
+            new Promise(resolve => setTimeout(resolve, 600))
+          ]);
           
           showToast('¡Postulación exitosa!', 'Tu postulación fue enviada correctamente.', 'success');
           
@@ -535,6 +541,8 @@ function showToast(title, subtitle = '', type = 'success') {
         } catch (e) {
           const errorMsg = e.response?.data?.message || 'Ya te postulaste a esta oferta o hubo un problema.';
           showToast('Error', errorMsg, 'error');
+        } finally {
+          applyBtnEl.classList.remove('is-loading');
         }
       });
     }
