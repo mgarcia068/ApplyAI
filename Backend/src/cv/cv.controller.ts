@@ -84,28 +84,36 @@ export class CvController {
     return this.cvService.analyze(id);
   }
 
+  @Get('my-cv')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.CANDIDATE)
+  async serveMyCv(
+    @CurrentUser() user: JwtPayload,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const buffer = await this.cvService.getMyCvBuffer(user.sub);
+    
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="CV.pdf"',
+    });
+
+    return new StreamableFile(buffer);
+  }
+
   @Get('file/:userId/:filename')
-  serveFile(
+  async serveFile(
     @Param('userId') userId: string,
     @Param('filename') filename: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, '');
-    const safeFilename = filename.replace(/[^a-zA-Z0-9_.-]/g, '');
+    const buffer = await this.cvService.getCvBufferForUser(userId);
     
-    // Ruta donde se guardan los CVs locales (Backend/uploads/cvs)
-    const filePath = join(__dirname, '..', '..', 'uploads', 'cvs', safeUserId, safeFilename);
-
-    if (!existsSync(filePath)) {
-      throw new NotFoundException('Archivo no encontrado');
-    }
-
-    const fileStream = createReadStream(filePath);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="${safeFilename}"`,
+      'Content-Disposition': `inline; filename="${filename}"`,
     });
     
-    return new StreamableFile(fileStream);
+    return new StreamableFile(buffer);
   }
 }

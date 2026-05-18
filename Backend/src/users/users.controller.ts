@@ -36,7 +36,7 @@ export class UsersController {
   }
 
   @Post('me/photo')
-  @Roles(Role.CANDIDATE)
+  @Roles(Role.CANDIDATE, Role.COMPANY)
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: memoryStorage(),
