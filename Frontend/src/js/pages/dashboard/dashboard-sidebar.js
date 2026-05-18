@@ -32,6 +32,16 @@ function navigateTo(seccion, subtitulo) {
 
   seccionActual = seccion;
 
+  const isProfileIncomplete = !PERFIL_EMPRESA.rubro || !PERFIL_EMPRESA.descripcion;
+  if (isProfileIncomplete && seccion !== 'perfil') {
+    showToast('Perfil Incompleto', 'Debes completar tu perfil de empresa antes de continuar.', 'error');
+    setTimeout(() => {
+      navigateTo('perfil');
+      setTimeout(() => togglePerfilEdit(true), 100);
+    }, 0);
+    return;
+  }
+
   const topbarTitle = document.getElementById('topbar-title');
   if (topbarTitle) {
     topbarTitle.textContent = subtitulo ? `${def.titulo} — ${subtitulo}` : def.titulo;
@@ -275,12 +285,12 @@ function getCompanyInitials(name) {
 
 let PERFIL_EMPRESA = {
   nombre:      companyName,
-  rubro:       'Tecnologia & Software',
-  descripcion: 'Empresa de desarrollo de software con foco en soluciones B2B para el mercado latinoamericano.',
-  web:         'https://techcorp.com.ar',
-  ubicacion:   'Buenos Aires, Argentina',
-  empleados:   '50-100',
-  fundacion:   '2018',
+  rubro:       '',
+  descripcion: '',
+  web:         '',
+  ubicacion:   '',
+  empleados:   '',
+  fundacion:   '',
   photoDataUrl:'',
   photoPanX:   0,
   photoPanY:   0,
@@ -810,7 +820,7 @@ async function guardarPerfil() {
     togglePerfilEdit(false);
     
     if (typeof showToast === 'function') {
-      showToast('Perfil actualizado', 'Los cambios se guardaron correctamente en la base de datos.', 'success');
+      showToast('Perfil actualizado', 'Los cambios se guardaron correctamente.', 'success');
     }
   } catch (e) {
     console.error('Error saving company profile:', e);

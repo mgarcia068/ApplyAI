@@ -224,7 +224,13 @@
        else if (searchKey.includes('hotmailcom')) searchKey = searchKey.replace('hotmailcom', '@hotmail.com');
     }
 
-    const cacheKey = isOwnProfile ? 'ApplyAI.ownCompanyProfile' : `ApplyAI.publicCompanyProfile_${searchKey}`;
+    let userEmail = '';
+    try {
+      const currentUserRaw = localStorage.getItem('ApplyAI.currentUser');
+      if (currentUserRaw) userEmail = JSON.parse(currentUserRaw).email || '';
+    } catch(e) {}
+    
+    const cacheKey = isOwnProfile ? `ApplyAI.ownCompanyProfile_${userEmail}` : `ApplyAI.publicCompanyProfile_${searchKey}`;
     const cachedRaw = localStorage.getItem(cacheKey);
     let hasLoadedFromCache = false;
 
