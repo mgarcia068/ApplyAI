@@ -503,7 +503,7 @@ function cambiarEstadoCandidato(id, nuevoEstado) {
       if (nuevoEstado === 'Entrevista') {
         showToast('Candidato en Entrevista', `Se notificó por mail a ${candidato.nombre} los pasos a seguir.`, 'info');
       } else if (nuevoEstado === 'Aceptado') {
-        showToast('¡Candidato Aceptado!', `Se envió propuesta formal a ${candidato.nombre} a su correo.`, 'success');
+        showToast('¡Candidato Contratado!', `El candidato ${candidato.nombre} fue marcado como aceptado exitosamente.`, 'success');
       } else if (nuevoEstado === 'Rechazado') {
         showToast('Candidato Rechazado', `Se envió mail de agradecimiento a ${candidato.nombre}.`, 'error');
       }

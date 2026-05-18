@@ -6,6 +6,7 @@ import { Role } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CvService } from '../cv/cv.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ApplicationsService {
@@ -15,6 +16,7 @@ export class ApplicationsService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly cvService: CvService,
+    private readonly mailService: MailService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
     this.genAI = new GoogleGenerativeAI(apiKey);
@@ -32,6 +34,11 @@ export class ApplicationsService {
 
     const job = await this.prisma.jobOffer.findUnique({
       where: { id: createApplicationDto.jobOfferId },
+      include: {
+        company: {
+          include: { companyProfile: true }
+        }
+      }
     });
 
     if (!job) {
@@ -83,6 +90,14 @@ export class ApplicationsService {
         jobOffer: true,
       },
     });
+
+    // Enviar correo de postulación asíncronamente
+    this.mailService.sendNewApplication(
+      profile.name,
+      user.email,
+      job.title,
+      job.company?.companyProfile?.name || 'Empresa'
+    ).catch(e => console.error(e));
 
     return application;
   }
@@ -285,13 +300,26 @@ export class ApplicationsService {
   async updateStatus(applicationId: string, status: any, user: JwtPayload) {
     const application = await this.prisma.application.findUnique({
       where: { id: applicationId },
-      include: { jobOffer: true },
+      include: { 
+        jobOffer: {
+          include: {
+            company: {
+              include: { companyProfile: true }
+            }
+          }
+        },
+        candidate: {
+          include: {
+            user: { select: { email: true, fullName: true } },
+          },
+        },
+      },
     });
 
     if (!application) throw new NotFoundException('Postulación no encontrada.');
     if (application.jobOffer.companyId !== user.sub) throw new ForbiddenException('No tienes permiso.');
 
-    return this.prisma.application.update({
+    const updatedApp = await this.prisma.application.update({
       where: { id: applicationId },
       data: { status },
       include: {
@@ -302,5 +330,25 @@ export class ApplicationsService {
         },
       },
     });
+
+    // Enviar email asíncronamente si el estado es VIEWED (Entrevista) o REJECTED
+    if (status === 'VIEWED') {
+      this.mailService.sendApplicationAccepted(
+        application.candidate.user.fullName || application.candidate.name,
+        application.candidate.user.email,
+        application.jobOffer.title,
+        application.jobOffer.company.companyProfile?.name || 'Empresa',
+        application.jobOffer.company.email
+      ).catch(e => console.error(e));
+    } else if (status === 'REJECTED') {
+      this.mailService.sendApplicationRejected(
+        application.candidate.user.fullName || application.candidate.name,
+        application.candidate.user.email,
+        application.jobOffer.title,
+        application.jobOffer.company.companyProfile?.name || 'Empresa'
+      ).catch(e => console.error(e));
+    }
+
+    return updatedApp;
   }
 }
