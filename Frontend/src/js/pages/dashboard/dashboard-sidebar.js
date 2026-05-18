@@ -42,11 +42,6 @@ function navigateTo(seccion, subtitulo) {
     return;
   }
 
-  const topbarTitle = document.getElementById('topbar-title');
-  if (topbarTitle) {
-    topbarTitle.textContent = subtitulo ? `${def.titulo} — ${subtitulo}` : def.titulo;
-  }
-
   document.querySelectorAll('.sidebar__link').forEach(link => {
     link.classList.toggle('active', !!link.getAttribute('onclick')?.includes(`'${seccion}'`));
   });

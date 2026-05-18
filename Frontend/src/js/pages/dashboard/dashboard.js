@@ -45,6 +45,14 @@ function renderStats(containerId) {
   const enEntrevista     = POSTULANTES.filter(p => p.estado === 'Entrevista').length;
   const aceptados        = POSTULANTES.filter(p => p.estado === 'Aceptado').length;
 
+  // Cálculo de recibidos esta semana (7 días atrás)
+  const ahora = new Date();
+  const haceUnaSemana = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 7);
+  const recibidosEstaSemana = POSTULANTES.filter(p => {
+    const fechaP = new Date(p.fecha);
+    return fechaP >= haceUnaSemana;
+  }).length;
+
   el.innerHTML = `
     <div class="stat-card">
       <div class="stat-card__top">
@@ -65,7 +73,7 @@ function renderStats(containerId) {
         </div>
       </div>
       <div class="stat-card__value">${totalPostulantes}</div>
-      <div class="stat-card__delta text-success">Recibidos esta semana</div>
+      <div class="stat-card__delta ${recibidosEstaSemana > 0 ? 'text-success' : ''}">${recibidosEstaSemana} recibidos esta semana</div>
     </div>
 
     <div class="stat-card">
@@ -81,7 +89,7 @@ function renderStats(containerId) {
         </div>
       </div>
       <div class="stat-card__value">${enEntrevista}</div>
-      <div class="stat-card__delta text-success">Candidatos avanzando</div>
+      <div class="stat-card__delta ${enEntrevista > 0 ? 'text-success' : ''}">Candidatos avanzando</div>
     </div>
 
     <div class="stat-card">
@@ -95,7 +103,7 @@ function renderStats(containerId) {
         </div>
       </div>
       <div class="stat-card__value">${aceptados}</div>
-      <div class="stat-card__delta text-success">Nuevos talentos sumados</div>
+      <div class="stat-card__delta ${aceptados > 0 ? 'text-success' : ''}">Nuevos talentos sumados</div>
     </div>
   `;
 }
@@ -258,7 +266,7 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
               <button class="btn btn--secondary btn--sm cursor-pointer" onclick="visualizarCV('${p.nombre}', '${p.cvUrl}', '${p.cvRating || '0.0'}')">Ver CV</button>
               <select class="form-select cursor-pointer" 
                 style="width: auto; padding: var(--space-1) var(--space-3); font-size: var(--text-xs);"
-                onchange="cambiarEstadoCandidato('${p.id}', this.value)"
+                onchange="cambiarEstadoCandidato('${p.id}', this.value, this)"
                 ${p.estado === 'Aceptado' || p.estado === 'Rechazado' ? 'disabled' : ''}>
                 <option value="Revisión" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Revisión' ? 'selected' : ''} ${p.estado === 'Entrevista' ? 'disabled' : ''}>En revisión</option>
                 <option value="Entrevista" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Entrevista' ? 'selected' : ''}>Entrevista</option>
@@ -482,11 +490,20 @@ function showConfirmDialog(title, message, onConfirm, onCancel) {
   };
 }
 
-function cambiarEstadoCandidato(id, nuevoEstado) {
+function cambiarEstadoCandidato(id, nuevoEstado, selectElement) {
   const candidato = POSTULANTES.find(p => p.id === id);
   if (!candidato) return;
 
+  // Si el estado es el mismo, o si ya es un estado terminal que no se debería cambiar
+  if (candidato.estado === nuevoEstado) return;
+  if (candidato.estado === 'Aceptado' || candidato.estado === 'Rechazado') {
+    showToast('Acción no permitida', 'No puedes cambiar el estado de un candidato ya aceptado o rechazado', 'error');
+    if (selectElement) selectElement.value = candidato.estado; // volver a la opción original
+    return;
+  }
+
   const performChange = async () => {
+    if (selectElement) selectElement.disabled = true; // Deshabilitar mientras carga
     try {
       const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
       let backendStatus = 'PENDING';
@@ -510,7 +527,8 @@ function cambiarEstadoCandidato(id, nuevoEstado) {
       applyPostulantesFilters(); // recarga
     } catch (err) {
       console.error("Error al actualizar estado", err);
-      alert("Error al actualizar estado del candidato");
+      showToast("Error", "No se pudo actualizar el estado del candidato", "error");
+      if (selectElement) selectElement.disabled = false;
       applyPostulantesFilters(); // recarga original si falla
     }
   };
@@ -522,7 +540,10 @@ function cambiarEstadoCandidato(id, nuevoEstado) {
       `¿Estás seguro de querer <strong>${isAceptado ? 'aceptar' : 'rechazar'} a ${candidato.nombre}</strong>? 
        Esta acción no se puede deshacer y deshabilitará el selector de estado permanentemente.`,
       () => performChange(), // Si confirma, ejecuta
-      () => applyPostulantesFilters() // Si cancela, re-renderiza con el estado original
+      () => {
+        if (selectElement) selectElement.value = candidato.estado; // Revertir visualmente
+        applyPostulantesFilters();
+      }
     );
   } else {
     // Si es entrevista, no pregunta, solo cambia
@@ -709,6 +730,7 @@ function setupTagsInput(containerId, inputId, hiddenId, initialTags = []) {
 
 const DASHBOARD_CACHE_KEYS = {
   offers: 'ApplyAI.dashboard.offers',
+  summary_applicants: 'ApplyAI.dashboard.summary_applicants',
   applicants: 'ApplyAI.dashboard.applicants_prefix_', // Se usará con ofertaId
 };
 
@@ -720,6 +742,13 @@ let ofertaActivaId = null;
   if (cachedOffers) {
     try {
       OFERTAS = JSON.parse(cachedOffers);
+    } catch(e) {}
+  }
+
+  const cachedSummaryApps = localStorage.getItem(DASHBOARD_CACHE_KEYS.summary_applicants);
+  if (cachedSummaryApps) {
+    try {
+      POSTULANTES = JSON.parse(cachedSummaryApps);
     } catch(e) {}
   }
 })();
@@ -735,11 +764,12 @@ async function loadDashboardData() {
 
   // 2. Sincronizar con el Backend en segundo plano
   try {
-    const res = await axios.get('http://localhost:3000/api/jobs/me/offers', {
+    // Sincronizar Ofertas
+    const resOffers = await axios.get('http://localhost:3000/api/jobs/me/offers', {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
-    const freshOffers = res.data.map(job => ({
+    const freshOffers = resOffers.data.map(job => ({
       id: job.id,
       titulo: job.title,
       descripcion: job.description,
@@ -755,6 +785,20 @@ async function loadDashboardData() {
 
     OFERTAS = freshOffers;
     localStorage.setItem(DASHBOARD_CACHE_KEYS.offers, JSON.stringify(freshOffers));
+
+    // Sincronizar Postulantes (para Resumen General)
+    const resApps = await axios.get('http://localhost:3000/api/applications', {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+
+    const freshSummaryApplicants = resApps.data.map(app => ({
+      id: app.id,
+      estado: app.status === 'PENDING' ? 'Revisión' : app.status === 'ACCEPTED' ? 'Aceptado' : app.status === 'VIEWED' ? 'Entrevista' : 'Rechazado',
+      fecha: app.createdAt
+    }));
+
+    POSTULANTES = freshSummaryApplicants;
+    localStorage.setItem(DASHBOARD_CACHE_KEYS.summary_applicants, JSON.stringify(freshSummaryApplicants));
 
     // Redibujar con datos frescos si seguimos en la misma sección
     if (seccionActual === 'resumen') renderResumen();
@@ -815,7 +859,23 @@ async function verPostulantes(ofertaId) {
     });
 
     POSTULANTES = freshApplicants;
-    localStorage.setItem(cacheKey, JSON.stringify(freshApplicants));
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(freshApplicants));
+    } catch (storageErr) {
+      if (storageErr.name === 'QuotaExceededError') {
+        console.warn("Storage quota exceeded, clearing old dashboard caches...");
+        // Limpiamos prefijos viejos para hacer espacio
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('ApplyAI.dashboard.')) {
+            localStorage.removeItem(key);
+          }
+        });
+        // Reintentamos una vez
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(freshApplicants));
+        } catch(e) { /* Si falla de nuevo, simplemente no lo cacheamos */ }
+      }
+    }
 
     // Si el usuario sigue viendo esta oferta, refrescamos la vista
     if (seccionActual === 'postulantes' && ofertaActivaId === ofertaId) {
