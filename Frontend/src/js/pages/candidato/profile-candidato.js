@@ -1322,10 +1322,17 @@
       return !hasAnyError;
     }
 
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', async function (e) {
       e.preventDefault();
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.classList.add('is-loading');
+
       commitPendingTokenDrafts();
-      if (!validate()) return;
+      if (!validate()) {
+        if (submitBtn) submitBtn.classList.remove('is-loading');
+        return;
+      }
 
       const existing = getCandidateProfile(userEmail) || {};
       const photoPan = getPhotoPan(existing);
@@ -1354,9 +1361,16 @@
 
       try {
         saveCandidateProfile(userEmail, nextProfile);
-        void syncProfileWithBackend(nextProfile);
+        
+        // Wait for both the backend sync and a minimum of 600ms so the loader is visible
+        await Promise.all([
+          syncProfileWithBackend(nextProfile),
+          new Promise(resolve => setTimeout(resolve, 600))
+        ]);
       } catch (_) {
         // ignore
+      } finally {
+        if (submitBtn) submitBtn.classList.remove('is-loading');
       }
 
       setText('profileName', nextProfile.fullName || '—');

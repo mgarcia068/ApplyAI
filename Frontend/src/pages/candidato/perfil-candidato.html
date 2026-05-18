@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
     <script src="../../js/core/middlewares/auth-guard.js?v=1.2"></script>
@@ -34,29 +34,52 @@
             <header class="card__header profile-shell__header">
               <div>
                 <div class="label">Candidato</div>
-                <h1 class="card__title" style="font-size: var(--text-2xl)">Mi perfil</h1>
+                <h1 class="card__title text-2xl">Mi perfil</h1>
               </div>
             </header>
 
             <div class="card__body">
               <p class="text-sm text-muted profile-shell__intro">
-                Completá tu información básica. Para subir tu CV y analizarlo con IA, usá la sección
-                <a id="goToMiCvLink" href="mi-cv.html" style="color: var(--color-accent); text-decoration: underline;">Mi CV</a>.
+                Completá tu información básica. Para subir tu CV y analizarlo
+                con IA, usá la sección
+                <a
+                  id="goToMiCvLink"
+                  href="mi-cv.html"
+                  style="color: var(--color-accent); text-decoration: underline"
+                  >Mi CV</a
+                >.
               </p>
 
-              <div id="profileAlert" class="alert alert--info flex-col" hidden style="margin-top: var(--space-4)">
+              <div
+                id="profileAlert"
+                class="alert alert--info flex-col mt-4"
+                hidden
+              >
                 <strong>Necesitás iniciar sesión.</strong>
-                <span class="text-sm text-muted">Tu perfil se guarda por usuario.</span>
-                <div style="margin-top: var(--space-3)">
-                  <a class="btn btn--primary btn--sm" href="../auth/login.html">Ir a login</a>
+                <span class="text-sm text-muted"
+                  >Tu perfil se guarda por usuario.</span
+                >
+                <div class="mt-3">
+                  <a class="btn btn--primary btn--sm" href="../auth/login.html"
+                    >Ir a login</a
+                  >
                 </div>
               </div>
 
-              <form id="candidateProfileForm" class="profile-form" novalidate style="margin-top: var(--space-8)">
+              <form
+                id="candidateProfileForm"
+                class="profile-form mt-8"
+                novalidate
+              >
                 <div class="grid grid-2 profile-layout">
                   <div class="profile-left-column">
                     <section class="profile-card profile-card--photo">
-                      <div id="profileAvatar" class="profile-avatar" role="img" aria-label="Foto de perfil">
+                      <div
+                        id="profileAvatar"
+                        class="profile-avatar"
+                        role="img"
+                        aria-label="Foto de perfil"
+                      >
                         <img
                           id="avatarPreview"
                           class="profile-avatar__img"
@@ -65,31 +88,49 @@
                           draggable="false"
                           hidden
                         />
-                        <div id="avatarFallback" class="profile-avatar__fallback">
+                        <div
+                          id="avatarFallback"
+                          class="profile-avatar__fallback"
+                        >
                           <span id="avatarInitials">?</span>
                         </div>
                       </div>
 
                       <div class="profile-avatar__meta">
-                        <div class="text-display" id="profileName" style="font-size: var(--text-lg)">—</div>
-                        <div class="text-xs text-muted" id="profileEmail">—</div>
+                        <div class="text-display text-lg" id="profileName">
+                          —
+                        </div>
+                        <div class="text-xs text-muted" id="profileEmail">
+                          —
+                        </div>
                       </div>
 
                       <label class="form-file" for="profilePhoto">
                         <div class="text-sm">Subir foto</div>
-                        <div class="text-xs text-muted">JPG/PNG/WebP (máx. 2MB)</div>
-                        <input id="profilePhoto" name="profilePhoto" type="file" accept="image/*" />
+                        <div class="text-xs text-muted">
+                          JPG/PNG/WebP (máx. 2MB)
+                        </div>
+                        <input
+                          id="profilePhoto"
+                          name="profilePhoto"
+                          type="file"
+                          accept="image/*"
+                        />
                       </label>
                       <div class="form-error" id="profilePhotoError"></div>
 
-                      <button class="btn btn--secondary btn--sm" type="button" id="removePhotoBtn">
+                      <button
+                        class="btn btn--secondary btn--sm"
+                        type="button"
+                        id="removePhotoBtn"
+                      >
                         Quitar foto
                       </button>
                     </section>
 
                     <section class="profile-cv-card card profile-card--about">
                       <div class="profile-card__extras">
-                        <div class="divider" style="margin: var(--space-2) 0">Sobre mí</div>
+                        <div class="divider my-2">Sobre mí</div>
 
                         <div class="form-group">
                           <label class="form-label" for="about">Sobre mí</label>
@@ -105,9 +146,11 @@
                   </div>
 
                   <section class="profile-fields profile-fields--panel">
-                    <div class="grid profile-fields-grid" style="grid-template-columns: 1fr; gap: var(--space-4)">
+                    <div class="grid profile-fields-grid grid-cols-1 gap-4">
                       <div class="form-group cv-upload-group">
-                        <label class="form-label" for="fullName">Nombre completo</label>
+                        <label class="form-label" for="fullName"
+                          >Nombre completo</label
+                        >
                         <input
                           class="form-input"
                           id="fullName"
@@ -121,7 +164,9 @@
                       </div>
 
                       <div class="form-group">
-                        <label class="form-label" for="headline">Título profesional</label>
+                        <label class="form-label" for="headline"
+                          >Título profesional</label
+                        >
                         <input
                           class="form-input"
                           id="headline"
@@ -133,29 +178,35 @@
                       </div>
 
                       <div class="form-group">
-                        <label class="form-label" for="academicBackground">Formación académica</label>
+                        <label class="form-label" for="academicBackground"
+                          >Formación académica</label
+                        >
                         <textarea
                           class="form-textarea"
                           id="academicBackground"
                           name="academicBackground"
                           placeholder="Ej: Lic. en Sistemas (UNC, 2021), cursos y certificaciones relevantes"
-                          style="min-height: 96px"
+                          class="min-h-96"
                         ></textarea>
                       </div>
 
                       <div class="form-group">
-                        <label class="form-label" for="workExperience">Experiencia laboral</label>
+                        <label class="form-label" for="workExperience"
+                          >Experiencia laboral</label
+                        >
                         <textarea
                           class="form-textarea"
                           id="workExperience"
                           name="workExperience"
                           placeholder="Describí tus roles, años de experiencia y logros clave"
-                          style="min-height: 108px"
+                          class="min-h-108"
                         ></textarea>
                       </div>
 
                       <div class="form-group">
-                        <label class="form-label" for="technicalSkills">Habilidades técnicas</label>
+                        <label class="form-label" for="technicalSkills"
+                          >Habilidades técnicas</label
+                        >
                         <input
                           class="form-input"
                           id="technicalSkills"
@@ -164,13 +215,21 @@
                           placeholder="Ej: React, Node.js, SQL, Docker, Testing"
                           autocomplete="off"
                         />
-                        <div class="form-hint profile-token-hint">Presioná Enter para agregar cada habilidad.</div>
+                        <div class="form-hint profile-token-hint">
+                          Presioná Enter para agregar cada habilidad.
+                        </div>
                         <div class="form-error" id="technicalSkillsError"></div>
-                        <div class="profile-token-list applicant-card__skills" id="technicalSkillsCards" aria-live="polite"></div>
+                        <div
+                          class="profile-token-list applicant-card__skills"
+                          id="technicalSkillsCards"
+                          aria-live="polite"
+                        ></div>
                       </div>
 
                       <div class="form-group">
-                        <label class="form-label" for="languages">Idiomas</label>
+                        <label class="form-label" for="languages"
+                          >Idiomas</label
+                        >
                         <input
                           class="form-input"
                           id="languages"
@@ -179,14 +238,22 @@
                           placeholder="Ej: Español, Inglés"
                           autocomplete="off"
                         />
-                        <div class="form-hint profile-token-hint">Presioná Enter para agregar cada idioma.</div>
+                        <div class="form-hint profile-token-hint">
+                          Presioná Enter para agregar cada idioma.
+                        </div>
                         <div class="form-error" id="languagesError"></div>
-                        <div class="profile-token-list applicant-card__skills" id="languagesCards" aria-live="polite"></div>
+                        <div
+                          class="profile-token-list applicant-card__skills"
+                          id="languagesCards"
+                          aria-live="polite"
+                        ></div>
                       </div>
 
                       <div class="grid grid-2">
                         <div class="form-group">
-                          <label class="form-label" for="location">Ubicación</label>
+                          <label class="form-label" for="location"
+                            >Ubicación</label
+                          >
                           <input
                             class="form-input"
                             id="location"
@@ -222,12 +289,12 @@
                           readonly
                         />
                       </div>
-
-
                     </div>
 
-                    <div class="card__footer" style="justify-content: flex-end">
-                      <button class="btn btn--primary" type="submit">Guardar cambios</button>
+                    <div class="card__footer justify-end">
+                      <button class="btn btn--primary" type="submit">
+                        Guardar cambios
+                      </button>
                     </div>
                   </section>
                 </div>
@@ -240,48 +307,100 @@
 
     <div id="photoCropModal" class="modal" hidden aria-hidden="true">
       <div class="modal__overlay"></div>
-      <div class="modal__panel card" role="dialog" aria-modal="true" aria-labelledby="photoCropTitle">
+      <div
+        class="modal__panel card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="photoCropTitle"
+      >
         <header class="card__header">
           <div>
             <div class="label">Foto de perfil</div>
-            <h2 class="card__title" id="photoCropTitle" class="text-xl">Ajustar encuadre</h2>
+            <h2 class="card__title" id="photoCropTitle" class="text-xl">
+              Ajustar encuadre
+            </h2>
           </div>
         </header>
 
         <div class="card__body">
-          <p class="text-sm text-muted">Arrastrá la imagen para centrarla dentro del círculo.</p>
+          <p class="text-sm text-muted">
+            Arrastrá la imagen para centrarla dentro del círculo.
+          </p>
 
-          <div class="photo-editor" style="margin-top: var(--space-4)">
-            <div id="photoEditorViewport" class="photo-editor__viewport" aria-label="Editor de foto">
-              <img id="photoEditorImg" class="photo-editor__img" alt="Previsualización" src="" draggable="false" />
+          <div class="photo-editor mt-4">
+            <div
+              id="photoEditorViewport"
+              class="photo-editor__viewport"
+              aria-label="Editor de foto"
+            >
+              <img
+                id="photoEditorImg"
+                class="photo-editor__img"
+                alt="Previsualización"
+                src=""
+                draggable="false"
+              />
             </div>
           </div>
         </div>
 
-        <footer class="card__footer" style="justify-content: flex-end">
-          <button class="btn btn--secondary btn--sm" type="button" id="photoCropCancelBtn">Cancelar</button>
-          <button class="btn btn--primary btn--sm" type="button" id="photoCropSaveBtn">Guardar</button>
+        <footer class="card__footer justify-end">
+          <button
+            class="btn btn--secondary btn--sm"
+            type="button"
+            id="photoCropCancelBtn"
+          >
+            Cancelar
+          </button>
+          <button
+            class="btn btn--primary btn--sm"
+            type="button"
+            id="photoCropSaveBtn"
+          >
+            Guardar
+          </button>
         </footer>
       </div>
     </div>
 
     <div id="confirmModal" class="modal" hidden aria-hidden="true">
       <div class="modal__overlay" id="confirmModalOverlay"></div>
-      <div class="modal__panel card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div
+        class="modal__panel card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmTitle"
+      >
         <header class="card__header">
           <div>
             <div class="label">Confirmación</div>
-            <h2 class="card__title" id="confirmTitle" class="text-xl">¿Estás seguro?</h2>
+            <h2 class="card__title" id="confirmTitle" class="text-xl">
+              ¿Estás seguro?
+            </h2>
           </div>
         </header>
 
         <div class="card__body">
-          <p class="text-sm text-muted" id="confirmMessage">Esta acción no se puede deshacer.</p>
+          <p class="text-sm text-muted" id="confirmMessage">
+            Esta acción no se puede deshacer.
+          </p>
         </div>
 
-        <footer class="card__footer" style="justify-content: flex-end">
-          <button class="btn btn--secondary btn--sm" type="button" id="confirmCancelBtn">Cancelar</button>
-          <button class="btn btn--primary btn--sm" type="button" id="confirmOkBtn">Confirmar</button>
+        <footer class="card__footer justify-end">
+          <button
+            class="btn btn--secondary btn--sm"
+            type="button"
+            id="confirmCancelBtn"
+          >
+            Cancelar
+          </button>
+          <button
+            class="btn btn--primary btn--sm"
+            type="button"
+            id="confirmOkBtn"
+          >
+            Confirmar
+          </button>
         </footer>
       </div>
     </div>

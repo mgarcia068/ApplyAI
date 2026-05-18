@@ -887,6 +887,9 @@ async function verPostulantes(ofertaId) {
 }
 
 async function publicarOferta() {
+  const saveBtn = document.querySelector('#form-container .btn--primary');
+  if (saveBtn) saveBtn.classList.add('is-loading');
+
   const tituloEl = document.getElementById('oferta-titulo');
   const descEl   = document.getElementById('oferta-desc');
   const areaEl   = document.getElementById('oferta-area');
@@ -905,6 +908,7 @@ async function publicarOferta() {
     if (!titulo && tituloEl) tituloEl.classList.add('form-input--error');
     if (!desc && descEl) descEl.classList.add('form-input--error');
     showToast('Campos incompletos', 'Por favor, completa los campos obligatorios (Título y Descripción).', 'error');
+    if (saveBtn) saveBtn.classList.remove('is-loading');
     return;
   }
 
@@ -933,6 +937,8 @@ async function publicarOferta() {
   } catch (error) {
     console.error("Error al publicar la oferta", error);
     showToast('Error al publicar', 'Hubo un problema al crear tu oferta. Intentalo de nuevo.', 'error');
+  } finally {
+    if (saveBtn) saveBtn.classList.remove('is-loading');
   }
 }
 
@@ -1103,13 +1109,20 @@ function cerrarModalEditarOferta() {
 }
 
 async function guardarOferta(ofertaId) {
+  const saveBtn = document.querySelector('#modal-editar-oferta .btn--primary');
+  if (saveBtn) saveBtn.classList.add('is-loading');
+
   const oferta = OFERTAS.find(o => o.id === ofertaId);
-  if (!oferta) return;
+  if (!oferta) {
+    if (saveBtn) saveBtn.classList.remove('is-loading');
+    return;
+  }
 
   const nuevoTitulo = document.getElementById('edit-oferta-titulo')?.value.trim();
   if (!nuevoTitulo) {
     document.getElementById('edit-oferta-titulo')?.focus();
     showToast('Campos incompletos', 'Por favor, completa el título de la oferta.', 'error');
+    if (saveBtn) saveBtn.classList.remove('is-loading');
     return;
   }
 
@@ -1142,6 +1155,8 @@ async function guardarOferta(ofertaId) {
   } catch (error) {
     console.error("Error al guardar cambios de oferta", error);
     showToast('Error', 'Ocurrió un error al guardar los cambios.', 'error');
+  } finally {
+    if (saveBtn) saveBtn.classList.remove('is-loading');
   }
 }
 
