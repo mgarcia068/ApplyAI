@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es">
   <head>
-    <script src="../../js/core/middlewares/auth-guard.js"></script>
+    <script src="../../js/core/middlewares/auth-guard.js?v=1.2"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ApplyAI &mdash; Perfil Empresa</title>
@@ -122,20 +122,22 @@
           0 10px 20px color-mix(in srgb, var(--color-primary) 18%, transparent);
       }
       .company-follow-btn.is-following {
-        border-color: color-mix(
-          in srgb,
-          var(--color-primary) 72%,
-          var(--color-surface)
-        );
-        background: color-mix(
-          in srgb,
-          var(--color-primary) 14%,
-          var(--color-bg)
-        );
-        color: color-mix(in srgb, var(--color-primary) 84%, var(--color-text));
+        border-color: color-mix(in srgb, var(--color-accent) 72%, var(--color-surface));
+        background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg));
+        color: color-mix(in srgb, var(--color-accent) 90%, var(--color-text));
+        box-shadow: 0 4px 14px color-mix(in srgb, var(--color-accent) 22%, transparent);
       }
-      .company-follow-btn.is-following .company-follow-btn__icon {
-        transform: scale(1.05);
+      .company-follow-btn.is-following .company-follow-btn__icon--follow {
+        display: none;
+      }
+      .company-follow-btn.is-following .company-follow-btn__icon--following {
+        display: block;
+      }
+      .company-follow-btn:not(.is-following) .company-follow-btn__icon--following {
+        display: none;
+      }
+      .company-follow-btn:not(.is-following) .company-follow-btn__icon--follow {
+        display: block;
       }
       .company-follow-btn.is-disabled {
         opacity: 0.62;
@@ -273,30 +275,12 @@
                 <span id="companyLogoFallback">TC</span>
               </div>
               <div class="company-actions">
-                <button
-                  class="btn btn--secondary btn--sm company-follow-btn"
-                  id="favoriteCompanyBtn"
-                  type="button"
-                  aria-label="Seguir empresa"
-                >
-                  <svg
-                    class="company-follow-btn__icon"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                    ></path>
-                  </svg>
-                  <span class="company-follow-btn__label" data-follow-label
-                    >Seguir</span
-                  >
+                <button class="btn btn--secondary btn--sm company-follow-btn" id="favoriteCompanyBtn" type="button" aria-label="Seguir empresa">
+                  <!-- Heart icon (shown when NOT following) -->
+                  <svg class="company-follow-btn__icon company-follow-btn__icon--follow" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                  <!-- Check icon (shown when IS following) -->
+                  <svg class="company-follow-btn__icon company-follow-btn__icon--following" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span class="company-follow-btn__label" data-follow-label>Seguir</span>
                 </button>
               </div>
             </div>

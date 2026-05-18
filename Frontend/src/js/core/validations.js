@@ -279,8 +279,8 @@
 
   function normalizeRole(value) {
     const normalized = String(value || '').trim().toLowerCase();
-    if (normalized === 'candidato' || normalized === 'cliente') return 'candidato';
-    if (normalized === 'empresa') return 'empresa';
+    if (normalized === 'candidato' || normalized === 'cliente' || normalized === 'candidate') return 'candidato';
+    if (normalized === 'empresa' || normalized === 'company' || normalized === 'company_role') return 'empresa';
     return '';
   }
 

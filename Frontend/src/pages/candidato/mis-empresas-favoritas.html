@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <script src="../../js/core/middlewares/auth-guard.js"></script>
+     <script src="../../js/core/middlewares/auth-guard.js?v=1.2"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mis empresas favoritas</title>
@@ -40,12 +40,12 @@
                 <span class="badge badge--neutral candidate-hub__count" id="favoritesCount">0</span>
               </div>
 
-              <p class="text-sm text-muted candidate-hub__intro">Empresas que seguís desde el perfil público para volver rápido a sus vacantes y novedades.</p>
+              <p class="text-sm text-muted candidate-hub__intro">Empresas que seg&uacute;is desde el perfil p&uacute;blico para volver r&aacute;pido a sus vacantes y novedades.</p>
 
               <div class="candidate-hub__panel">
                 <div id="favoritesAlert" class="alert alert--info flex-col" hidden>
-                  <strong>Necesitás iniciar sesión como candidato.</strong>
-                  <span class="text-sm text-muted">Para ver tus favoritas, primero iniciá sesión.</span>
+                  <strong>Necess&aacute;s iniciar sesi&oacute;n como candidato.</strong>
+                  <span class="text-sm text-muted">Para ver tus favoritas, primero inici&aacute; sesi&oacute;n.</span>
                   <div style="margin-top: var(--space-3)">
                     <a class="btn btn--primary btn--sm" href="../auth/login.html">Ir a login</a>
                   </div>
@@ -53,8 +53,8 @@
 
                 <div id="favoritesEmpty" class="empty-state" hidden>
                   <div class="empty-state__icon">✦</div>
-                  <div class="empty-state__title">Todavía no seguís empresas</div>
-                  <div class="empty-state__text">Entrá a una oferta laboral, abrí la empresa y tocá el corazón.</div>
+                  <div class="empty-state__title">Todav&iacute;a no segu&iacute;s empresas</div>
+                  <div class="empty-state__text">Entr&aacute; a una oferta laboral, abr&iacute; la empresa y toc&aacute; el coraz&oacute;n.</div>
                 </div>
 
                 <div id="favoritesList" class="grid favorites-grid" hidden></div>

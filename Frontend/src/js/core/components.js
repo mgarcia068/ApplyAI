@@ -264,6 +264,29 @@ function ensureNavbarDom() {
     actions.appendChild(dashboardBtn);
   }
 
+  // Ensure CV button exists outside the dropdown
+  let cvBtn = document.getElementById("navbar-cv-btn");
+  if (cvBtn && cvBtn.classList.contains("user-dropdown__item")) {
+    cvBtn.remove();
+    cvBtn = null;
+  }
+  if (!cvBtn) {
+    cvBtn = document.createElement("button");
+    cvBtn.className = "btn btn--ai btn--sm";
+    cvBtn.type = "button";
+    cvBtn.id = "navbar-cv-btn";
+    cvBtn.hidden = true;
+    cvBtn.innerHTML = `
+      <span>✨ Mi CV y Análisis IA</span>
+    `;
+    const existingMenu = document.getElementById("navbar-user-menu");
+    if (existingMenu) {
+      actions.insertBefore(cvBtn, existingMenu);
+    } else {
+      actions.appendChild(cvBtn);
+    }
+  }
+
   // Ensure candidate user dropdown exists.
   let userMenu = document.getElementById("navbar-user-menu");
   if (!userMenu) {
@@ -374,6 +397,8 @@ function ensureNavbarDom() {
   // Ensure menu items exist and have visible labels.
   const profileBtn = ensureElementId(document.getElementById("navbar-profile-btn") || userMenu.querySelector("#navbar-profile-btn") || userMenu.querySelector("button"), "navbar-profile-btn");
   ensureButtonLabel(profileBtn, "Mi perfil");
+
+
 
   let empresaPanelBtn = document.getElementById("navbar-empresa-panel-btn") || userMenu.querySelector("#navbar-empresa-panel-btn");
   if (!empresaPanelBtn && userDropdown) {
@@ -549,6 +574,7 @@ function updateNavbarActions() {
     
     const isEmpresa = user.role === "empresa";
     const profileBtn = document.getElementById("navbar-profile-btn");
+    const cvBtn = document.getElementById("navbar-cv-btn");
     const empresaPanelBtn = document.getElementById("navbar-empresa-panel-btn");
     const offersBtn = document.getElementById("navbar-offers-btn");
     const favoritesBtn = document.getElementById("navbar-favorites-btn");
@@ -557,6 +583,11 @@ function updateNavbarActions() {
     if (profileBtn) {
       profileBtn.style.display = isEmpresa ? "none" : "";
       ensureButtonLabel(profileBtn, "Mi perfil");
+    }
+
+    if (cvBtn) {
+      cvBtn.style.display = isEmpresa ? "none" : "";
+      cvBtn.hidden = isEmpresa;
     }
 
     if (empresaPanelBtn) {
@@ -629,6 +660,68 @@ function initNavbarDashboardButton() {
   });
 }
 
+function showToast(title, subtitle = '', type = 'success') {
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = 'position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px;';
+    document.body.appendChild(toastContainer);
+  }
+
+  const toast = document.createElement('div');
+  const typeColors = {
+    success: { bg: '#10B981', color: 'white', icon: '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>' },
+    info: { bg: '#3B82F6', color: 'white', icon: '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"></path></svg>' },
+    error: { bg: '#EF4444', color: 'white', icon: '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>' }
+  };
+
+  const styleDef = typeColors[type] || typeColors.success;
+
+  toast.style.cssText = `
+    background: ${styleDef.bg};
+    color: ${styleDef.color};
+    padding: 14px 20px;
+    border-radius: 10px;
+    box-shadow: 0 14px 20px -5px rgba(0, 0, 0, 0.15), 0 5px 7px -3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    font-family: inherit;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  `;
+  
+  toast.innerHTML = `
+    <div style="flex-shrink: 0; padding-top: 1px;">
+      ${styleDef.icon}
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-weight: 600; line-height: 1.2;">${title}</span>
+      ${subtitle ? `<span style="font-size: 13px; opacity: 0.85; line-height: 1.4;">${subtitle}</span>` : ''}
+    </div>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+  });
+
+  // Animate out and remove
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 400);
+  }, 4000);
+}
+
 async function loadComponent(url, placeholderId) {
   const placeholder = document.getElementById(placeholderId);
   if (!placeholder) return;
@@ -676,6 +769,7 @@ function initNavbarUserDropdown() {
   const userBtn = document.getElementById("navbar-user-btn");
   const userDropdown = document.getElementById("navbar-user-dropdown");
   const profileBtn = document.getElementById("navbar-profile-btn");
+  const cvBtn = document.getElementById("navbar-cv-btn");
   const empresaPanelBtn = document.getElementById("navbar-empresa-panel-btn");
   const offersBtn = document.getElementById("navbar-offers-btn");
   const applicationsBtn = document.getElementById("navbar-applications-btn");
@@ -707,6 +801,13 @@ function initNavbarUserDropdown() {
   if (profileBtn) {
     profileBtn.addEventListener("click", () => {
       window.location.href = resolvePathForContext("pages/candidato/perfil-candidato.html");
+    });
+  }
+
+  // CV button (Candidato)
+  if (cvBtn) {
+    cvBtn.addEventListener("click", () => {
+      window.location.href = resolvePathForContext("pages/candidato/mi-cv.html");
     });
   }
 

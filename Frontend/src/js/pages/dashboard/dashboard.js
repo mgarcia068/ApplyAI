@@ -1147,7 +1147,7 @@ async function guardarOferta(ofertaId) {
 
 // ── VISUALIZAR CV ─────────────────────────────────────────────
 
-function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', rating = '0.0') {
+  async function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', rating = '0.0') {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
   const backendOrigin = 'http://localhost:3000';
 
@@ -1155,14 +1155,44 @@ function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/
   overlay.id = 'cv-preview-overlay';
   overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 100500; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px); padding: 12px;';
   
-  const modal = document.createElement('div');
-  modal.style.cssText = `background: #fff; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); width: ${isMobile ? '100%' : '90vw'}; max-width: 1000px; height: ${isMobile ? 'calc(100vh - 24px)' : '90vh'}; max-height: calc(100vh - 24px); display: flex; flex-direction: column; overflow: hidden;`;
-  
   let docUrl = urlOriginal || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
   
-  // Si es una ruta local (empieza con /api o /cv), le anteponemos el origen del backend
-  if (docUrl.startsWith('/')) {
-    docUrl = `${backendOrigin}${docUrl}`;
+  // Si la URL es interna, de S3 o un proxy, descargamos como Blob con el Token de la empresa
+  const isS3 = docUrl.includes('.amazonaws.com');
+  const isProxy = docUrl.includes('/api/cv/');
+
+  if (docUrl.startsWith('/') || isS3 || isProxy) {
+    try {
+      const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+      let targetUrl = docUrl.startsWith('http') ? docUrl : `${backendOrigin}${docUrl}`;
+      
+      // Si es una URL de S3 (privada), la convertimos a nuestra ruta de proxy
+      if (isS3) {
+        try {
+          const urlObj = new URL(docUrl);
+          const parts = urlObj.pathname.split('/').filter(Boolean);
+          // El formato esperado es /bucket/userId/filename o /userId/filename
+          // En nuestro caso es userId/filename (key)
+          const filename = parts.pop();
+          const userId = parts.pop();
+          if (userId && filename) {
+            targetUrl = `${backendOrigin}/api/cv/file/${userId}/${filename}`;
+          }
+        } catch (e) {
+          console.warn('[Dashboard] No se pudo parsear URL de S3, intentando fetch directo:', e);
+        }
+      }
+
+      const res = await fetch(targetUrl, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        docUrl = URL.createObjectURL(blob);
+      }
+    } catch (e) {
+      console.error('[Dashboard] Error al previsualizar como blob:', e);
+    }
   }
 
   // Calcular color según rating IA (Idéntica lógica a la tarjeta)
@@ -1218,6 +1248,7 @@ function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/
   document.body.appendChild(overlay);
   
   const close = () => {
+    if (docUrl.startsWith('blob:')) URL.revokeObjectURL(docUrl);
     overlay.remove();
   };
   
