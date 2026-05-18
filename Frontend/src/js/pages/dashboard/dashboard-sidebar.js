@@ -32,9 +32,14 @@ function navigateTo(seccion, subtitulo) {
 
   seccionActual = seccion;
 
-  const topbarTitle = document.getElementById('topbar-title');
-  if (topbarTitle) {
-    topbarTitle.textContent = subtitulo ? `${def.titulo} — ${subtitulo}` : def.titulo;
+  const isProfileIncomplete = !PERFIL_EMPRESA.rubro || !PERFIL_EMPRESA.descripcion;
+  if (isProfileIncomplete && seccion !== 'perfil') {
+    showToast('Perfil Incompleto', 'Debes completar tu perfil de empresa antes de continuar.', 'error');
+    setTimeout(() => {
+      navigateTo('perfil');
+      setTimeout(() => togglePerfilEdit(true), 100);
+    }, 0);
+    return;
   }
 
   document.querySelectorAll('.sidebar__link').forEach(link => {
@@ -127,22 +132,33 @@ function renderOfertas() {
 }
 
 function renderPostulantesView() {
+  if (!ofertaActivaId && OFERTAS && OFERTAS.length > 0) {
+    const defaultOffer = OFERTAS.find(o => o.estado === 'activa') || OFERTAS[0];
+    if (defaultOffer) {
+      setTimeout(() => verPostulantes(defaultOffer.id), 0);
+      return;
+    }
+  }
+
   const oferta = ofertaActivaId ? OFERTAS.find(o => o.id === ofertaActivaId) : null;
   document.getElementById('db-content').innerHTML = `
     <div class="section-header mb-4">
       <div>
         <div class="section-header__title">
-          ${oferta ? `Postulantes — ${oferta.titulo}` : 'Todos los postulantes'}
+          ${oferta ? `Postulantes — ${oferta.titulo}` : 'Postulantes'}
         </div>
         <div class="section-header__sub">Ordenados por compatibilidad segun IA</div>
-      </div>
-      <div class="flex gap-2">
-        ${ofertaActivaId ? `<button class="btn btn--ghost btn--sm" onclick="ofertaActivaId=null;navigateTo('postulantes')">Ver todos</button>` : ''}
       </div>
     </div>
     
     <div id="postulantes-filters" class="mb-6">
       <div class="form-grid grid-cols-auto-200">
+        <div class="form-group mb-0">
+          <label class="form-label text-xs">Oferta</label>
+          <select class="form-select" id="filter-oferta-dropdown" onchange="cambiarOfertaFiltro(this.value)">
+            ${OFERTAS.map(o => `<option value="${o.id}" ${o.id === ofertaActivaId ? 'selected' : ''}>${o.titulo}</option>`).join('')}
+          </select>
+        </div>
         <div class="form-group mb-0">
           <label class="form-label text-xs">Tecnologías (ej: React, Node)</label>
           <input type="text" class="form-input" id="filter-tech" placeholder="Buscar por skill..." onkeyup="applyPostulantesFilters()">
@@ -264,12 +280,12 @@ function getCompanyInitials(name) {
 
 let PERFIL_EMPRESA = {
   nombre:      companyName,
-  rubro:       'Tecnologia & Software',
-  descripcion: 'Empresa de desarrollo de software con foco en soluciones B2B para el mercado latinoamericano.',
-  web:         'https://techcorp.com.ar',
-  ubicacion:   'Buenos Aires, Argentina',
-  empleados:   '50-100',
-  fundacion:   '2018',
+  rubro:       '',
+  descripcion: '',
+  web:         '',
+  ubicacion:   '',
+  empleados:   '',
+  fundacion:   '',
   photoDataUrl:'',
   photoPanX:   0,
   photoPanY:   0,
@@ -719,6 +735,10 @@ function togglePerfilEdit(editar) {
       });
     }, 200);
     if (btn) btn.style.display = 'none';
+
+    if (typeof geoService !== 'undefined') {
+      geoService.setupAutocomplete('#edit-ubicacion');
+    }
   } else {
     edit.style.opacity = '0';
     edit.style.transform = 'translateY(-8px)';
@@ -736,34 +756,76 @@ function togglePerfilEdit(editar) {
   }
 }
 
-function guardarPerfil() {
-  PERFIL_EMPRESA.nombre      = document.getElementById('edit-nombre')?.value.trim()      || PERFIL_EMPRESA.nombre;
-  PERFIL_EMPRESA.rubro       = document.getElementById('edit-rubro')?.value.trim()       || PERFIL_EMPRESA.rubro;
-  PERFIL_EMPRESA.descripcion = document.getElementById('edit-descripcion')?.value.trim() || PERFIL_EMPRESA.descripcion;
-  PERFIL_EMPRESA.web         = document.getElementById('edit-web')?.value.trim()         || PERFIL_EMPRESA.web;
-  PERFIL_EMPRESA.ubicacion   = document.getElementById('edit-ubicacion')?.value.trim()   || PERFIL_EMPRESA.ubicacion;
-  PERFIL_EMPRESA.empleados   = document.getElementById('edit-empleados')?.value          || PERFIL_EMPRESA.empleados;
-  PERFIL_EMPRESA.fundacion   = document.getElementById('edit-fundacion')?.value          || PERFIL_EMPRESA.fundacion;
+async function guardarPerfil() {
+  const saveBtn = document.querySelector('#perfil-edit .btn--primary');
+  const originalText = saveBtn ? saveBtn.textContent : 'Guardar cambios';
+  if (saveBtn) {
+    saveBtn.textContent = 'Guardando...';
+    saveBtn.disabled = true;
+  }
+
+  const payload = {
+    name:        document.getElementById('edit-nombre')?.value.trim()      || PERFIL_EMPRESA.nombre,
+    rubro:       document.getElementById('edit-rubro')?.value.trim()       || PERFIL_EMPRESA.rubro,
+    description: document.getElementById('edit-descripcion')?.value.trim() || PERFIL_EMPRESA.descripcion,
+    web:         document.getElementById('edit-web')?.value.trim()         || PERFIL_EMPRESA.web,
+    location:    document.getElementById('edit-ubicacion')?.value.trim()   || PERFIL_EMPRESA.ubicacion,
+    employees:   document.getElementById('edit-empleados')?.value          || PERFIL_EMPRESA.empleados,
+    foundation:  document.getElementById('edit-fundacion')?.value          || PERFIL_EMPRESA.fundacion,
+  };
 
   const photoDraft = getPerfilEmpresaDraft();
-  PERFIL_EMPRESA.photoDataUrl = String(photoDraft.photoDataUrl || '');
-  PERFIL_EMPRESA.photoPanX = clampCompanyNumber(photoDraft.photoPanX, -1, 1);
-  PERFIL_EMPRESA.photoPanY = clampCompanyNumber(photoDraft.photoPanY, -1, 1);
+  payload.photoUrl = String(photoDraft.photoDataUrl || '');
+  payload.photoPanX = clampCompanyNumber(photoDraft.photoPanX, -1, 1);
+  payload.photoPanY = clampCompanyNumber(photoDraft.photoPanY, -1, 1);
 
-  if (PERFIL_EMPRESA.web && !/^https?:\/\//i.test(PERFIL_EMPRESA.web)) {
-    PERFIL_EMPRESA.web = `https://${PERFIL_EMPRESA.web}`;
+  if (payload.web && !/^https?:\/\//i.test(payload.web)) {
+    payload.web = `https://${payload.web}`;
   }
 
   try {
-    localStorage.setItem(`ApplyAI.perfilEmpresa_${companyEmail}`, JSON.stringify(PERFIL_EMPRESA));
+    const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+    const response = await axios.patch('http://localhost:3000/api/users/me', payload, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+
+    const freshUser = response.data;
+    const profile = freshUser.companyProfile;
+
+    if (profile) {
+      PERFIL_EMPRESA = {
+        nombre:      profile.name || freshUser.fullName || PERFIL_EMPRESA.nombre,
+        rubro:       profile.rubro || PERFIL_EMPRESA.rubro,
+        descripcion: profile.description || PERFIL_EMPRESA.descripcion,
+        web:         profile.web || PERFIL_EMPRESA.web,
+        ubicacion:   profile.location || PERFIL_EMPRESA.ubicacion,
+        empleados:   profile.employees || PERFIL_EMPRESA.empleados,
+        fundacion:   profile.foundation || PERFIL_EMPRESA.foundation,
+        photoDataUrl: profile.photoUrl || '',
+        photoPanX:   profile.photoPanX || 0,
+        photoPanY:   profile.photoPanY || 0,
+      };
+      
+      localStorage.setItem(`ApplyAI.perfilEmpresa_${companyEmail}`, JSON.stringify(PERFIL_EMPRESA));
+    }
+
     syncPerfilEmpresaIdentityUi();
+    syncPerfilEmpresaViewFields();
+    syncPerfilEmpresaAvatars();
+    togglePerfilEdit(false);
+    
+    if (typeof showToast === 'function') {
+      showToast('Perfil actualizado', 'Los cambios se guardaron correctamente.', 'success');
+    }
   } catch (e) {
     console.error('Error saving company profile:', e);
+    alert('Error al guardar el perfil en el servidor.');
+  } finally {
+    if (saveBtn) {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }
   }
-
-  syncPerfilEmpresaViewFields();
-  syncPerfilEmpresaAvatars();
-  togglePerfilEdit(false);
 }
 
 const style = document.createElement('style');
@@ -786,6 +848,34 @@ function closeMobileSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Intentar cargar datos frescos del perfil al iniciar
+  try {
+    const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
+    if (user && user.token) {
+      const response = await axios.get('http://localhost:3000/api/users/me', {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      const profile = response.data.companyProfile;
+      if (profile) {
+        PERFIL_EMPRESA = {
+          nombre:      profile.name || response.data.fullName || PERFIL_EMPRESA.nombre,
+          rubro:       profile.rubro || PERFIL_EMPRESA.rubro,
+          descripcion: profile.description || PERFIL_EMPRESA.descripcion,
+          web:         profile.web || PERFIL_EMPRESA.web,
+          ubicacion:   profile.location || PERFIL_EMPRESA.ubicacion,
+          empleados:   profile.employees || PERFIL_EMPRESA.empleados,
+          fundacion:   profile.foundation || PERFIL_EMPRESA.foundation,
+          photoDataUrl: profile.photoUrl || '',
+          photoPanX:   profile.photoPanX || 0,
+          photoPanY:   profile.photoPanY || 0,
+        };
+        localStorage.setItem(`ApplyAI.perfilEmpresa_${companyEmail}`, JSON.stringify(PERFIL_EMPRESA));
+      }
+    }
+  } catch (err) {
+    console.warn("No se pudo sincronizar el perfil con el backend, usando local.", err);
+  }
+
   syncPerfilEmpresaIdentityUi();
 
   if (typeof loadDashboardData === 'function') {

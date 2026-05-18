@@ -11,6 +11,7 @@ import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AwsModule } from './aws/aws.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AwsModule } from './aws/aws.module';
     JobsModule,
     ApplicationsModule,
     CvModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

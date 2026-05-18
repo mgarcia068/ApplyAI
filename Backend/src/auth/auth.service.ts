@@ -15,6 +15,7 @@ import { RegisterDto, UserRoleDto } from './dto/register.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtPayload } from './types/jwt-payload.type';
 import { OAuth2Client } from 'google-auth-library';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly appConfig: AppConfigService,
+    private readonly mailService: MailService,
   ) {
     this.googleClient = new OAuth2Client(this.appConfig.googleClientId || 'default-client-id');
   }
@@ -57,6 +59,8 @@ export class AuthService {
           updatedAt: true,
         },
       });
+
+      this.mailService.sendWelcomeEmail(user.fullName || user.email, user.email, user.role).catch(e => console.error(e));
 
       return user;
     } catch (error: unknown) {
@@ -158,6 +162,7 @@ export class AuthService {
           select: { id: true, email: true, fullName: true, role: true }
         });
         isNewUser = true;
+        this.mailService.sendWelcomeEmail(user.fullName || user.email, user.email, user.role).catch(e => console.error(e));
       }
 
       const jwtSecret = this.appConfig.jwtSecret;

@@ -46,7 +46,29 @@ model User {
   updatedAt DateTime @updatedAt
 
   candidateProfile CandidateProfile?
+  companyProfile   CompanyProfile?
   jobOffers        JobOffer[]
+}
+
+model CompanyProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  rubro       String?
+  description String?
+  web         String?
+  location    String?
+  employees   String?
+  foundation  String?
+  
+  photoUrl    String?
+  photoPanX   Float    @default(0)
+  photoPanY   Float    @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model CandidateProfile {
@@ -101,6 +123,8 @@ model Application {
 
   status      ApplicationStatus @default(PENDING)
   matchScore  Int?              // Nuevo: Puntaje de match con la oferta (1-100)
+  matchPros   String[]          // Nuevo: Pros del match
+  matchCons   String[]          // Nuevo: Contras del match
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 

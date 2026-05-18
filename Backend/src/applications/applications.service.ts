@@ -5,6 +5,8 @@ import { CreateApplicationDto } from './dto/create-application.dto';
 import { Role } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { CvService } from '../cv/cv.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ApplicationsService {
@@ -13,6 +15,8 @@ export class ApplicationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly cvService: CvService,
+    private readonly mailService: MailService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
     this.genAI = new GoogleGenerativeAI(apiKey);
@@ -21,6 +25,7 @@ export class ApplicationsService {
   async create(user: JwtPayload, createApplicationDto: CreateApplicationDto) {
     const profile = await this.prisma.candidateProfile.findUnique({
       where: { userId: user.sub },
+      include: { cvAnalysis: true },
     });
 
     if (!profile) {
@@ -29,6 +34,11 @@ export class ApplicationsService {
 
     const job = await this.prisma.jobOffer.findUnique({
       where: { id: createApplicationDto.jobOfferId },
+      include: {
+        company: {
+          include: { companyProfile: true }
+        }
+      }
     });
 
     if (!job) {
@@ -52,17 +62,96 @@ export class ApplicationsService {
       throw new BadRequestException('Ya te has postulado a esta oferta de trabajo.');
     }
 
+    // 1. Asegurar que el CV esté analizado
+    let cvAnalysis = profile.cvAnalysis;
+    if (!cvAnalysis) {
+      try {
+        cvAnalysis = await this.cvService.analyze(profile.id);
+      } catch (err) {
+        console.error('Error al analizar el CV automáticamente al postularse:', err);
+      }
+    }
+
+    // 2. Calcular el Match Score automáticamente
+    let matchData: { score: number; pros: string[]; cons: string[] } | null = null;
+    if (cvAnalysis) {
+      matchData = await this._calculateMatchScore(cvAnalysis, job);
+    }
+
     const application = await this.prisma.application.create({
       data: {
         candidateId: profile.id,
         jobOfferId: job.id,
+        matchScore: matchData ? matchData.score : null,
+        matchPros: matchData ? matchData.pros : [],
+        matchCons: matchData ? matchData.cons : [],
       },
       include: {
         jobOffer: true,
       },
     });
 
+    // Enviar correo de postulación asíncronamente
+    this.mailService.sendNewApplication(
+      profile.name,
+      user.email,
+      job.title,
+      job.company?.companyProfile?.name || 'Empresa'
+    ).catch(e => console.error(e));
+
     return application;
+  }
+
+  private async _calculateMatchScore(cvAnalysis: any, jobOffer: any): Promise<{ score: number; pros: string[]; cons: string[] } | null> {
+    try {
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+
+      const prompt = `
+        Eres un Reclutador Senior comparando un CV previamente analizado con una Oferta de Empleo.
+        Calcula un grado de compatibilidad (Match Score) teniendo en cuenta las habilidades requeridas en el anuncio y la experiencia del candidato.
+
+        OFERTA DE EMPLEO:
+        - Título: ${jobOffer.title}
+        - Descripción: ${jobOffer.description}
+        - Habilidades requeridas: ${jobOffer.skillsRequired.join(', ')}
+        - Experiencia mínima: ${jobOffer.minExperience} años
+
+        DATOS EXTRAÍDOS DEL CANDIDATO:
+        - Resumen Profesional: ${cvAnalysis.summary}
+        - Competencias Tecnológicas: ${cvAnalysis.technologies.join(', ')}
+        - Habilidades Blandas: ${cvAnalysis.skills.join(', ')}
+        - Experiencia Laboral: ${cvAnalysis.experience.join(', ')}
+
+        INSTRUCCIONES DE RESPUESTA:
+        Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura. No envíes texto extra ni explicaciones fuera del JSON.
+        {
+          "score": 85,
+          "pros": ["Tiene experiencia en React que es requerida", "Supera los años de experiencia mínima"],
+          "cons": ["No menciona experiencia en Backend", "Falta detallar proyectos similares"]
+        }
+      `;
+
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text().trim();
+      
+      try {
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No se encontró JSON en la respuesta');
+        
+        const data = JSON.parse(jsonMatch[0]);
+        return {
+          score: typeof data.score === 'number' ? data.score : 0,
+          pros: Array.isArray(data.pros) ? data.pros : [],
+          cons: Array.isArray(data.cons) ? data.cons : [],
+        };
+      } catch (e) {
+        console.error('Error parseando JSON de match. Respuesta de la IA:', responseText);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error calculando Score con Gemini:', error);
+      return null;
+    }
   }
 
   async listMine(user: JwtPayload) {
@@ -211,13 +300,26 @@ export class ApplicationsService {
   async updateStatus(applicationId: string, status: any, user: JwtPayload) {
     const application = await this.prisma.application.findUnique({
       where: { id: applicationId },
-      include: { jobOffer: true },
+      include: { 
+        jobOffer: {
+          include: {
+            company: {
+              include: { companyProfile: true }
+            }
+          }
+        },
+        candidate: {
+          include: {
+            user: { select: { email: true, fullName: true } },
+          },
+        },
+      },
     });
 
     if (!application) throw new NotFoundException('Postulación no encontrada.');
     if (application.jobOffer.companyId !== user.sub) throw new ForbiddenException('No tienes permiso.');
 
-    return this.prisma.application.update({
+    const updatedApp = await this.prisma.application.update({
       where: { id: applicationId },
       data: { status },
       include: {
@@ -228,5 +330,25 @@ export class ApplicationsService {
         },
       },
     });
+
+    // Enviar email asíncronamente si el estado es VIEWED (Entrevista) o REJECTED
+    if (status === 'VIEWED') {
+      this.mailService.sendApplicationAccepted(
+        application.candidate.user.fullName || application.candidate.name,
+        application.candidate.user.email,
+        application.jobOffer.title,
+        application.jobOffer.company.companyProfile?.name || 'Empresa',
+        application.jobOffer.company.email
+      ).catch(e => console.error(e));
+    } else if (status === 'REJECTED') {
+      this.mailService.sendApplicationRejected(
+        application.candidate.user.fullName || application.candidate.name,
+        application.candidate.user.email,
+        application.jobOffer.title,
+        application.jobOffer.company.companyProfile?.name || 'Empresa'
+      ).catch(e => console.error(e));
+    }
+
+    return updatedApp;
   }
 }

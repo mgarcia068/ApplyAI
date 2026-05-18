@@ -1,10 +1,18 @@
 (function () {
   document.addEventListener('DOMContentLoaded', () => {
-    const company = resolveCompanyContext();
-    checkAccess(company);
-    renderCompanyHeader(company);
-    initFollowAndFavorite(company);
-    renderCompanyOffers(company);
+    loadCompanyData(company => {
+      const loader = document.getElementById('page-loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.remove(), 300);
+      }
+
+      if (!company) return;
+      checkAccess(company);
+      renderCompanyHeader(company);
+      initFollowAndFavorite(company);
+      renderCompanyOffers(company);
+    });
   });
 
   const COMPANY_CATALOG = {
@@ -188,75 +196,152 @@
     }
   }
 
-  function resolveCompanyContext() {
-    const requested = String(getQueryParam('company') || '').trim();
+  function fallbackToCatalog(requested, callback) {
     const requestedId = requested ? slugify(requested) : '';
-
-    if (!requested) {
-      try {
-        const currentUserRaw = localStorage.getItem('ApplyAI.currentUser');
-        if (currentUserRaw) {
-          const currentUser = JSON.parse(currentUserRaw);
-          if (normalizeRole(currentUser.role) === 'empresa') {
-            const companyEmail = currentUser.email;
-            let companyName = currentUser.fullName || currentUser.email.split('@')[0] || 'Mi Empresa';
-
-            let profile = mapSavedProfileToPublic(null, companyName, slugify(companyName), true);
-
-            const savedRaw = localStorage.getItem(`ApplyAI.perfilEmpresa_${companyEmail}`);
-            if (savedRaw) {
-              const saved = safeJsonParse(savedRaw, null);
-              if (saved) {
-                profile = mapSavedProfileToPublic(saved, companyName, requestedId || slugify(companyName), true);
-              }
-            }
-            return profile;
-          }
-        }
-      } catch (e) {}
-    }
-
-    const fallback = {
-      ...COMPANY_CATALOG.techcorp,
-      description: 'En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida...',
-      photoDataUrl: '',
-      photoPanX: 0,
-      photoPanY: 0,
-    };
-
-    const savedFromStorage = requestedId ? findSavedCompanyProfileById(requestedId) : null;
-    if (savedFromStorage) {
-      return mapSavedProfileToPublic(savedFromStorage, requested, requestedId, false);
-    }
-
     const fromCatalog = requestedId && COMPANY_CATALOG[requestedId] ? COMPANY_CATALOG[requestedId] : null;
     if (fromCatalog) {
-      return {
+      callback({
         ...fromCatalog,
         description: fromCatalog.tagline,
-        photoDataUrl: '',
-        photoPanX: 0,
-        photoPanY: 0,
-      };
+        photoDataUrl: '', photoPanX: 0, photoPanY: 0,
+      });
+      return;
     }
+    callback({
+      ...COMPANY_CATALOG.techcorp,
+      description: 'En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida...',
+      photoDataUrl: '', photoPanX: 0, photoPanY: 0,
+    });
+  }
+
+  function loadCompanyData(callback) {
+    const requested = String(getQueryParam('company') || '').trim();
+    const isOwnProfile = !requested;
+    
+    let searchKey = requested;
+    if (requested && !searchKey.includes('@')) {
+       if (searchKey.includes('gmailcom')) searchKey = searchKey.replace('gmailcom', '@gmail.com');
+       else if (searchKey.includes('hotmailcom')) searchKey = searchKey.replace('hotmailcom', '@hotmail.com');
+    }
+
+    let userEmail = '';
+    try {
+      const currentUserRaw = localStorage.getItem('ApplyAI.currentUser');
+      if (currentUserRaw) userEmail = JSON.parse(currentUserRaw).email || '';
+    } catch(e) {}
+    
+    const cacheKey = isOwnProfile ? `ApplyAI.ownCompanyProfile_${userEmail}` : `ApplyAI.publicCompanyProfile_${searchKey}`;
+    const cachedRaw = localStorage.getItem(cacheKey);
+    let hasLoadedFromCache = false;
+
+    if (cachedRaw) {
+      try {
+        const cachedCompany = JSON.parse(cachedRaw);
+        if (cachedCompany) {
+          hasLoadedFromCache = true;
+          callback(cachedCompany);
+        }
+      } catch(e) {}
+    }
+
+    const onFreshData = (company) => {
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(company));
+      } catch (err) {
+        if (err.name === 'QuotaExceededError') {
+          console.warn("Caché llena. Limpiando datos antiguos para liberar espacio...");
+          // Limpiamos todo lo cacheado previamente excepto la sesión actual del usuario
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('ApplyAI.') && key !== 'ApplyAI.currentUser' && key !== cacheKey) {
+              localStorage.removeItem(key);
+            }
+          }
+          // Reintentamos guardar
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(company));
+          } catch (e) {
+            console.warn("Aún limpiando, no hay espacio suficiente en caché.");
+          }
+        }
+      }
+      callback(company);
+    };
 
     if (requested) {
-      return {
-        id: requestedId || slugify(requested) || 'empresa',
-        name: requested,
-        tagline: 'Perfil de empresa',
-        description: 'Perfil público de ' + requested,
-        industry: '—',
-        location: '—',
-        website: '#',
-        offers: [],
-        photoDataUrl: '',
-        photoPanX: 0,
-        photoPanY: 0,
-      };
+      axios.get(`http://localhost:3000/api/users/company/${searchKey}`).then(res => {
+        const data = res.data;
+        const profile = data.companyProfile;
+        if (profile) {
+          onFreshData({
+            id: profile.id,
+            name: profile.name || data.fullName || 'Empresa',
+            tagline: profile.rubro || 'Perfil de empresa',
+            description: profile.description || 'Sin descripción disponible.',
+            industry: profile.rubro || 'No especificada',
+            location: profile.location || 'No especificada',
+            website: profile.web || '',
+            photoDataUrl: profile.photoUrl || '',
+            photoPanX: profile.photoPanX || 0,
+            photoPanY: profile.photoPanY || 0,
+            offers: (data.jobOffers || []).map(jo => ({
+              id: jo.id,
+              title: jo.title,
+              type: jo.modality === 'HYBRID' ? 'Híbrido' : jo.modality === 'ONSITE' ? 'Presencial' : 'Remoto',
+              date: new Date(jo.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
+            }))
+          });
+        } else {
+          if (!hasLoadedFromCache) fallbackToCatalog(requested, callback);
+        }
+      }).catch(err => {
+        console.warn("No se encontró la empresa o error.", err);
+        if (!hasLoadedFromCache) fallbackToCatalog(requested, callback);
+      });
+    } else {
+      const currentUserRaw = localStorage.getItem('ApplyAI.currentUser');
+      if (currentUserRaw) {
+        const currentUser = JSON.parse(currentUserRaw);
+        if (normalizeRole(currentUser.role) === 'empresa') {
+          axios.get('http://localhost:3000/api/users/me', {
+            headers: { Authorization: `Bearer ${currentUser.token}` }
+          }).then(response => {
+            const data = response.data;
+            const profile = data.companyProfile || {};
+            if (data) {
+              onFreshData({
+                id: profile.id || 'me',
+                name: profile.name || data.fullName || 'Mi Empresa',
+                tagline: profile.description || 'Perfil de empresa',
+                description: profile.description || 'Sin descripción disponible.',
+                industry: profile.rubro || 'Tecnología',
+                location: profile.location || 'No especificada',
+                website: profile.web || '#',
+                photoDataUrl: profile.photoUrl || '',
+                photoPanX: profile.photoPanX || 0,
+                photoPanY: profile.photoPanY || 0,
+                isOwnProfile: true,
+                offers: (data.jobOffers || []).map(jo => ({
+                  id: jo.id,
+                  title: jo.title,
+                  type: jo.modality === 'HYBRID' ? 'Híbrido' : jo.modality === 'ONSITE' ? 'Presencial' : 'Remoto',
+                  date: new Date(jo.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
+                }))
+              });
+            } else {
+              if (!hasLoadedFromCache) fallbackToCatalog('', callback);
+            }
+          }).catch(e => {
+            console.error("Error cargando perfil propio", e);
+            if (!hasLoadedFromCache) fallbackToCatalog('', callback);
+          });
+        } else if (!hasLoadedFromCache) {
+          fallbackToCatalog('', callback);
+        }
+      } else if (!hasLoadedFromCache) {
+        fallbackToCatalog('', callback);
+      }
     }
-
-    return fallback;
   }
 
   // Función para mostrar mensajes temporales "Toast"

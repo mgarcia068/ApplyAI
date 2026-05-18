@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
     <script src="../../js/core/middlewares/auth-guard.js?v=1.2"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Perfil de Empresa - TalentIQ</title>
+    <title>ApplyAI &mdash; Perfil Empresa</title>
+    <link rel="icon" type="image/png" href="../../assets/img/favIcon.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,30 +19,94 @@
     <link rel="stylesheet" href="../../css/pages/profile.css?v=1.1" />
     <link rel="stylesheet" href="../../css/pages/empresa-publico.css?v=1.0" />
 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../../js/services/theme.js?v=1.1"></script>
     <script src="../../js/services/followed-companies.js?v=1.0" defer></script>
     <script src="../../js/core/components.js?v=1.2" defer></script>
-    <script src="../../js/pages/empresa/perfil-empresa-publico.js" defer></script>
+    <script
+      src="../../js/pages/empresa/perfil-empresa-publico.js"
+      defer
+    ></script>
   </head>
 
   <body>
+    <!-- Full page loader -->
+    <div
+      id="page-loader"
+      style="
+        position: fixed;
+        inset: 0;
+        background: var(--color-bg);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.3s ease;
+      "
+    >
+      <div
+        class="spinner"
+        style="
+          width: 40px;
+          height: 40px;
+          border: 3px solid var(--color-surface);
+          border-top-color: var(--color-primary);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        "
+      ></div>
+      <div style="margin-top: 16px; font-weight: 500; color: var(--color-text)">
+        Cargando perfil...
+      </div>
+      <style>
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      </style>
+    </div>
+
     <div class="db-topbar db-topbar-sticky">
-      <button class="btn btn--ghost btn--sm" type="button" onclick="history.back()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <button
+        class="btn btn--ghost btn--sm flex items-center"
+        style="gap: var(--space-2)"
+        onclick="window.history.back()"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
         Volver
       </button>
     </div>
 
     <main class="page-wrapper pt-0">
       <div class="container">
-        
         <!-- Company Header (Banner + Basic Info) -->
         <header class="my-4">
           <div class="company-banner"></div>
           <div class="company-header">
             <div class="flex items-end justify-between">
               <div class="company-logo" id="companyLogo">
-                <img id="companyLogoImg" class="company-logo__img" alt="Logo de empresa" src="" draggable="false" hidden />
+                <img
+                  id="companyLogoImg"
+                  class="company-logo__img"
+                  alt="Logo de empresa"
+                  src=""
+                  draggable="false"
+                  hidden
+                />
                 <span id="companyLogoFallback">TC</span>
               </div>
               <div class="company-actions">
@@ -54,32 +119,81 @@
                 </button>
               </div>
             </div>
-            
+
             <div class="mt-4">
-              <h1 class="text-display text-3xl" id="companyName">Cargando...</h1>
-              <div class="text-lg text-muted" id="companyTagline">Innovando el futuro del desarrollo de software.</div>
-              
+              <h1 class="text-display text-3xl" id="companyName"></h1>
+              <div class="text-lg text-muted" id="companyTagline"></div>
+
               <div class="info-grid">
                 <div class="info-item">
                   <span class="text-xs text-muted flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <rect
+                        x="2"
+                        y="7"
+                        width="20"
+                        height="14"
+                        rx="2"
+                        ry="2"
+                      ></rect>
+                      <path
+                        d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"
+                      ></path>
+                    </svg>
                     Industria
                   </span>
-                  <span class="text-sm font-medium" id="companyIndustry">Desarrollo de Software</span>
+                  <span class="text-sm font-medium" id="companyIndustry"></span>
                 </div>
                 <div class="info-item">
                   <span class="text-xs text-muted flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
+                      ></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
                     Ubicación
                   </span>
-                  <span class="text-sm font-medium" id="companyLocation">Córdoba, Argentina</span>
+                  <span class="text-sm font-medium" id="companyLocation"></span>
                 </div>
                 <div class="info-item">
                   <span class="text-xs text-muted flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2A15.3 15.3 0 0 1 17 12a15.3 15.3 0 0 1-5 10 15.3 15.3 0 0 1-5-10A15.3 15.3 0 0 1 12 2z"></path><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path
+                        d="M12 2A15.3 15.3 0 0 1 17 12a15.3 15.3 0 0 1-5 10 15.3 15.3 0 0 1-5-10A15.3 15.3 0 0 1 12 2z"
+                      ></path>
+                      <line x1="2" y1="12" x2="22" y2="12"></line>
+                    </svg>
                     Sitio Web
                   </span>
-                  <a href="#" class="text-sm font-medium" id="companyWebsite" class="text-primary">www.techcorp.com.ar</a>
+                  <a
+                    href="#"
+                    class="text-sm font-medium"
+                    id="companyWebsite"
+                    class="text-primary"
+                  ></a>
                 </div>
               </div>
             </div>
@@ -94,21 +208,30 @@
                 <header class="card__header">
                   <h2 class="card__title text-xl">Sobre Nosotros</h2>
                 </header>
-                <div class="card__body text-muted" id="companyAbout" class="leading-relaxed">
-                  <p id="companyDescription">En TechCorp Argentina nos especializamos en la creación de soluciones de software a medida para empresas de tecnología a nivel global. Con más de 10 años de experiencia, nuestro equipo combina talento y creatividad para resolver problemas complejos.</p>
+                <div
+                  class="card__body text-muted"
+                  id="companyAbout"
+                  class="leading-relaxed"
+                >
+                  <p id="companyDescription"></p>
                 </div>
               </div>
 
               <div class="card">
                 <header class="card__header">
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
                     <h2 class="card__title text-xl">Ofertas de Trabajo</h2>
-                    <span class="badge badge--accent" id="companyOffersCount">3</span>
+                    <span
+                      class="badge badge--accent"
+                      id="companyOffersCount"
+                    ></span>
                   </div>
                 </header>
                 <div class="card__body" id="companyOffersList">
                   <!-- Offers injected by JS -->
-                  <div class="text-center text-muted p-4">Cargando ofertas...</div>
+                  <div class="text-center text-muted p-4">
+                    Cargando ofertas...
+                  </div>
                 </div>
               </div>
             </div>
@@ -159,7 +282,6 @@
             </div>
           </div>
         </section>
-
       </div>
     </main>
 

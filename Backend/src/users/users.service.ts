@@ -19,6 +19,12 @@ export class UsersService {
             cvAnalysis: true,
           },
         },
+        companyProfile: true,
+        jobOffers: {
+          where: { isActive: true },
+          take: 10,
+          orderBy: { createdAt: 'desc' }
+        },
       },
     });
 
@@ -31,7 +37,11 @@ export class UsersService {
   }
 
   async updateProfile(user: JwtPayload, dto: UpdateProfileDto) {
-    const { fullName, name, location, bio, education, experience, skills, languages, cvUrl, cvOriginalName, photoUrl } = dto;
+    const { 
+      fullName, 
+      name, location, bio, education, experience, skills, languages, cvUrl, cvOriginalName, photoUrl,
+      rubro, description, web, employees, foundation, photoPanX, photoPanY
+    } = dto;
 
     // Update user info
     if (fullName !== undefined) {
@@ -77,6 +87,44 @@ export class UsersService {
         await this.prisma.candidateProfile.update({
           where: { userId: user.sub },
           data: candidateProfileData,
+        });
+      }
+    }
+
+    // If company, update/create company profile
+    if (user.role === Role.COMPANY) {
+      const companyProfileData: any = {};
+      if (name !== undefined) companyProfileData.name = name;
+      if (rubro !== undefined) companyProfileData.rubro = rubro;
+      if (description !== undefined) companyProfileData.description = description;
+      if (web !== undefined) companyProfileData.web = web;
+      if (location !== undefined) companyProfileData.location = location;
+      if (employees !== undefined) companyProfileData.employees = employees;
+      if (foundation !== undefined) companyProfileData.foundation = foundation;
+      if (photoUrl !== undefined) companyProfileData.photoUrl = photoUrl;
+      if (photoPanX !== undefined) companyProfileData.photoPanX = photoPanX;
+      if (photoPanY !== undefined) companyProfileData.photoPanY = photoPanY;
+
+      const existingProfile = await this.prisma.companyProfile.findUnique({
+        where: { userId: user.sub },
+      });
+
+      if (!existingProfile) {
+        const currentUser = await this.prisma.user.findUnique({
+          where: { id: user.sub },
+        });
+
+        await this.prisma.companyProfile.create({
+          data: {
+            userId: user.sub,
+            name: name || currentUser?.fullName || user.email.split('@')[0],
+            ...companyProfileData,
+          },
+        });
+      } else if (Object.keys(companyProfileData).length > 0) {
+        await this.prisma.companyProfile.update({
+          where: { userId: user.sub },
+          data: companyProfileData,
         });
       }
     }
@@ -139,5 +187,26 @@ export class UsersService {
     await this.prisma.user.delete({
       where: { id: user.sub },
     });
+  }
+
+  async findCompanyByEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { 
+        companyProfile: true,
+        jobOffers: {
+          where: { isActive: true },
+          take: 10,
+          orderBy: { createdAt: 'desc' }
+        }
+      },
+    });
+
+    if (!user || user.role !== Role.COMPANY) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+
+    const { password, ...result } = user;
+    return result;
   }
 }
