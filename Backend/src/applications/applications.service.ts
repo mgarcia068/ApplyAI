@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException, ForbiddenException,
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
 import { CreateApplicationDto } from './dto/create-application.dto';
-import { Role } from '@prisma/client';
+import { ApplicationStatus, Role } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CvService } from '../cv/cv.service';
@@ -350,5 +350,36 @@ export class ApplicationsService {
     }
 
     return updatedApp;
+  }
+
+  async withdrawByOffer(offerId: string, user: JwtPayload) {
+    const profile = await this.prisma.candidateProfile.findUnique({
+      where: { userId: user.sub },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Perfil de candidato no encontrado.');
+    }
+
+    const application = await this.prisma.application.findUnique({
+      where: {
+        candidateId_jobOfferId: {
+          candidateId: profile.id,
+          jobOfferId: offerId,
+        },
+      },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Postulación no encontrada.');
+    }
+
+    if (application.status !== ApplicationStatus.PENDING) {
+      throw new BadRequestException('No puedes despostularte de esta oferta.');
+    }
+
+    return this.prisma.application.delete({
+      where: { id: application.id },
+    });
   }
 }

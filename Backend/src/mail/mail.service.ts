@@ -7,7 +7,17 @@ export class MailService {
 
   constructor(private readonly mailerService: MailerService) {}
 
+  private isMailEnabled() {
+    const raw = String(process.env.MAIL_ENABLED || '').trim().toLowerCase();
+    if (!raw) return true;
+    return !['false', '0', 'no'].includes(raw);
+  }
+
   async sendApplicationAccepted(candidateName: string, candidateEmail: string, offerTitle: string, companyName: string, companyEmail: string) {
+    if (!this.isMailEnabled()) {
+      this.logger.log('Envio de mail deshabilitado por MAIL_ENABLED.');
+      return;
+    }
     try {
       await this.mailerService.sendMail({
         to: candidateEmail,
@@ -29,6 +39,10 @@ export class MailService {
   }
 
   async sendApplicationRejected(candidateName: string, candidateEmail: string, offerTitle: string, companyName: string) {
+    if (!this.isMailEnabled()) {
+      this.logger.log('Envio de mail deshabilitado por MAIL_ENABLED.');
+      return;
+    }
     try {
       await this.mailerService.sendMail({
         to: candidateEmail,
@@ -48,6 +62,10 @@ export class MailService {
   }
 
   async sendWelcomeEmail(userName: string, userEmail: string, role: string) {
+    if (!this.isMailEnabled()) {
+      this.logger.log('Envio de mail deshabilitado por MAIL_ENABLED.');
+      return;
+    }
     try {
       await this.mailerService.sendMail({
         to: userEmail,
@@ -66,6 +84,10 @@ export class MailService {
   }
 
   async sendNewApplication(candidateName: string, candidateEmail: string, offerTitle: string, companyName: string) {
+    if (!this.isMailEnabled()) {
+      this.logger.log('Envio de mail deshabilitado por MAIL_ENABLED.');
+      return;
+    }
     try {
       await this.mailerService.sendMail({
         to: candidateEmail,
