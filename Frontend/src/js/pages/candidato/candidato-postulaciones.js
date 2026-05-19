@@ -216,6 +216,30 @@
     saveAllApplications(nextApps);
   }
 
+  async function withdrawApplication(email, offerId) {
+    const rawUser = localStorage.getItem("ApplyAI.currentUser");
+    const token = rawUser ? JSON.parse(rawUser).token : "";
+
+    if (!token) {
+      if (typeof showToast === "function")
+        showToast("Error", "No se pudo validar tu sesión.", "error");
+      return false;
+    }
+
+    try {
+      await axios.delete(
+        `http://localhost:3000/api/applications/offer/${offerId}/withdraw`,
+        { headers: { Authorization: "Bearer " + token } },
+      );
+      removeApplication(email, offerId);
+      return true;
+    } catch (e) {
+      if (typeof showToast === "function")
+        showToast("Error", "No se pudo retirar la postulación.", "error");
+      return false;
+    }
+  }
+
   function badgeClassForStatus(status) {
     const s = String(status || "").toLowerCase();
     if (s.includes("acept")) return "badge--success";
@@ -414,15 +438,21 @@
           if (!offerId || !email) return;
           const existingApp = getApplication(email, offerId);
           if (existingApp && canWithdrawApplication(existingApp)) {
-            removeApplication(email, offerId);
-            if (typeof showToast === "function")
-              showToast(
-                "Postulación retirada",
-                "Te has despostulado correctamente.",
-                "info",
-              );
-            renderOffers(email, true);
-            renderApplications(email);
+            btn.classList.add("is-loading");
+            withdrawApplication(email, offerId)
+              .then((wasRemoved) => {
+                if (wasRemoved && typeof showToast === "function")
+                  showToast(
+                    "Postulación retirada",
+                    "Te has despostulado correctamente.",
+                    "info",
+                  );
+              })
+              .finally(() => {
+                btn.classList.remove("is-loading");
+                renderOffers(email, true);
+                renderApplications(email);
+              });
           }
         });
       });

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -44,5 +44,11 @@ export class ApplicationsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.applicationsService.updateStatus(id, body.status, user);
+  }
+
+  @Delete('offer/:offerId/withdraw')
+  @Roles(Role.CANDIDATE)
+  withdrawByOffer(@Param('offerId') offerId: string, @CurrentUser() user: JwtPayload) {
+    return this.applicationsService.withdrawByOffer(offerId, user);
   }
 }
