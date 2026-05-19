@@ -61,6 +61,54 @@
 	gap: var(--space-3);
 }
 
+.password-field {
+	position: relative;
+}
+
+.form-input--with-toggle {
+	padding-right: 3rem;
+}
+
+.password-toggle {
+	position: absolute;
+	right: 0.6rem;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 2.25rem;
+	height: 2.25rem;
+	border: 0;
+	border-radius: var(--radius-md);
+	background: transparent;
+	color: var(--color-text-muted);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.password-toggle:hover {
+	color: var(--color-text);
+	background-color: var(--color-bg-2);
+}
+
+.password-toggle:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.password-toggle__icon--hide {
+	display: none;
+}
+
+.password-toggle.is-active .password-toggle__icon--show {
+	display: none;
+}
+
+.password-toggle.is-active .password-toggle__icon--hide {
+	display: inline-flex;
+}
+
 /* ── Role toggle (Register) ───────────────────────────────── */
 .role-fieldset {
 	border: 0;

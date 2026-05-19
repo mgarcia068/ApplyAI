@@ -584,15 +584,45 @@
     });
   }
 
+  function initPasswordToggles() {
+    const toggles = document.querySelectorAll('[data-password-toggle]');
+    if (!toggles.length) return;
+
+    toggles.forEach(function (button) {
+      const targetId = button.getAttribute('data-password-toggle');
+      if (!targetId) return;
+
+      const input = document.getElementById(targetId);
+      if (!input) return;
+
+      function syncState() {
+        const isVisible = input.type === 'text';
+        button.classList.toggle('is-active', isVisible);
+        button.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+        button.setAttribute('aria-label', isVisible ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      }
+
+      button.addEventListener('click', function () {
+        input.type = input.type === 'password' ? 'text' : 'password';
+        syncState();
+        input.focus();
+      });
+
+      syncState();
+    });
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       initSignupValidation();
       initLoginValidation();
+      initPasswordToggles();
       initGoogleIdentity(0);
     });
   } else {
     initSignupValidation();
     initLoginValidation();
+    initPasswordToggles();
     initGoogleIdentity(0);
   }
 })();
