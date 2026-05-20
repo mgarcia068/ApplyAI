@@ -221,7 +221,7 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
         if (ratingNum >= 8.5) {
           ratingColor = '#10B981'; // Verde
           ratingBg = 'rgba(16, 185, 129, 0.1)';
-        } else if (ratingNum >= 7.0) {
+        } else if (ratingNum >= 5.5) {
           ratingColor = '#F59E0B'; // Naranja/Amarillo
           ratingBg = 'rgba(245, 158, 11, 0.1)';
         } else {
@@ -299,7 +299,7 @@ function abrirModalExplicacionIA(postulanteId) {
   if (ratingNum >= 8.5) {
     color = '#10B981';
     bg = 'rgba(16, 185, 129, 0.1)';
-  } else if (ratingNum >= 7.0) {
+  } else if (ratingNum >= 5.5) {
     color = '#F59E0B';
     bg = 'rgba(245, 158, 11, 0.1)';
   }
@@ -307,7 +307,7 @@ function abrirModalExplicacionIA(postulanteId) {
   let explicacion = '';
   if (ratingNum >= 8.5) {
     explicacion = `<b>¡Excelente compatibilidad!</b> El perfil de ${p.nombre} se alinea en gran medida con los requerimientos de la vacante. Cuenta con un dominio sólido comprobado en las herramientas clave y su trayectoria previa sugiere un desempeño exitoso.`;
-  } else if (ratingNum >= 7.0) {
+  } else if (ratingNum >= 5.5) {
     explicacion = `<b>Buen encaje con potencial.</b> ${p.nombre} cumple con la mayor parte de las competencias solicitadas. Sería valioso profundizar en la entrevista sobre algunos requisitos específicos, pero es un perfil viable.`;
   } else {
     explicacion = `<b>Perfil con oportunidades de desarrollo.</b> Actualmente, el perfil no parece cubrir los requisitos core que exige la postulación. Existe una brecha en las habilidades tecnológicas principales solicitadas.`;
@@ -1218,7 +1218,7 @@ async function guardarOferta(ofertaId) {
   if (ratingNum >= 8.5) {
     ratingColor = '#10B981'; // Verde
     ratingBg = 'rgba(16, 185, 129, 0.1)';
-  } else if (ratingNum >= 7.0) {
+  } else if (ratingNum >= 5.5) {
     ratingColor = '#F59E0B'; // Naranja/Amarillo
     ratingBg = 'rgba(245, 158, 11, 0.1)';
   } else {
@@ -1226,26 +1226,24 @@ async function guardarOferta(ofertaId) {
     ratingBg = 'rgba(239, 68, 68, 0.1)';
   }
 
+  const modal = document.createElement('div');
+  modal.style.cssText = `background: #fff; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); width: ${isMobile ? '100%' : '90vw'}; max-width: 1000px; height: ${isMobile ? 'calc(100vh - 24px)' : '90vh'}; max-height: calc(100vh - 24px); display: flex; flex-direction: column; overflow: hidden;`;
+
   modal.innerHTML = `
-    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: ${isMobile ? '10px' : '14px'}; padding: ${isMobile ? '12px 14px' : '20px 24px'}; border-bottom: 1px solid #e5e7eb; background: #fff;">
-      <div style="display: flex; align-items: center; gap: ${isMobile ? '10px' : '16px'}; min-width: 0; flex: 1 1 ${isMobile ? '100%' : '320px'};">
-        <div style="width: ${isMobile ? '38px' : '44px'}; height: ${isMobile ? '38px' : '44px'}; border-radius: 10px; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center; color: #3B82F6; flex-shrink: 0;">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 20px 24px; border-bottom: 1px solid #e5e7eb; background: #fff;">
+      <div style="display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1;">
+        <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center; color: #3B82F6; flex-shrink: 0;">
           <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"></path></svg>
         </div>
-        <div style="display: flex; flex-direction: column; min-width: 0; flex: 1;">
-          <h3 style="margin: 0; font-size: ${isMobile ? '16px' : '18px'}; font-weight: 600; color: #111827; line-height: 1.2; word-break: break-word;">CV de ${nombreCandidato}</h3>
-          <p style="margin: 0; font-size: ${isMobile ? '13px' : '14px'}; color: #6B7280;">Previsualizacion del documento pdf</p>
+        <div>
+          <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827;">CV de ${nombreCandidato}</h3>
+          <p style="margin: 0; font-size: 14px; color: #6B7280;">Previsualización del documento PDF</p>
         </div>
-        <div style="display: flex; align-items: center; justify-content: center; width: ${isMobile ? '38px' : '44px'}; height: ${isMobile ? '38px' : '44px'}; border-radius: 50%; background: ${ratingBg}; border: 3px solid ${ratingColor}; font-size: ${isMobile ? '13px' : '15px'}; font-weight: 700; color: ${ratingColor}; margin-left: ${isMobile ? '4px' : '12px'}; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;" title="Calidad de CV evaluada por IA">
-          ${rating}
-        </div>
+        <div style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: ${ratingBg}; border: 3px solid ${ratingColor}; font-size: 15px; font-weight: 700; color: ${ratingColor}; margin-left: 12px; flex-shrink: 0;" title="Calidad de CV evaluada por IA">${rating}</div>
       </div>
-      <div style="display: flex; gap: 10px; align-items: center; margin-left: auto; ${isMobile ? 'width: 100%; justify-content: flex-end;' : ''}">
-        <a href="${docUrl}" target="_blank" style="padding: ${isMobile ? '8px 12px' : '8px 16px'}; background: #f3f4f6; color: #374151; font-weight: 500; font-size: 13px; border-radius: 6px; text-decoration: none; display: flex; align-items: center; gap: 6px; border: 1px solid #d1d5db;">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"></path></svg>
-          Abrir en pestaña
-        </a>
-        <button id="cv-close-btn" style="padding: 8px; width: 36px; height: 36px; background: none; border: none; color: #6B7280; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px; flex-shrink: 0;" onmouseover="this.style.background='#f3f4f6'; this.style.color='#ef4444';" onmouseout="this.style.background='none'; this.style.color='#6b7280';">
+      <div style="display: flex; gap: 10px; align-items: center; margin-left: auto;">
+        <a href="${docUrl}" target="_blank" style="padding: 8px 16px; background: #f3f4f6; color: #374151; font-weight: 500; font-size: 13px; border-radius: 6px; text-decoration: none; display: flex; align-items: center; gap: 6px; border: 1px solid #d1d5db;">Abrir original</a>
+        <button id="cv-close-btn" style="padding: 8px; width: 36px; height: 36px; background: none; border: none; color: #6B7280; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px;" onmouseover="this.style.background='#f3f4f6'; this.style.color='#ef4444';" onmouseout="this.style.background='none'; this.style.color='#6b7280';">
           <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
