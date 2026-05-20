@@ -37,6 +37,7 @@ export class UsersController {
   }
 
   @Post('me/photo')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.CANDIDATE, Role.COMPANY)
   @UseInterceptors(
     FileInterceptor('photo', {
