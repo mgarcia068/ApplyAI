@@ -1,123 +1,152 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <script src="js/core/middlewares/auth-guard.js?v=1.2"></script>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ApplyAI &mdash; Seleccion de Personal Inteligente</title>
-  <link rel="icon" type="image/png" href="assets/img/favIcon.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>    
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../src/css/core/base.css?v=1.1">
-  <link rel="stylesheet" href="../src/css/pages/landing.css?v=1.1">
-  <link rel="stylesheet" href="../src/css/components/components.css?v=1.1">
-  <script src="../src/js/services/theme.js?v=1.1"></script>
-</head>
-<body>
- 
-  <div id="navbar-placeholder"></div>
- 
-  <section class="hero" id="hero">
- 
-    <div class="hero__grid"></div>
-    <div class="hero__orb hero__orb--1"></div>
-    <div class="hero__orb hero__orb--2"></div>
- 
-    <div class="hero__content">
- 
-      <div class="hero__badge">
-        <span class="hero__badge-dot"></span>
-        Potenciá tu CV con IA y accede a las mejores oportunidades laborales
-      </div>
- 
-      <h1 class="hero__title">
-        El trabajo ideal existe.
-        La <span class="highlight">IA</span> lo encuentra.
-      </h1>
-      
-      <p class="hero__subtitle">
-        ApplyAI conecta candidatos y empresas mediante IA que analiza
-        curriculos, detecta habilidades y sugiere los mejores perfiles
-        para cada vacante.
-      </p>
- 
-      <div class="hero__ctas">
-        <a href="pages/auth/register.html?rol=candidato" class="btn btn--hero-primary">
-          Soy candidato &rarr;
-        </a>
-        <a href="pages/auth/register.html?rol=empresa" class="btn btn--hero-secondary">
-          Soy empresa
-        </a>
-      </div>
- 
-      <div class="hero__divider">quien sos?</div>
- 
-      <div class="hero__stats">
-        <div class="hero__stat">
-          <div class="hero__stat-value">10<span>x</span></div>
-          <div class="hero__stat-label">Mas rapido</div>
-        </div>
-        <div class="hero__stat-sep"></div>
-        <div class="hero__stat">
-          <div class="hero__stat-value">IA<span>+</span></div>
-          <div class="hero__stat-label">Analisis de CV</div>
-        </div>
-        <div class="hero__stat-sep"></div>
-        <div class="hero__stat">
-          <div class="hero__stat-value">100<span>%</span></div>
-          <div class="hero__stat-label">Gratuito</div>
-        </div>
-      </div>
- 
-    </div>
- 
-    <div class="hero__scroll">
-      <div class="hero__scroll-line"></div>
-      scroll
-    </div>
- 
-  </section>
+  <head>
+    <script src="js/core/middlewares/auth-guard.js?v=1.2"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ApplyAI &mdash; Seleccion de Personal Inteligente</title>
+    <link rel="icon" type="image/png" href="assets/img/favIcon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/core/base.css?v=1.1" />
+    <link rel="stylesheet" href="css/pages/landing.css?v=1.1" />
+    <link rel="stylesheet" href="css/components/components.css?v=1.1" />
+    <script src="js/services/theme.js?v=1.1"></script>
+    <script src="../src/js/services/theme.js?v=1.1"></script>
+  </head>
+  <body>
+    <div id="navbar-placeholder"></div>
 
-   <section class="reviews" id="reviews">
-    <div class="container">
- 
-      <div class="reviews__header">
-        <span class="reviews__label">Lo que dicen de nosotros</span>
-        <h2 class="reviews__title navbar__logo">Empresas y candidatos que confian en Apply<span>AI</span></h2>
-      </div>
- 
-      <div class="reviews__carousel">
-        <div class="reviews__track-wrapper">
-          <div class="reviews__track" id="reviews-track">
+    <section class="hero" id="hero">
+      <div class="hero__grid"></div>
+      <div class="hero__orb hero__orb--1"></div>
+      <div class="hero__orb hero__orb--2"></div>
+
+      <div class="hero__content">
+        <div class="hero__badge">
+          <span class="hero__badge-dot"></span>
+          Potenciá tu CV con IA y accede a las mejores oportunidades laborales
+        </div>
+
+        <h1 class="hero__title">
+          El trabajo ideal existe. La <span class="highlight">IA</span> lo
+          encuentra.
+        </h1>
+
+        <p class="hero__subtitle">
+          ApplyAI conecta candidatos y empresas mediante IA que analiza
+          curriculos, detecta habilidades y sugiere los mejores perfiles para
+          cada vacante.
+        </p>
+
+        <div class="hero__ctas">
+          <a
+            href="pages/auth/register.html?rol=candidato"
+            class="btn btn--hero-primary"
+          >
+            Soy candidato &rarr;
+          </a>
+          <a
+            href="pages/auth/register.html?rol=empresa"
+            class="btn btn--hero-secondary"
+          >
+            Soy empresa
+          </a>
+        </div>
+
+        <div class="hero__divider">quien sos?</div>
+
+        <div class="hero__stats">
+          <div class="hero__stat">
+            <div class="hero__stat-value">10<span>x</span></div>
+            <div class="hero__stat-label">Mas rapido</div>
+          </div>
+          <div class="hero__stat-sep"></div>
+          <div class="hero__stat">
+            <div class="hero__stat-value">IA<span>+</span></div>
+            <div class="hero__stat-label">Analisis de CV</div>
+          </div>
+          <div class="hero__stat-sep"></div>
+          <div class="hero__stat">
+            <div class="hero__stat-value">100<span>%</span></div>
+            <div class="hero__stat-label">Gratuito</div>
           </div>
         </div>
- 
-        <div class="reviews__controls">
-          <button class="reviews__btn" id="reviews-prev" aria-label="Anterior">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
- 
-          <div class="reviews__dots" id="reviews-dots"></div>
- 
-          <button class="reviews__btn" id="reviews-next" aria-label="Siguiente">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
+      </div>
+
+      <div class="hero__scroll">
+        <div class="hero__scroll-line"></div>
+        scroll
+      </div>
+    </section>
+
+    <section class="reviews" id="reviews">
+      <div class="container">
+        <div class="reviews__header">
+          <span class="reviews__label">Lo que dicen de nosotros</span>
+          <h2 class="reviews__title navbar__logo">
+            Empresas y candidatos que confian en Apply<span>AI</span>
+          </h2>
+        </div>
+
+        <div class="reviews__carousel">
+          <div class="reviews__track-wrapper">
+            <div class="reviews__track" id="reviews-track"></div>
+          </div>
+
+          <div class="reviews__controls">
+            <button
+              class="reviews__btn"
+              id="reviews-prev"
+              aria-label="Anterior"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+
+            <div class="reviews__dots" id="reviews-dots"></div>
+
+            <button
+              class="reviews__btn"
+              id="reviews-next"
+              aria-label="Siguiente"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
- 
-    </div>
-  </section>
- 
-  <div id="footer-placeholder"></div>
- 
-  <script src="../src/js/core/components.js?v=1.4"></script>
-  <script src="../src/js/services/reviews-data.js"></script>
-  <script src="../src/js/pages/landing.js"></script>
- 
-</body>
+    </section>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="js/core/components.js?v=1.4"></script>
+    <script src="js/services/reviews-data.js"></script>
+    <script src="js/pages/landing.js"></script>
+  </body>
 </html>
