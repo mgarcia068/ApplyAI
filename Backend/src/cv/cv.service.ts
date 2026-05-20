@@ -9,6 +9,7 @@ import { join } from 'path';
 import * as pdfParseModule from 'pdf-parse';
 const pdfParse = (pdfParseModule as any).default || pdfParseModule;
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import { fromBuffer as detectFileTypeFromBuffer } from 'file-type';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -18,6 +19,7 @@ import { CvStorageService } from './cv-storage.service';
 @Injectable()
 export class CvService {
   private readonly genAI: GoogleGenerativeAI;
+  private readonly anthropic?: Anthropic;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -26,6 +28,51 @@ export class CvService {
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
     this.genAI = new GoogleGenerativeAI(apiKey);
+
+    const anthropicKey = this.configService.get<string>('ANTHROPIC_API_KEY') || '';
+    this.anthropic = anthropicKey ? new Anthropic({ apiKey: anthropicKey }) : undefined;
+  }
+
+  private async generateTextWithGemini(prompt: string): Promise<string> {
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  }
+
+  private async generateTextWithAnthropic(prompt: string): Promise<string> {
+    if (!this.anthropic) {
+      throw new Error('Anthropic API key not configured.');
+    }
+
+    const result = await this.anthropic.messages.create({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 1500,
+      temperature: 0.2,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    let text = '';
+    for (const block of result.content) {
+      if (block.type === 'text') {
+        text += block.text;
+      }
+    }
+
+    const trimmed = text.trim();
+    if (!trimmed) {
+      throw new Error('Anthropic returned empty response.');
+    }
+
+    return trimmed;
+  }
+
+  private async generateTextWithFallback(prompt: string): Promise<string> {
+    try {
+      return await this.generateTextWithGemini(prompt);
+    } catch (error) {
+      console.error('Gemini failed, attempting Anthropic fallback:', error);
+      return await this.generateTextWithAnthropic(prompt);
+    }
   }
 
   async upload(params: { userId: string; email: string; file: Express.Multer.File }) {
@@ -139,10 +186,8 @@ export class CvService {
       throw new InternalServerErrorException('El PDF parece estar vacío o ser solo una imagen sin texto.');
     }
 
-    // 3. Procesar el texto con Gemini IA
+    // 3. Procesar el texto con Gemini IA (fallback a Anthropic si falla)
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-      
       const prompt = `
         Eres un experto seleccionador de personal de IT y un Coach de Carrera. Lee el siguiente CV y realiza dos tareas: 
         1. Extraer los datos profesionales del perfil.
@@ -165,8 +210,7 @@ export class CvService {
         """
       `;
 
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text().trim();
+      const responseText = await this.generateTextWithFallback(prompt);
       
       // Limpiar backticks de markdown que suele meter Gemini
       const jsonRaw = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();

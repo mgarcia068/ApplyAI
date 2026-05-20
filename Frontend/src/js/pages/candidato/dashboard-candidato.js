@@ -218,13 +218,65 @@
   let currentUser = null;
   let canViewOffers = false;
   let canApplyToOffers = false;
+  let currentPage = 1;
+  let pageSize = 6;
 
-  function renderList(offers) {
+  function getPageSize() {
+    return pageSize;
+  }
+
+  function setPageSizeSelection(value) {
+    const buttons = document.querySelectorAll('.page-size-tag');
+    buttons.forEach((btn) => {
+      const size = Number(btn.getAttribute('data-page-size') || 0);
+      const isActive = size === value;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  }
+
+  function hydratePageSizeFromDom() {
+    const activeBtn = document.querySelector('.page-size-tag.is-active');
+    const value = Number(activeBtn?.getAttribute('data-page-size') || pageSize);
+    if (Number.isFinite(value) && value > 0) {
+      pageSize = value;
+      setPageSizeSelection(value);
+    }
+  }
+
+  function setPaginationInfo(totalItems) {
+    const pageInfoEl = document.getElementById('offersPageInfo');
+    const prevBtn = document.getElementById('offersPrevBtn');
+    const nextBtn = document.getElementById('offersNextBtn');
+
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    if (pageInfoEl) {
+      pageInfoEl.textContent = `Pagina ${currentPage} de ${totalPages}`;
+    }
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+  }
+
+  function paginateOffers(offers) {
+    pageSize = getPageSize();
+    const totalPages = Math.max(1, Math.ceil(offers.length / pageSize));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const start = (currentPage - 1) * pageSize;
+    return offers.slice(start, start + pageSize);
+  }
+
+  function renderList(offers, totalCount) {
     const listEl = document.getElementById('employeeOffersList');
     const countEl = document.getElementById('employeeOffersCount');
     if (!listEl) return;
 
-    if (countEl) countEl.textContent = String(offers.length);
+    const total = typeof totalCount === 'number' ? totalCount : offers.length;
+    if (countEl) countEl.textContent = String(total);
 
     if (!OFFERS.length) {
       listEl.innerHTML = `
@@ -335,12 +387,6 @@
 
     setText('offerDetailPublished', absolute ? `${absolute} (${publishedSince})` : publishedSince);
 
-    const respEl = document.getElementById('offerDetailResponsibilities');
-    if (respEl) {
-      respEl.innerHTML =
-        (offer.responsibilities || []).map((t) => `<li>${escapeHtml(t)}</li>`).join('') || '<li>—</li>';
-    }
-
     const reqEl = document.getElementById('offerDetailRequirements');
     if (reqEl) {
       reqEl.innerHTML =
@@ -373,11 +419,21 @@
   function renderAll() {
     const offers = getFilteredOffers();
 
+    if (selectedOfferId) {
+      const selectedIndex = offers.findIndex((o) => o.id === selectedOfferId);
+      if (selectedIndex >= 0) {
+        const targetPage = Math.floor(selectedIndex / pageSize) + 1;
+        currentPage = targetPage;
+      }
+    }
+
     if (selectedOfferId && !offers.some((o) => o.id === selectedOfferId)) {
       selectedOfferId = '';
     }
 
-    renderList(offers);
+    const pagedOffers = paginateOffers(offers);
+    renderList(pagedOffers, offers.length);
+    setPaginationInfo(offers.length);
     renderDetail();
   }
 
@@ -458,6 +514,12 @@ function showToast(title, subtitle = '', type = 'success') {
     setDisabled('filterRole', !canViewOffers);
     setDisabled('filterLocation', !canViewOffers);
     setDisabled('filterPublishedDays', !canViewOffers);
+    setDisabled('offersPrevBtn', !canViewOffers);
+    setDisabled('offersNextBtn', !canViewOffers);
+
+    document.querySelectorAll('.page-size-tag').forEach((btn) => {
+      btn.disabled = !canViewOffers;
+    });
 
     if (
       canViewOffers &&
@@ -477,7 +539,6 @@ function showToast(title, subtitle = '', type = 'success') {
         location: job.location || 'Remoto',
         publishedAt: job.createdAt,
         description: job.description,
-        responsibilities: [],
         requirements: job.skillsRequired || []
       }));
 
@@ -566,11 +627,64 @@ function showToast(title, subtitle = '', type = 'success') {
     const filterRoleEl = document.getElementById('filterRole');
     const filterLocationEl = document.getElementById('filterLocation');
     const filterPublishedDaysEl = document.getElementById('filterPublishedDays');
+    const offersPageSizeTags = document.getElementById('offersPageSizeTags');
+    const offersPrevBtn = document.getElementById('offersPrevBtn');
+    const offersNextBtn = document.getElementById('offersNextBtn');
 
-    if (filterOfferNameEl) filterOfferNameEl.addEventListener('input', renderAll);
-    if (filterRoleEl) filterRoleEl.addEventListener('input', renderAll);
-    if (filterLocationEl) filterLocationEl.addEventListener('input', renderAll);
-    if (filterPublishedDaysEl) filterPublishedDaysEl.addEventListener('change', renderAll);
+    if (filterOfferNameEl) {
+      filterOfferNameEl.addEventListener('input', () => {
+        currentPage = 1;
+        renderAll();
+      });
+    }
+    if (filterRoleEl) {
+      filterRoleEl.addEventListener('input', () => {
+        currentPage = 1;
+        renderAll();
+      });
+    }
+    if (filterLocationEl) {
+      filterLocationEl.addEventListener('input', () => {
+        currentPage = 1;
+        renderAll();
+      });
+    }
+    if (filterPublishedDaysEl) {
+      filterPublishedDaysEl.addEventListener('change', () => {
+        currentPage = 1;
+        renderAll();
+      });
+    }
+    if (offersPageSizeTags) {
+      offersPageSizeTags.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const btn = target.closest('.page-size-tag');
+        if (!btn) return;
+
+        const size = Number(btn.getAttribute('data-page-size') || 0);
+        if (!Number.isFinite(size) || size <= 0) return;
+
+        pageSize = size;
+        setPageSizeSelection(size);
+        currentPage = 1;
+        renderAll();
+      });
+    }
+
+    hydratePageSizeFromDom();
+    if (offersPrevBtn) {
+      offersPrevBtn.addEventListener('click', () => {
+        currentPage = Math.max(1, currentPage - 1);
+        renderAll();
+      });
+    }
+    if (offersNextBtn) {
+      offersNextBtn.addEventListener('click', () => {
+        currentPage += 1;
+        renderAll();
+      });
+    }
 
     renderAll();
   }

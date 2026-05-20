@@ -5,12 +5,14 @@ import { CreateApplicationDto } from './dto/create-application.dto';
 import { ApplicationStatus, Role } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import { CvService } from '../cv/cv.service';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ApplicationsService {
   private readonly genAI: GoogleGenerativeAI;
+  private readonly anthropic?: Anthropic;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -20,6 +22,51 @@ export class ApplicationsService {
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
     this.genAI = new GoogleGenerativeAI(apiKey);
+
+    const anthropicKey = this.configService.get<string>('ANTHROPIC_API_KEY') || '';
+    this.anthropic = anthropicKey ? new Anthropic({ apiKey: anthropicKey }) : undefined;
+  }
+
+  private async generateTextWithGemini(prompt: string): Promise<string> {
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  }
+
+  private async generateTextWithAnthropic(prompt: string): Promise<string> {
+    if (!this.anthropic) {
+      throw new Error('Anthropic API key not configured.');
+    }
+
+    const result = await this.anthropic.messages.create({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 800,
+      temperature: 0.2,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    let text = '';
+    for (const block of result.content) {
+      if (block.type === 'text') {
+        text += block.text;
+      }
+    }
+
+    const trimmed = text.trim();
+    if (!trimmed) {
+      throw new Error('Anthropic returned empty response.');
+    }
+
+    return trimmed;
+  }
+
+  private async generateTextWithFallback(prompt: string): Promise<string> {
+    try {
+      return await this.generateTextWithGemini(prompt);
+    } catch (error) {
+      console.error('Gemini failed, attempting Anthropic fallback:', error);
+      return await this.generateTextWithAnthropic(prompt);
+    }
   }
 
   async create(user: JwtPayload, createApplicationDto: CreateApplicationDto) {
@@ -104,8 +151,6 @@ export class ApplicationsService {
 
   private async _calculateMatchScore(cvAnalysis: any, jobOffer: any): Promise<{ score: number; pros: string[]; cons: string[] } | null> {
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-
       const prompt = `
         Eres un Reclutador Senior comparando un CV previamente analizado con una Oferta de Empleo.
         Calcula un grado de compatibilidad (Match Score) teniendo en cuenta las habilidades requeridas en el anuncio y la experiencia del candidato.
@@ -131,8 +176,7 @@ export class ApplicationsService {
         }
       `;
 
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text().trim();
+      const responseText = await this.generateTextWithFallback(prompt);
       
       try {
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -230,8 +274,6 @@ export class ApplicationsService {
     }
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-
       const prompt = `
         Eres un Reclutador Senior comparando un CV previamente analizado con una Oferta de Empleo.
         Calcula un grado de compatibilidad (Match Score) teniendo en cuenta las habilidades requeridas en el anuncio y la experiencia del candidato.
@@ -252,8 +294,7 @@ export class ApplicationsService {
         Devuelve ÚNICAMENTE un número entero del 1 al 100 que represente el porcentaje de compatibilidad. No envíes texto extra ni explicaciones, SOLO el número numérico, por ejemplo: 85
       `;
 
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text().trim();
+      const responseText = await this.generateTextWithFallback(prompt);
       const score = parseInt(responseText, 10);
 
       if (isNaN(score)) {
