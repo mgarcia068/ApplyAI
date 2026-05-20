@@ -2,205 +2,238 @@
 
 # ApplyAI
 
-**La selección de personal, potenciada por inteligencia artificial.**
-
-ApplyAI conecta talento con oportunidad eliminando el ruido del proceso de reclutamiento tradicional. Los candidatos construyen su perfil profesional, las empresas publican sus vacantes, y la IA se encarga del análisis pesado.
-
-[![Frontend](https://img.shields.io/badge/Frontend-En%20vivo-brightgreen?style=flat-square)](https://your-frontend-url.com)
-[![Backend](https://img.shields.io/badge/API-En%20vivo-blue?style=flat-square)](https://your-backend-url.com)
-[![License](https://img.shields.io/badge/Licencia-MIT-gray?style=flat-square)](#)
+**La seleccion de personal, potenciada por inteligencia artificial.**
 
 </div>
 
 ---
 
-## ¿Por qué ApplyAI?
+## Resumen
 
-Los procesos de selección tradicionales son lentos, repetitivos y costosos. Los reclutadores pierden horas leyendo CVs que no encajan, y los candidatos postulan sin recibir respuesta.
+ApplyAI es una plataforma web para conectar candidatos y empresas. Los candidatos cargan su perfil y CV en PDF, las empresas publican ofertas y el sistema utiliza IA para analizar curriculums y generar insights de compatibilidad.
 
-ApplyAI resuelve eso. Es una plataforma web donde candidatos y empresas se encuentran, y donde un motor de inteligencia artificial extrae habilidades, resume experiencia y sugiere automáticamente los perfiles más compatibles con cada puesto — en segundos.
-
----
-
-## Funcionalidades
-
-### Para candidatos
-- Registro y gestión del perfil profesional
-- Carga de CV en formato PDF
-- Exploración y postulación a ofertas laborales
-- Seguimiento del estado de cada postulación
-
-### Para empresas
-- Publicación y administración de ofertas de trabajo
-- Búsqueda y filtrado de candidatos por habilidades, experiencia y ubicación
-- Análisis de CVs con un clic mediante inteligencia artificial
-- Visualización de resúmenes generados por IA y scores de compatibilidad
-
-### Motor de IA
-- Extrae habilidades, tecnologías y experiencia laboral de cualquier CV
-- Genera un resumen profesional estructurado por candidato
-- Ordena y sugiere los perfiles más compatibles con una vacante
-- Detecta habilidades faltantes entre un candidato y los requisitos del puesto
+Este proyecto fue desarrollado para **Ingenieria Web II (2026)** y aplica arquitectura cliente-servidor, APIs REST, procesamiento de documentos, integracion con IA y despliegue en la nube.
 
 ---
 
-## Stack tecnológico
+## Objetivos del proyecto (segun enunciado)
 
-| Capa | Tecnología |
-|---|---|
-| Frontend | HTML · CSS · JavaScript |
-| Backend | NestJS |
-| Base de datos | *(Supabase) * |
-| Integración IA | Anthropic Claude API |
-| Despliegue | Vercel · Render |
+- Facilitar la conexion entre candidatos y empresas.
+- Permitir perfiles profesionales y carga de CV en PDF.
+- Permitir publicaciones de ofertas laborales.
+- Incorporar busqueda y filtrado de candidatos.
+- Integrar IA para analizar CVs y sugerir candidatos.
+- Publicar el sistema en hosting gratuito.
 
-La arquitectura es **cliente-servidor**: el frontend se comunica con el backend únicamente a través de la API REST, manteniendo ambas capas completamente desacopladas.
+---
+
+## Roles
+
+### Candidato
+
+- Registro e inicio de sesion.
+- Edicion de perfil profesional.
+- Carga de CV en PDF.
+- Postulacion a ofertas.
+- Visualizacion del estado de sus postulaciones.
+
+### Empresa
+
+- Registro e inicio de sesion.
+- Publicacion, edicion y baja de ofertas.
+- Busqueda y filtrado de candidatos.
+- Analisis de CVs con IA.
+- Actualizacion del estado de postulaciones.
+
+---
+
+## Funcionalidades implementadas
+
+- Autenticacion con roles (candidato/empresa) y login con Google.
+- Gestion de perfiles de candidatos y empresas.
+- Subida y visualizacion de CVs en PDF con validacion por contenido.
+- Publicacion y administracion de ofertas laborales.
+- Postulaciones con estados (pendiente, visto, aceptado, rechazado).
+- Analisis de CV con IA y puntaje general del documento.
+- Calculo de compatibilidad (match score) entre CV y oferta.
+- Notificaciones por email (bienvenida, postulación, aceptacion, rechazo).
+- Almacenamiento de archivos en S3 con fallback local para CVs.
+
+---
+
+## IA: analisis de CV y compatibilidad
+
+- Se extrae el texto del PDF y se envia a un prompt estructurado.
+- La IA devuelve JSON con: `summary`, `skills`, `technologies`, `experience`, `strengths`, `weaknesses` y `overallScore`.
+- El analisis se persiste en base de datos para reuso.
+- Proveedores configurados con fallback (CV): **Gemini** -> **Groq** -> **Anthropic** -> **OpenAI** -> **XAI**.
+- El match score de ofertas se calcula con IA a partir del CV analizado y la oferta.
+
+---
+
+## Arquitectura
+
+Cliente (HTML/CSS/JS) -> API REST (NestJS) -> Base de datos (PostgreSQL/Supabase)
+
+- El frontend consume la API via `fetch`.
+- El backend expone endpoints REST para autenticacion, ofertas, CVs y postulaciones.
+
+---
+
+## Modelo de datos (Prisma)
+
+- **User**: credenciales y rol.
+- **CandidateProfile**: datos del candidato y link al CV.
+- **CompanyProfile**: datos de la empresa.
+- **JobOffer**: ofertas publicadas.
+- **Application**: postulaciones con estado y match score.
+- **CvAnalysis**: resultado del analisis IA del CV.
 
 ---
 
 ## API
 
+### Auth
+
 ```
-POST   /auth/register          Registro de usuario (candidato o empresa)
-POST   /auth/login             Autenticación y obtención de token
-
-GET    /jobs                   Listar ofertas laborales activas
-POST   /jobs                   Crear una nueva oferta
-GET    /jobs/:id               Detalle de una oferta específica
-
-POST   /applications           Postularse a una oferta
-GET    /applications           Listar postulaciones (filtradas por rol)
-
-POST   /cv/upload              Subir CV en PDF
-POST   /cv/:id/analyze         Iniciar análisis de IA sobre un CV
+POST /auth/register
+POST /auth/login
+POST /auth/google
 ```
 
-Nota: `POST /cv/upload` espera `multipart/form-data` con el archivo en el campo `cv` y valida el PDF por contenido (magic numbers), no solo por extensión/mimetype.
+### Jobs
+
+```
+GET    /jobs
+GET    /jobs/me/offers
+GET    /jobs/:id
+POST   /jobs
+POST   /jobs/:id
+DELETE /jobs/:id
+```
+
+### Applications
+
+```
+POST   /applications
+GET    /applications
+POST   /applications/:id/evaluate
+GET    /applications/offer/:offerId
+POST   /applications/:id/status
+DELETE /applications/offer/:offerId/withdraw
+```
+
+### CV
+
+```
+POST /cv/upload
+POST /cv/analyze/me
+POST /cv/analyze/:id
+GET  /cv/my-cv
+GET  /cv/file/:userId/:filename
+```
+
+### Users
+
+```
+GET    /users/me
+PATCH  /users/me
+POST   /users/me/photo
+DELETE /users/me
+GET    /users
+GET    /users/:id
+GET    /users/company/:email
+```
+
+---
+
+## Stack tecnologico
+
+| Capa | Tecnologia |
+| --- | --- |
+| Frontend | HTML, CSS, JavaScript |
+| Backend | NestJS |
+| ORM | Prisma |
+| Base de datos | PostgreSQL (Supabase) |
+| IA | Gemini, Groq, Anthropic, OpenAI, XAI |
+| Storage | AWS S3 (con fallback local para CVs) |
+| Email | Nodemailer + Handlebars |
+| Deploy | Render (backend), Vercel (frontend) |
 
 ---
 
 ## Estructura del proyecto
 
 ```
-applyai/
-├── frontend/                  # Cliente HTML/CSS/JS
-│   ├── pages/
-│   ├── components/
-│   └── assets/
-├── backend/                   # API REST con NestJS
+Proyecto-web-2/
+├── Backend/            # API REST con NestJS
 │   ├── src/
-│   │   ├── auth/
-│   │   ├── jobs/
-│   │   ├── applications/
-│   │   ├── cv/
-│   │   └── ai/
-│   └── test/
-└── docs/                      # Arquitectura, modelo de datos, documentación
+│   ├── prisma/
+│   └── docs/
+├── Frontend/           # HTML/CSS/JS
+└── README.md
 ```
 
 ---
 
-## Instalación y uso local
+## Variables de entorno
 
-### Requisitos previos
+Crear `.env` en la raiz o en `Backend/`.
 
-- Node.js 18+
-- npm o yarn
-
-### Pasos
-
-```bash
-# Clonar el repositorio
-git clone https://github.com/tu-usuario/applyai.git
-cd applyai
-
-# Instalar dependencias del backend
-cd Backend
-npm install
-
-# Instalar dependencias del frontend (si aplica)
-cd ../Frontend
-npm install
 ```
-
-### Variables de entorno
-
-Crear un archivo `.env` dentro de `/Backend` **o** en la raíz del repo (no se commitea; está en `.gitignore`).
-
-Plantilla: `Backend/.env.example`
-
-```env
 PORT=3000
-DATABASE_URL=tu_url_de_base_de_datos
-DIRECT_URL=tu_url_directa_de_base_de_datos
-JWT_SECRET=tu_clave_secreta
+DATABASE_URL=
+DIRECT_URL=
+JWT_SECRET=
 JWT_EXPIRES_IN=7d
-ANTHROPIC_API_KEY=tu_api_key
-# CORS: 1 URL o múltiples separadas por coma
 FRONTEND_URL=http://localhost:5500
+GOOGLE_CLIENT_ID=
 
-# Cloud Storage (S3) para CVs (stateless)
-# Se sube el PDF a S3 y en BD se guarda la URL externa.
-S3_BUCKET=tu_bucket
-S3_REGION=us-east-1
-# URL pública base (recomendado: CloudFront/CDN o endpoint público)
-# Ej: https://cdn.tu-dominio.com
-S3_PUBLIC_BASE_URL=https://tu-cdn-o-endpoint-publico
+GEMINI_API_KEY=
+GROQ_API_KEY=
+ANTHROPIC_API_KEY=
+GPT_API_KEY=
+XAI_API_KEY=
 
-# Opcionales (S3-compatible: MinIO/LocalStack/R2)
-S3_ENDPOINT=http://localhost:4566
-S3_FORCE_PATH_STYLE=true
+AWS_BUCKET_NAME=
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=
+AWS_ACCESS_KEY=
+AWS_SECRET_ACCESS_KEY=
+S3_PUBLIC_BASE_URL=
 S3_CV_PREFIX=cv
 
-# Credenciales AWS (usa el standard AWS SDK)
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
+MAIL_HOST=smtp.gmail.com
+MAIL_USER=
+MAIL_PASS=
+MAIL_ENABLED=true
 ```
 
-### Correr en local
+---
 
-```bash
-# Generar Prisma Client (requerido para compilar tipos/enums)
+## Instalacion local
+
+```
+# Backend
 cd Backend
+npm install
 npm run prisma:generate
-
-# Iniciar el backend
 npm run start:dev
 
-# Abrir el frontend
-# Abrir frontend/index.html en el navegador o usar un servidor local
+# Frontend
+# Abrir Frontend/src/index.html o usar Live Server
 ```
 
 ---
 
 ## Despliegue
 
-| Capa | Servicio |
-|---|---|
-| Frontend | Vercel |
-| Backend | Render |
-| Base de datos | Supabase |
-
-🔗 **App:** `[agregar URL]`  
-🔗 **API:** `[agregar URL]`
+- Backend (Render): https://applyai-umuw.onrender.com
+- Frontend: https://apply-mjlqfcu70-mateo-iua.vercel.app/
 
 ---
 
 ## Equipo
 
-| | Nombre | Rol |
-|---|---|---|
-| 👤 | **Santino Bertola** | Desarrollador Full-stack |
-| 👤 | **Mateo Garcia** | Desarrollador Full-stack |
-
----
-
-## Contexto académico
-
-Proyecto final desarrollado para la materia **Ingeniería Web II · 2026**, aplicando conceptos de arquitectura cliente-servidor, diseño de APIs REST, procesamiento de documentos, integración con IA y despliegue en la nube.
-
----
-
-<div align="center">
-  <sub>Hecho con ☕ y muchos <code>npm install</code> de más.</sub>
-</div>
+- Santino Bertola
+- Mateo Garcia
