@@ -1,7 +1,7 @@
 (function () {
   const STORAGE_KEYS = { currentUser: 'ApplyAI.currentUser' };
 
-  const API_BASE_URL = 'http://localhost:3000/api';
+  const API_BASE_URL = 'https://applyai-umuw.onrender.com/api';
 
   function safeJsonParse(value, fallback) {
     try {

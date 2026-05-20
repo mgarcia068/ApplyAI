@@ -1,7 +1,7 @@
 (function () {
   const PROFILE_VERSION = 1;
   const CV_AI_DAILY_LIMIT = 3;
-  const BACKEND = 'http://localhost:3000';
+  const BACKEND = 'https://applyai-umuw.onrender.com';
 
   // ── Utilidades de fecha ────────────────────────────────────────────────────
   function getLocalDateKey() {

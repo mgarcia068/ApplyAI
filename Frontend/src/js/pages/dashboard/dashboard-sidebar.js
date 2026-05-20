@@ -783,7 +783,7 @@ async function guardarPerfil() {
 
   try {
     const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
-    const response = await axios.patch('http://localhost:3000/api/users/me', payload, {
+    const response = await axios.patch('https://applyai-umuw.onrender.com/api/users/me', payload, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
@@ -849,7 +849,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
     if (user && user.token) {
-      const response = await axios.get('http://localhost:3000/api/users/me', {
+      const response = await axios.get('https://applyai-umuw.onrender.com/api/users/me', {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       const profile = response.data.companyProfile;

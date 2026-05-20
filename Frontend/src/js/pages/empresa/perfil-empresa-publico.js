@@ -269,7 +269,7 @@
     };
 
     if (requested) {
-      axios.get(`http://localhost:3000/api/users/company/${searchKey}`).then(res => {
+      axios.get(`https://applyai-umuw.onrender.com/api/users/company/${searchKey}`).then(res => {
         const data = res.data;
         const profile = data.companyProfile;
         if (profile) {
@@ -303,7 +303,7 @@
       if (currentUserRaw) {
         const currentUser = JSON.parse(currentUserRaw);
         if (normalizeRole(currentUser.role) === 'empresa') {
-          axios.get('http://localhost:3000/api/users/me', {
+          axios.get('https://applyai-umuw.onrender.com/api/users/me', {
             headers: { Authorization: `Bearer ${currentUser.token}` }
           }).then(response => {
             const data = response.data;

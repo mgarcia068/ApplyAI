@@ -511,7 +511,7 @@ function cambiarEstadoCandidato(id, nuevoEstado, selectElement) {
       else if (nuevoEstado === 'Aceptado') backendStatus = 'ACCEPTED';
       else if (nuevoEstado === 'Rechazado') backendStatus = 'REJECTED';
 
-      await axios.post(`http://localhost:3000/api/applications/${id}/status`, 
+      await axios.post(`https://applyai-umuw.onrender.com/api/applications/${id}/status`, 
         { status: backendStatus },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -765,7 +765,7 @@ async function loadDashboardData() {
   // 2. Sincronizar con el Backend en segundo plano
   try {
     // Sincronizar Ofertas
-    const resOffers = await axios.get('http://localhost:3000/api/jobs/me/offers', {
+    const resOffers = await axios.get('https://applyai-umuw.onrender.com/api/jobs/me/offers', {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
@@ -787,7 +787,7 @@ async function loadDashboardData() {
     localStorage.setItem(DASHBOARD_CACHE_KEYS.offers, JSON.stringify(freshOffers));
 
     // Sincronizar Postulantes (para Resumen General)
-    const resApps = await axios.get('http://localhost:3000/api/applications', {
+    const resApps = await axios.get('https://applyai-umuw.onrender.com/api/applications', {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
@@ -830,7 +830,7 @@ async function verPostulantes(ofertaId) {
   // 2. Sincronizar con el Backend
   try {
     const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
-    const res = await axios.get(`http://localhost:3000/api/applications/offer/${ofertaId}`, {
+    const res = await axios.get(`https://applyai-umuw.onrender.com/api/applications/offer/${ofertaId}`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
@@ -926,7 +926,7 @@ async function publicarOferta() {
 
   try {
     const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
-    await axios.post('http://localhost:3000/api/jobs', payload, {
+    await axios.post('https://applyai-umuw.onrender.com/api/jobs', payload, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
     
@@ -989,7 +989,7 @@ function eliminarOferta(id) {
   modal.querySelector('#conf-eliminar').addEventListener('click', async () => {
     try {
       const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
-      await axios.delete(`http://localhost:3000/api/jobs/${id}`, {
+      await axios.delete(`https://applyai-umuw.onrender.com/api/jobs/${id}`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       await loadDashboardData();
@@ -1146,7 +1146,7 @@ async function guardarOferta(ofertaId) {
 
   try {
     const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
-    await axios.post(`http://localhost:3000/api/jobs/${ofertaId}`, payload, {
+    await axios.post(`https://applyai-umuw.onrender.com/api/jobs/${ofertaId}`, payload, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
     
@@ -1164,7 +1164,7 @@ async function guardarOferta(ofertaId) {
 
   async function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', rating = '0.0') {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
-  const backendOrigin = 'http://localhost:3000';
+  const backendOrigin = 'https://applyai-umuw.onrender.com';
 
   const overlay = document.createElement('div');
   overlay.id = 'cv-preview-overlay';
