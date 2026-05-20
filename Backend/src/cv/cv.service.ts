@@ -356,6 +356,10 @@ export class CvService {
       throw new InternalServerErrorException('El PDF parece estar vacío o ser solo una imagen sin texto.');
     }
 
+    console.log(`\n\n--- INICIO PDF EXTRAIDO (${profile.id}) ---`);
+    console.log(pdfText.substring(0, 300) + '...');
+    console.log(`--- FIN PDF EXTRAIDO ---\n\n`);
+
     // 3. Procesar el texto con IA (con fallback entre proveedores)
     try {
       const prompt = `
@@ -368,8 +372,8 @@ export class CvService {
         - "skills": Un array de strings con habilidades blandas y métodos de trabajo.
         - "technologies": Un array de strings listando únicamente tecnologías, lenguajes, frameworks o herramientas.
         - "experience": Un array de strings resumiendo su experiencia laboral.
-        - "strengths": Un array de strings con 3 puntos fuertes DE ESTE DOCUMENTO CV (ej. "Estructura clara", "Buen uso de métricas", "Fácil lectura").
-        - "weaknesses": Un array de strings con 3 críticas constructivas sobre CÓMO MEJORAR EL DOCUMENTO (ej. "Faltan logros cuantificables", "Descripciones muy largas", "Faltan enlaces a portfolio").
+        - "strengths": Un array de strings con 3 puntos fuertes DE ESTE DOCUMENTO CV basandote en la estructura y claridad.
+        - "weaknesses": Un array de strings con 3 críticas constructivas reales sobre CÓMO MEJORAR EL DOCUMENTO.
         - "overallScore": Un número del 1 al 100 que califique EXCLUSIVAMENTE la calidad de redacción, legibilidad y formato de este CV.
 
         Devuelve ÚNICAMENTE un objeto JSON válido, sin markdown, sin explicaciones extra.

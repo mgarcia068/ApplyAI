@@ -75,7 +75,7 @@ export class ApplicationsService {
       include: { cvAnalysis: true },
     });
 
-    if (!profile) {
+    if (!profile || !profile.cvUrl) {
       throw new BadRequestException('Debes completar tu perfil y subir tu CV antes de postularte.');
     }
 
