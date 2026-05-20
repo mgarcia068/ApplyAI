@@ -3,6 +3,8 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
@@ -20,21 +22,39 @@ import { CvStorageService } from './cv-storage.service';
 export class CvService {
   private readonly genAI: GoogleGenerativeAI;
   private readonly anthropic?: Anthropic;
+  private readonly geminiApiKey?: string;
+  private readonly gptApiKey?: string;
+  private readonly xaiApiKey?: string;
+  private readonly groqApiKey?: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly cvStorageService: CvStorageService,
     private readonly configService: ConfigService,
   ) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
-    this.genAI = new GoogleGenerativeAI(apiKey);
+    const geminiKey = this.getOptionalConfig('GEMINI_API_KEY');
+    this.geminiApiKey = geminiKey;
+    this.genAI = new GoogleGenerativeAI(geminiKey || '');
 
-    const anthropicKey = this.configService.get<string>('ANTHROPIC_API_KEY') || '';
+    const anthropicKey = this.getOptionalConfig('ANTHROPIC_API_KEY');
     this.anthropic = anthropicKey ? new Anthropic({ apiKey: anthropicKey }) : undefined;
+
+    this.gptApiKey = this.getOptionalConfig('GPT_API_KEY');
+    this.xaiApiKey = this.getOptionalConfig('XAI_API_KEY');
+    this.groqApiKey = this.getOptionalConfig('GROQ_API_KEY');
+  }
+
+  private getOptionalConfig(key: string): string | undefined {
+    const value = this.configService.get<string>(key);
+    const trimmed = value?.trim();
+    return trimmed ? trimmed : undefined;
   }
 
   private async generateTextWithGemini(prompt: string): Promise<string> {
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    if (!this.geminiApiKey) {
+      throw new Error('Gemini API key not configured.');
+    }
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const result = await model.generateContent(prompt);
     return result.response.text().trim();
   }
@@ -45,7 +65,7 @@ export class CvService {
     }
 
     const result = await this.anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-3-haiku-20240307',
       max_tokens: 1500,
       temperature: 0.2,
       messages: [{ role: 'user', content: prompt }],
@@ -66,13 +86,163 @@ export class CvService {
     return trimmed;
   }
 
-  private async generateTextWithFallback(prompt: string): Promise<string> {
-    try {
-      return await this.generateTextWithGemini(prompt);
-    } catch (error) {
-      console.error('Gemini failed, attempting Anthropic fallback:', error);
-      return await this.generateTextWithAnthropic(prompt);
+  private async generateTextWithGpt(prompt: string): Promise<string> {
+    if (!this.gptApiKey) {
+      throw new Error('GPT API key not configured.');
     }
+
+    return this.generateTextWithOpenAiCompatible({
+      provider: 'GPT',
+      apiKey: this.gptApiKey,
+      url: 'https://api.openai.com/v1/chat/completions',
+      model: 'gpt-4o-mini',
+      maxTokens: 1500,
+      temperature: 0.2,
+      prompt,
+    });
+  }
+
+  private async generateTextWithXai(prompt: string): Promise<string> {
+    if (!this.xaiApiKey) {
+      throw new Error('XAI API key not configured.');
+    }
+
+    return this.generateTextWithOpenAiCompatible({
+      provider: 'XAI',
+      apiKey: this.xaiApiKey,
+      url: 'https://api.x.ai/v1/chat/completions',
+      model: 'grok-3-mini',
+      maxTokens: 1500,
+      temperature: 0.2,
+      prompt,
+    });
+  }
+
+  private async generateTextWithGroq(prompt: string): Promise<string> {
+    if (!this.groqApiKey) {
+      throw new Error('Groq API key not configured.');
+    }
+
+    return this.generateTextWithOpenAiCompatible({
+      provider: 'GROQ',
+      apiKey: this.groqApiKey,
+      url: 'https://api.groq.com/openai/v1/chat/completions',
+      model: 'llama-3.3-70b-versatile',
+      maxTokens: 1500,
+      temperature: 0.2,
+      prompt,
+    });
+  }
+
+  private async generateTextWithOpenAiCompatible(options: {
+    provider: string;
+    apiKey: string;
+    url: string;
+    model: string;
+    maxTokens: number;
+    temperature: number;
+    prompt: string;
+  }): Promise<string> {
+    const response = await fetch(options.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${options.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: options.model,
+        messages: [{ role: 'user', content: options.prompt }],
+        max_tokens: options.maxTokens,
+        temperature: options.temperature,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await this.safeReadJson(response);
+      throw this.buildProviderError(options.provider, response.status, errorBody);
+    }
+
+    const data = await response.json().catch(() => undefined);
+    const text = data?.choices?.[0]?.message?.content?.trim();
+    if (!text) {
+      throw new Error(`${options.provider} returned empty response.`);
+    }
+
+    return text;
+  }
+
+  private async safeReadJson(response: { json: () => Promise<any> }): Promise<any> {
+    try {
+      return await response.json();
+    } catch (_) {
+      return undefined;
+    }
+  }
+
+  private buildProviderError(provider: string, status: number, body: any): Error {
+    const message =
+      body?.error?.message ||
+      body?.message ||
+      `${provider} request failed with status ${status}.`;
+    const code = body?.error?.code || body?.code;
+
+    const error = new Error(message);
+    (error as any).provider = provider;
+    (error as any).status = status;
+    if (code) (error as any).code = code;
+    if (body) (error as any).raw = body;
+    return error;
+  }
+
+  private isTokensExhausted(error: any): boolean {
+    const message = String(error?.message || '').toLowerCase();
+    const code = String(error?.code || error?.raw?.error?.code || '').toLowerCase();
+    const type = String(error?.raw?.error?.type || '').toLowerCase();
+    const status = Number(
+      error?.status || error?.statusCode || error?.response?.status || error?.raw?.status,
+    );
+
+    const hints = ['insufficient', 'quota', 'exceeded', 'token', 'billing', 'credit'];
+    const hasHint = hints.some((hint) =>
+      message.includes(hint) || code.includes(hint) || type.includes(hint),
+    );
+
+    return (status === 402 || status === 429) && hasHint;
+  }
+
+  private async generateTextWithFallback(prompt: string): Promise<string> {
+    const attempts: Array<{ name: string; fn: () => Promise<string> }> = [];
+
+    if (this.geminiApiKey) attempts.push({ name: 'Gemini', fn: () => this.generateTextWithGemini(prompt) });
+    if (this.groqApiKey) attempts.push({ name: 'Groq', fn: () => this.generateTextWithGroq(prompt) });
+    if (this.anthropic) attempts.push({ name: 'Anthropic', fn: () => this.generateTextWithAnthropic(prompt) });
+    if (this.gptApiKey) attempts.push({ name: 'GPT', fn: () => this.generateTextWithGpt(prompt) });
+    if (this.xaiApiKey) attempts.push({ name: 'XAI', fn: () => this.generateTextWithXai(prompt) });
+
+    if (!attempts.length) {
+      throw new Error('No AI providers configured.');
+    }
+
+    let tokenIssue = false;
+    let lastError: unknown;
+
+    for (const attempt of attempts) {
+      try {
+        return await attempt.fn();
+      } catch (error) {
+        tokenIssue = tokenIssue || this.isTokensExhausted(error);
+        lastError = error;
+        console.error(`${attempt.name} failed:`, error);
+      }
+    }
+
+    if (tokenIssue) {
+      const error = new Error('AI_TOKENS_EXHAUSTED');
+      (error as any).code = 'AI_TOKENS_EXHAUSTED';
+      throw error;
+    }
+
+    throw (lastError || new Error('All AI providers failed.')) as Error;
   }
 
   async upload(params: { userId: string; email: string; file: Express.Multer.File }) {
@@ -186,7 +356,7 @@ export class CvService {
       throw new InternalServerErrorException('El PDF parece estar vacío o ser solo una imagen sin texto.');
     }
 
-    // 3. Procesar el texto con Gemini IA (fallback a Anthropic si falla)
+    // 3. Procesar el texto con IA (con fallback entre proveedores)
     try {
       const prompt = `
         Eres un experto seleccionador de personal de IT y un Coach de Carrera. Lee el siguiente CV y realiza dos tareas: 
@@ -219,7 +389,7 @@ export class CvService {
       try {
         parsedAiData = JSON.parse(jsonRaw);
       } catch (parseError) {
-        console.error('Error parseando JSON de Gemini. Raw Response:', responseText);
+        console.error('Error parseando JSON de IA. Raw Response:', responseText);
         throw new InternalServerErrorException('La IA no devolvió un formato JSON válido.');
       }
 
@@ -251,7 +421,16 @@ export class CvService {
 
       return cvAnalysis;
     } catch (error: any) {
-      console.error('Error detallado con Gemini IA:', error?.message || error);
+      console.error('Error detallado con IA:', error?.message || error);
+      if (error?.code === 'AI_TOKENS_EXHAUSTED' || this.isTokensExhausted(error)) {
+        throw new HttpException(
+          {
+            message: 'No hay tokens disponibles para analizar el CV en este momento. Intentá más tarde.',
+            errorCode: 'AI_TOKENS_EXHAUSTED',
+          },
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
       throw new InternalServerErrorException(
         error?.message || 'Error al contactar a la IA o procesar el resultado.'
       );
