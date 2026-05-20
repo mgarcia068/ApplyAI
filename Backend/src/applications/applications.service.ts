@@ -28,7 +28,7 @@ export class ApplicationsService {
   }
 
   private async generateTextWithGemini(prompt: string): Promise<string> {
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const result = await model.generateContent(prompt);
     return result.response.text().trim();
   }
@@ -39,7 +39,7 @@ export class ApplicationsService {
     }
 
     const result = await this.anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-3-haiku-20240307',
       max_tokens: 800,
       temperature: 0.2,
       messages: [{ role: 'user', content: prompt }],

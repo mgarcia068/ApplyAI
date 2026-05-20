@@ -494,7 +494,9 @@
 
           if (!res.ok) {
             const errBody = await res.json().catch(() => ({}));
-            throw new Error(errBody.message || 'Error al analizar el CV con IA.');
+            const err = new Error(errBody.message || 'Error al analizar el CV con IA.');
+            err.code = errBody.errorCode || errBody.code;
+            throw err;
           }
 
           const data = await res.json();
@@ -518,7 +520,15 @@
 
         } catch (error) {
           console.error(error);
-          if (els.status) els.status.textContent = 'Error: ' + error.message;
+          if (error?.code === 'AI_TOKENS_EXHAUSTED') {
+            if (els.status) els.status.textContent = error.message;
+            if (els.insight) {
+              els.insight.textContent = 'Tu resumen profesional generado por IA aparecerá acá.';
+              els.insight.hidden = false;
+            }
+          } else if (els.status) {
+            els.status.textContent = 'Error: ' + error.message;
+          }
         } finally {
           syncLimitUi();
           if (!hasCvAiReachedLimit(userEmail)) {
