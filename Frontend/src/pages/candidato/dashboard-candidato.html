@@ -18,12 +18,12 @@
 
     <link rel="stylesheet" href="../../css/core/base.css?v=1.1" />
     <link rel="stylesheet" href="../../css/components/components.css?v=1.1" />
-    <link rel="stylesheet" href="../../css/pages/candidato-dashboard.css?v=1.0" />
+    <link rel="stylesheet" href="../../css/pages/candidato-dashboard.css?v=1.2" />
 
     <script src="../../js/services/theme.js?v=1.1"></script>
     <script src="../../js/core/components.js?v=1.4" defer></script>
     <script src="../../js/services/geo-api.js?v=1.1" defer></script>
-    <script src="../../js/pages/candidato/dashboard-candidato.js?v=1.1" defer></script>
+    <script src="../../js/pages/candidato/dashboard-candidato.js?v=1.3" defer></script>
   </head>
 
   <body>
@@ -119,6 +119,8 @@
                   <h2 class="card__title text-base">Listado</h2>
                 </div>
               </header>
+
+              <div id="offerAiRecommendationStatus" class="offer-list__status text-xs text-muted" hidden></div>
 
               <div id="employeeOffersList" class="offer-list" role="listbox" aria-label="Listado de ofertas"></div>
 

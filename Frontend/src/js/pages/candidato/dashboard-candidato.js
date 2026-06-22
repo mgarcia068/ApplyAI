@@ -1,10 +1,13 @@
 (function () {
+  const BACKEND = 'https://applyai-umuw.onrender.com';
   const STORAGE_KEYS = {
     currentUser: 'ApplyAI.currentUser',
     applications: 'ApplyAI.applications',
+    candidateProfilePrefix: 'ApplyAI.candidateProfile:',
   };
 
   let OFFERS = [];
+  let AI_RECOMMENDATIONS = new Map();
 
   function safeJsonParse(value, fallback) {
     try {
@@ -32,6 +35,13 @@
       role: normalizeRole(parsed.role),
       fullName: String(parsed.fullName || '').trim(),
     };
+  }
+
+  function getCandidateProfile(email) {
+    const key = `${STORAGE_KEYS.candidateProfilePrefix}${String(email || '').trim().toLowerCase()}`;
+    const raw = localStorage.getItem(key);
+    const parsed = raw ? safeJsonParse(raw, null) : null;
+    return parsed && typeof parsed === 'object' ? parsed : null;
   }
 
   function normalizeText(value) {
@@ -214,6 +224,129 @@
     });
   }
 
+  function applyRecommendationsToOffers(offers) {
+    return offers
+      .map((offer) => {
+        const rec = AI_RECOMMENDATIONS.get(offer.id) || null;
+        return {
+          ...offer,
+          aiRecommended: Boolean(rec),
+          aiRecommendationScore: Number(rec?.score || 0),
+          aiRecommendationReason: String(rec?.reason || '').trim(),
+        };
+      })
+      .sort((a, b) => {
+        const aRecommended = Boolean(a.aiRecommended);
+        const bRecommended = Boolean(b.aiRecommended);
+
+        if (aRecommended !== bRecommended) {
+          return aRecommended ? -1 : 1;
+        }
+
+        if (aRecommended && bRecommended) {
+          const scoreDiff = (b.aiRecommendationScore || 0) - (a.aiRecommendationScore || 0);
+          if (scoreDiff !== 0) return scoreDiff;
+        }
+
+        return new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime();
+      });
+  }
+
+  function normalizeListTokens(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .split(/[^a-z0-9#+.]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function buildCandidateCorpus(profile) {
+    const skills = Array.isArray(profile?.technicalSkillsList) ? profile.technicalSkillsList : [];
+    const languages = Array.isArray(profile?.languagesList) ? profile.languagesList : [];
+
+    return [
+      profile?.fullName,
+      profile?.headline,
+      profile?.about,
+      profile?.academicBackground,
+      profile?.workExperience,
+      profile?.location,
+      profile?.bio,
+      profile?.education,
+      profile?.experience,
+      profile?.cvAiSummary,
+      skills.join(' '),
+      languages.join(' '),
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  function buildLocalRecommendations(offers, currentUser) {
+    const profile = getCandidateProfile(currentUser?.email);
+    if (!profile) return [];
+
+    const candidateTokens = new Set(normalizeListTokens(buildCandidateCorpus(profile)));
+    const hasMeaningfulProfile = candidateTokens.size > 0;
+    if (!hasMeaningfulProfile) return [];
+
+    return offers
+      .map((offer) => {
+        const offerTokens = normalizeListTokens([
+          offer.name,
+          offer.role,
+          offer.description,
+          offer.location,
+          ...(Array.isArray(offer.requirements) ? offer.requirements : []),
+        ].join(' '));
+
+        let overlap = 0;
+        offerTokens.forEach((token) => {
+          if (candidateTokens.has(token)) overlap += 1;
+        });
+
+        const locationMatch = profile?.location
+          ? normalizeText(profile.location) === normalizeText(offer.location || '')
+          : false;
+
+        const roleMatch = [profile?.headline, profile?.workExperience, profile?.about, profile?.cvAiSummary]
+          .filter(Boolean)
+          .some((text) => normalizeText(text).includes(normalizeText(offer.role || offer.name || '')));
+
+        const score = Math.min(100, overlap * 8 + (locationMatch ? 8 : 0) + (roleMatch ? 10 : 0));
+
+        return {
+          jobId: offer.id,
+          score,
+          reason: 'Coincide con tu perfil y habilidades registradas.',
+        };
+      })
+      .filter((item) => item.score >= 20)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }
+
+  function mergeRecommendations(primary, secondary) {
+    const merged = [];
+    const seen = new Set();
+
+    [...(Array.isArray(primary) ? primary : []), ...(Array.isArray(secondary) ? secondary : [])].forEach((item) => {
+      const jobId = String(item?.jobId || '').trim();
+      if (!jobId || seen.has(jobId)) return;
+      seen.add(jobId);
+      merged.push({
+        jobId,
+        score: Math.max(0, Math.min(100, Number(item?.score || 0))),
+        reason: String(item?.reason || '').trim() || 'Recomendado por tu perfil.',
+      });
+    });
+
+    return merged.sort((a, b) => b.score - a.score).slice(0, 5);
+  }
+
   let selectedOfferId = '';
   let currentUser = null;
   let canViewOffers = false;
@@ -279,6 +412,7 @@
     if (countEl) countEl.textContent = String(total);
 
     if (!OFFERS.length) {
+      setHidden('offerAiRecommendationStatus', true);
       listEl.innerHTML = `
         <div class="empty-state empty-state--padded">
           <div class="empty-state__icon">✦</div>
@@ -290,6 +424,7 @@
     }
 
     if (!offers.length) {
+      setHidden('offerAiRecommendationStatus', true);
       listEl.innerHTML = `
         <div class="empty-state empty-state--padded">
           <div class="empty-state__icon">✦</div>
@@ -304,6 +439,9 @@
       .map((o) => {
         const selected = o.id === selectedOfferId;
         const published = formatPublishedSince(o.publishedAt);
+        const recommendationBadge = o.aiRecommended
+          ? `<span class="badge badge--accent offer-list__badge">Recomendado</span>`
+          : '';
 
         return `
         <button
@@ -314,7 +452,10 @@
           data-offer-id="${o.id}"
           ${canViewOffers ? '' : 'disabled'}
         >
-          <div class="offer-list__title">${escapeHtml(o.name)}</div>
+          <div class="offer-list__top">
+            <div class="offer-list__title">${escapeHtml(o.name)}</div>
+            ${recommendationBadge}
+          </div>
           <div class="offer-list__meta">
             <div><strong>Puesto:</strong> ${escapeHtml(o.role)}</div>
             <div><strong>Ubicación:</strong> ${escapeHtml(o.location)}</div>
@@ -435,6 +576,21 @@
     renderList(pagedOffers, offers.length);
     setPaginationInfo(offers.length);
     renderDetail();
+  }
+
+  function syncRecommendationStatus() {
+    const statusEl = document.getElementById('offerAiRecommendationStatus');
+    if (!statusEl) return;
+
+    const recommendedCount = AI_RECOMMENDATIONS.size;
+    if (recommendedCount > 0) {
+      statusEl.textContent = `${recommendedCount} oferta${recommendedCount === 1 ? '' : 's'} recomendada${recommendedCount === 1 ? '' : 's'} por IA`;
+      statusEl.hidden = false;
+      return;
+    }
+
+    statusEl.textContent = 'Sin recomendaciones por IA por ahora.';
+    statusEl.hidden = false;
   }
 
   
@@ -560,6 +716,46 @@ function showToast(title, subtitle = '', type = 'success') {
           saveAllApplications(mappedApps);
         }
       }
+
+      if (currentUser?.role === 'candidato' && currentUser?.email) {
+        try {
+          const rawUser = localStorage.getItem('ApplyAI.currentUser');
+          const token = rawUser ? JSON.parse(rawUser).token : '';
+
+          if (token) {
+            const recRes = await axios.get(`${BACKEND}/api/jobs/me/recommendations`, {
+              headers: { Authorization: 'Bearer ' + token },
+            });
+
+            const backendRecommendations = Array.isArray(recRes.data)
+              ? recRes.data
+              : Array.isArray(recRes.data?.recommendations)
+                ? recRes.data.recommendations
+                : [];
+
+            const localRecommendations = buildLocalRecommendations(OFFERS, currentUser);
+            const recommendations = mergeRecommendations(backendRecommendations, localRecommendations);
+
+            AI_RECOMMENDATIONS = new Map(
+              recommendations.map((item) => [String(item.jobId), {
+                score: Number(item.score || 0),
+                reason: String(item.reason || '').trim(),
+              }]),
+            );
+          }
+        } catch (recommendationError) {
+          console.error('Error fetching job recommendations', recommendationError);
+          AI_RECOMMENDATIONS = new Map(
+            buildLocalRecommendations(OFFERS, currentUser).map((item) => [String(item.jobId), {
+              score: Number(item.score || 0),
+              reason: String(item.reason || '').trim(),
+            }]),
+          );
+        }
+      }
+
+      OFFERS = applyRecommendationsToOffers(OFFERS);
+      syncRecommendationStatus();
     } catch (e) { console.error('Error fetching data', e); }
 
     const applyBtnEl = document.getElementById('applyOfferBtn');
