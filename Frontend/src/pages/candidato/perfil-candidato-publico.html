@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <script src="../../js/core/config.js"></script>
+    <script src="../../js/core/middlewares/auth-guard.js?v=1.2"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ApplyAI &mdash; Perfil Candidato</title>
+    <meta name="description" content="Perfil público del candidato en ApplyAI." />
+    <link rel="icon" type="image/png" href="../../assets/img/favIcon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="../../css/core/base.css?v=1.1" />
+    <link rel="stylesheet" href="../../css/components/components.css?v=1.1" />
+    <link rel="stylesheet" href="../../css/pages/profile.css?v=1.1" />
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../../js/services/theme.js?v=1.1"></script>
+    <script src="../../js/core/components.js?v=1.2" defer></script>
+    <script src="../../js/pages/candidato/perfil-candidato-publico.js" defer></script>
+  </head>
+
+  <body>
+    <!-- Full page loader -->
+    <div id="page-loader">
+      <div class="spinner"></div>
+      <div class="mt-4 font-medium text-color-text">Cargando perfil...</div>
+    </div>
+
+    <!-- Topbar con botón volver -->
+    <div class="db-topbar db-topbar-sticky">
+      <button
+        class="btn btn--ghost btn--sm flex items-center gap-2"
+        onclick="window.history.back()"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Volver
+      </button>
+    </div>
+
+    <main class="page-wrapper pt-0">
+      <div class="container">
+        <!-- ── Header (Banner + Avatar + Info) ── -->
+        <header class="my-4">
+          <div class="candidate-banner"></div>
+          <div class="candidate-header">
+            <div class="flex items-end justify-between flex-wrap gap-2">
+              <!-- Avatar -->
+              <div class="candidate-avatar-wrap" id="candidateAvatar">
+                <img
+                  id="candidateAvatarImg"
+                  class="candidate-avatar__img"
+                  alt="Foto de perfil"
+                  src=""
+                  draggable="false"
+                  hidden
+                />
+                <div id="candidateAvatarFallback" class="candidate-avatar__fallback">
+                  <span id="candidateAvatarInitials">?</span>
+                </div>
+              </div>
+
+              <!-- Acciones -->
+              <div class="candidate-actions">
+                <!-- Solo visible para el propio candidato -->
+                <a
+                  id="editProfileBtn"
+                  href="perfil-candidato.html"
+                  class="btn btn--secondary btn--sm gap-2"
+                  hidden
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Editar mi perfil
+                </a>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <h1 class="text-display text-3xl" id="candidateName"></h1>
+              <div class="text-lg text-muted" id="candidateHeadline" hidden></div>
+
+              <div class="info-grid mt-3">
+                <!-- Ubicación -->
+                <div class="info-item" id="candidateLocationRow" hidden>
+                  <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  <span class="text-sm font-medium" id="candidateLocation"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- ── Body ── -->
+        <section class="mb-8">
+          <div class="candidate-body">
+            <!-- Columna izquierda: Bio, Experiencia, Educación -->
+            <div class="flex flex-col gap-6">
+
+              <!-- Sobre mí -->
+              <div class="card" id="candidateBioCard" hidden>
+                <header class="card__header">
+                  <h2 class="card__title text-xl">Sobre mí</h2>
+                </header>
+                <div class="card__body text-muted candidate-bio" id="candidateBio"></div>
+              </div>
+
+              <!-- Experiencia laboral -->
+              <div class="card" id="candidateExperienceCard" hidden>
+                <header class="card__header">
+                  <div class="flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                    <h2 class="card__title text-xl">Experiencia laboral</h2>
+                  </div>
+                </header>
+                <div class="card__body text-muted" id="candidateExperience"></div>
+              </div>
+
+              <!-- Formación académica -->
+              <div class="card" id="candidateEducationCard" hidden>
+                <header class="card__header">
+                  <div class="flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                      <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                    </svg>
+                    <h2 class="card__title text-xl">Formación académica</h2>
+                  </div>
+                </header>
+                <div class="card__body text-muted" id="candidateEducation"></div>
+              </div>
+
+            </div>
+
+            <!-- Columna derecha: Skills, Idiomas, CV -->
+            <div class="flex flex-col gap-6">
+
+              <!-- Habilidades técnicas -->
+              <div class="card" id="candidateSkillsCard">
+                <header class="card__header border-b-surface pb-3">
+                  <h3 class="card__title text-base">Habilidades técnicas</h3>
+                </header>
+                <div class="card__body">
+                  <div class="skills-flex" id="candidateSkills">
+                    <span class="text-muted text-sm">No especificadas</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Idiomas -->
+              <div class="card" id="candidateLanguagesCard">
+                <header class="card__header border-b-surface pb-3">
+                  <h3 class="card__title text-base">Idiomas</h3>
+                </header>
+                <div class="card__body">
+                  <div class="skills-flex" id="candidateLanguages">
+                    <span class="text-muted text-sm">No especificados</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CV -->
+              <div class="card" id="candidateCvCard" hidden>
+                <header class="card__header border-b-surface pb-3">
+                  <div class="flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    <h3 class="card__title text-base">Currículum Vitae</h3>
+                  </div>
+                </header>
+                <div class="card__body">
+                  <a id="candidateCvLink" href="#" class="cv-download-link" target="_blank" rel="noopener noreferrer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span id="candidateCvName">Descargar CV</span>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+  </body>
+</html>

@@ -95,4 +95,9 @@ export class UsersController {
   findCompany(@Param('email') email: string) {
     return this.usersService.findCompanyByEmail(email);
   }
+
+  @Get('candidate/:email')
+  findCandidate(@Param('email') email: string) {
+    return this.usersService.findCandidateByEmail(email);
+  }
 }

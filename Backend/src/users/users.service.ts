@@ -209,4 +209,25 @@ export class UsersService {
     const { password, ...result } = user;
     return result;
   }
+
+  async findCandidateByEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        candidateProfile: {
+          include: {
+            cvAnalysis: true,
+          },
+        },
+      },
+    });
+
+    if (!user || user.role !== Role.CANDIDATE) {
+      throw new NotFoundException('Candidato no encontrado');
+    }
+
+    // Solo exponemos campos públicos — NO se devuelve password ni email
+    const { id, fullName, candidateProfile } = user;
+    return { id, fullName, candidateProfile };
+  }
 }
