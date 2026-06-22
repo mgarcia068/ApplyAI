@@ -24,6 +24,14 @@ export class JobsController {
     return this.jobsService.findCompanyOffers(companyId);
   }
 
+  @Get('me/recommendations')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.CANDIDATE)
+  recommendForMe(@CurrentUser() user: any) {
+    const candidateId = user?.sub || user?.id;
+    return this.jobsService.recommendForCandidate(candidateId);
+  }
+
   @Get(':id')
   detail(@Param('id') id: string) {
     return this.jobsService.findOne(id);
