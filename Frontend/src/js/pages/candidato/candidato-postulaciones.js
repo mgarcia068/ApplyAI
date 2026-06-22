@@ -60,7 +60,7 @@
       const rawUser = localStorage.getItem("ApplyAI.currentUser");
       const token = rawUser ? JSON.parse(rawUser).token : "";
       if (!token) return [];
-      const res = await axios.get("https://applyai-umuw.onrender.com/api/applications", {
+      const res = await axios.get(`${window.APP_CONFIG.API_URL}/api/applications`, {
         headers: { Authorization: "Bearer " + token },
       });
 
@@ -180,7 +180,7 @@
       const rawUser = localStorage.getItem("ApplyAI.currentUser");
       const token = rawUser ? JSON.parse(rawUser).token : "";
       const res = await axios.post(
-        "https://applyai-umuw.onrender.com/api/applications",
+        `${window.APP_CONFIG.API_URL}/api/applications`,
         { jobOfferId: offer.id },
         { headers: { Authorization: "Bearer " + token } },
       );
@@ -228,7 +228,7 @@
 
     try {
       await axios.delete(
-        `https://applyai-umuw.onrender.com/api/applications/offer/${offerId}/withdraw`,
+        `${window.APP_CONFIG.API_URL}/api/applications/offer/${offerId}/withdraw`,
         { headers: { Authorization: "Bearer " + token } },
       );
       removeApplication(email, offerId);
@@ -489,7 +489,7 @@
 
     setTimeout(() => {
       axios
-        .get("https://applyai-umuw.onrender.com/api/jobs")
+        .get(`${window.APP_CONFIG.API_URL}/api/jobs`)
         .then((res) => {
           const fresh = res.data.map((job) => ({
             id: job.id,

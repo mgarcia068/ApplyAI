@@ -210,7 +210,7 @@ export class CvService {
     return (status === 402 || status === 429) && hasHint;
   }
 
-  private async generateTextWithFallback(prompt: string): Promise<string> {
+  public async generateTextWithFallback(prompt: string): Promise<string> {
     const attempts: Array<{ name: string; fn: () => Promise<string> }> = [];
 
     if (this.geminiApiKey) attempts.push({ name: 'Gemini', fn: () => this.generateTextWithGemini(prompt) });

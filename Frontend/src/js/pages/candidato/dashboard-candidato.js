@@ -686,7 +686,7 @@ function showToast(title, subtitle = '', type = 'success') {
     }
 
     try {
-      const res = await axios.get(`${BACKEND}/api/jobs`);
+      const res = await axios.get(`${window.APP_CONFIG.API_URL}/api/jobs`);
       OFFERS = res.data.map(job => ({
         id: job.id,
         name: job.title,
@@ -702,7 +702,7 @@ function showToast(title, subtitle = '', type = 'success') {
       if (rawUser) {
         const token = JSON.parse(rawUser).token;
         if (token) {
-          const appsRes = await axios.get('https://applyai-umuw.onrender.com/api/applications', { headers: { Authorization: 'Bearer ' + token } });
+          const appsRes = await axios.get(`${window.APP_CONFIG.API_URL}/api/applications`, { headers: { Authorization: 'Bearer ' + token } });
           const mappedApps = appsRes.data.map(app => ({
             id: app.id,
             email: currentUser.email,
@@ -773,7 +773,7 @@ function showToast(title, subtitle = '', type = 'success') {
           const token = rawUser ? JSON.parse(rawUser).token : '';
           
           const [res] = await Promise.all([
-            axios.post('https://applyai-umuw.onrender.com/api/applications', { jobOfferId: offer.id }, { headers: { Authorization: 'Bearer ' + token } }),
+            axios.post(`${window.APP_CONFIG.API_URL}/api/applications`, { jobOfferId: offer.id }, { headers: { Authorization: 'Bearer ' + token } }),
             new Promise(resolve => setTimeout(resolve, 600))
           ]);
           
