@@ -4,70 +4,17 @@ import { JwtPayload } from '../auth/types/jwt-payload.type';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { ApplicationStatus, Role } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import Anthropic from '@anthropic-ai/sdk';
 import { CvService } from '../cv/cv.service';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ApplicationsService {
-  private readonly genAI: GoogleGenerativeAI;
-  private readonly anthropic?: Anthropic;
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly cvService: CvService,
     private readonly mailService: MailService,
-  ) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
-    this.genAI = new GoogleGenerativeAI(apiKey);
-
-    const anthropicKey = this.configService.get<string>('ANTHROPIC_API_KEY') || '';
-    this.anthropic = anthropicKey ? new Anthropic({ apiKey: anthropicKey }) : undefined;
-  }
-
-  private async generateTextWithGemini(prompt: string): Promise<string> {
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  }
-
-  private async generateTextWithAnthropic(prompt: string): Promise<string> {
-    if (!this.anthropic) {
-      throw new Error('Anthropic API key not configured.');
-    }
-
-    const result = await this.anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 800,
-      temperature: 0.2,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    let text = '';
-    for (const block of result.content) {
-      if (block.type === 'text') {
-        text += block.text;
-      }
-    }
-
-    const trimmed = text.trim();
-    if (!trimmed) {
-      throw new Error('Anthropic returned empty response.');
-    }
-
-    return trimmed;
-  }
-
-  private async generateTextWithFallback(prompt: string): Promise<string> {
-    try {
-      return await this.generateTextWithGemini(prompt);
-    } catch (error) {
-      console.error('Gemini failed, attempting Anthropic fallback:', error);
-      return await this.generateTextWithAnthropic(prompt);
-    }
-  }
+  ) {}
 
   async create(user: JwtPayload, createApplicationDto: CreateApplicationDto) {
     const profile = await this.prisma.candidateProfile.findUnique({
@@ -123,6 +70,21 @@ export class ApplicationsService {
     let matchData: { score: number; pros: string[]; cons: string[] } | null = null;
     if (cvAnalysis) {
       matchData = await this._calculateMatchScore(cvAnalysis, job);
+    } else {
+      // Si tampoco hay análisis de CV disponible (y la IA falla al crearlo), al menos comparamos contra las skills del perfil
+      const candidateSkills = profile.skills || [];
+      const requiredSkills = job.skillsRequired || [];
+      let matchCount = 0;
+      requiredSkills.forEach((req: string) => {
+        if (candidateSkills.some(cand => req.toLowerCase().includes(cand.toLowerCase()) || cand.toLowerCase().includes(req.toLowerCase()))) {
+          matchCount++;
+        }
+      });
+      matchData = {
+        score: requiredSkills.length > 0 ? Math.round((matchCount / requiredSkills.length) * 100) : 50,
+        pros: ["Evaluación basada únicamente en el perfil (Sin análisis de CV)"],
+        cons: ["Sugerimos analizar el CV a fondo para un resultado más preciso"]
+      };
     }
 
     const application = await this.prisma.application.create({
@@ -176,26 +138,122 @@ export class ApplicationsService {
         }
       `;
 
-      const responseText = await this.generateTextWithFallback(prompt);
+      const responseText = await this.cvService.generateTextWithFallback(prompt);
       
       try {
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('No se encontró JSON en la respuesta');
         
         const data = JSON.parse(jsonMatch[0]);
-        return {
-          score: typeof data.score === 'number' ? data.score : 0,
-          pros: Array.isArray(data.pros) ? data.pros : [],
-          cons: Array.isArray(data.cons) ? data.cons : [],
-        };
+        return this.normalizeMatchData(data);
       } catch (e) {
         console.error('Error parseando JSON de match. Respuesta de la IA:', responseText);
-        return null;
+        return this.calculateHeuristicMatch(cvAnalysis, jobOffer);
       }
-    } catch (error) {
-      console.error('Error calculando Score con Gemini:', error);
-      return null;
+    } catch (error: any) {
+      console.error('Error calculando Score con proveedores de IA, usando algoritmo de respaldo:', error?.message || error);
+      return this.calculateHeuristicMatch(cvAnalysis, jobOffer);
+      
+      // ALGORITMO HEURÍSTICO DE RESPALDO SI FALLAN LAS APIS DE IA
+      const requiredSkills = (jobOffer.skillsRequired || []).map((s: string) => s.toLowerCase().trim());
+      const candidateSkills = [
+        ...(cvAnalysis.technologies || []),
+        ...(cvAnalysis.skills || [])
+      ].map((s: string) => s.toLowerCase().trim());
+
+      let matchCount = 0;
+      const matched: string[] = [];
+      const missed: string[] = [];
+
+      requiredSkills.forEach((req: string) => {
+        const found = candidateSkills.some((cand: string) => req.includes(cand) || cand.includes(req));
+        if (found) {
+          matchCount++;
+          matched.push(req);
+        } else {
+          missed.push(req);
+        }
+      });
+
+      const score = requiredSkills.length > 0 
+        ? Math.round((matchCount / requiredSkills.length) * 100) 
+        : 50;
+
+      return {
+        score,
+        pros: matched.length > 0 
+          ? [`Coincide en habilidades clave: ${matched.join(', ')}`] 
+          : ["Evaluación básica (IA no disponible)"],
+        cons: missed.length > 0 
+          ? [`Falta evidencia clara en: ${missed.join(', ')}`] 
+          : ["No se detectaron faltantes críticos respecto a lo requerido."]
+      };
     }
+  }
+
+  private normalizeMatchData(data: any): { score: number; pros: string[]; cons: string[] } {
+    const scoreAsNumber = Number(data?.score);
+    const score = Number.isFinite(scoreAsNumber)
+      ? Math.min(100, Math.max(0, Math.round(scoreAsNumber)))
+      : 0;
+
+    const pros = this.normalizeTextArray(data?.pros);
+    const cons = this.normalizeTextArray(data?.cons);
+
+    return {
+      score,
+      pros: pros.length ? pros : ['La IA no detallo puntos fuertes especificos para este match.'],
+      cons: cons.length ? cons : ['La IA no detallo puntos debiles especificos para este match.'],
+    };
+  }
+
+  private normalizeTextArray(value: any): string[] {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+      .slice(0, 5);
+  }
+
+  private calculateHeuristicMatch(cvAnalysis: any, jobOffer: any): { score: number; pros: string[]; cons: string[] } {
+    // Ultimo respaldo: solo se usa cuando todos los proveedores de IA fallan o no devuelven JSON valido.
+    const requiredSkills = (jobOffer.skillsRequired || [])
+      .map((s: string) => s.toLowerCase().trim())
+      .filter(Boolean);
+    const candidateSkills = [
+      ...(cvAnalysis.technologies || []),
+      ...(cvAnalysis.skills || []),
+    ]
+      .map((s: string) => s.toLowerCase().trim())
+      .filter(Boolean);
+
+    let matchCount = 0;
+    const matched: string[] = [];
+    const missed: string[] = [];
+
+    requiredSkills.forEach((req: string) => {
+      const found = candidateSkills.some((cand: string) => req.includes(cand) || cand.includes(req));
+      if (found) {
+        matchCount++;
+        matched.push(req);
+      } else {
+        missed.push(req);
+      }
+    });
+
+    const score = requiredSkills.length > 0
+      ? Math.round((matchCount / requiredSkills.length) * 100)
+      : 50;
+
+    return {
+      score,
+      pros: matched.length > 0
+        ? [`Coincide en habilidades clave: ${matched.join(', ')}`]
+        : ['Evaluacion basica: no se encontraron coincidencias claras en habilidades requeridas.'],
+      cons: missed.length > 0
+        ? [`Falta evidencia clara en: ${missed.join(', ')}`]
+        : ['No se detectaron faltantes criticos respecto a lo requerido.'],
+    };
   }
 
   async listMine(user: JwtPayload) {
@@ -274,36 +332,19 @@ export class ApplicationsService {
     }
 
     try {
-      const prompt = `
-        Eres un Reclutador Senior comparando un CV previamente analizado con una Oferta de Empleo.
-        Calcula un grado de compatibilidad (Match Score) teniendo en cuenta las habilidades requeridas en el anuncio y la experiencia del candidato.
+      const matchData = await this._calculateMatchScore(candidate.cvAnalysis, jobOffer);
 
-        OFERTA DE EMPLEO:
-        - Título: ${jobOffer.title}
-        - Descripción: ${jobOffer.description}
-        - Habilidades requeridas: ${jobOffer.skillsRequired.join(', ')}
-        - Experiencia mínima: ${jobOffer.minExperience} años
-
-        DATOS EXTRAÍDOS DEL CANDIDATO:
-        - Resumen Profesional: ${candidate.cvAnalysis.summary}
-        - Competencias Tecnológicas: ${candidate.cvAnalysis.technologies.join(', ')}
-        - Habilidades Blandas: ${candidate.cvAnalysis.skills.join(', ')}
-        - Experiencia Laboral: ${candidate.cvAnalysis.experience.join(', ')}
-
-        INSTRUCCIONES DE RESPUESTA:
-        Devuelve ÚNICAMENTE un número entero del 1 al 100 que represente el porcentaje de compatibilidad. No envíes texto extra ni explicaciones, SOLO el número numérico, por ejemplo: 85
-      `;
-
-      const responseText = await this.generateTextWithFallback(prompt);
-      const score = parseInt(responseText, 10);
-
-      if (isNaN(score)) {
-        throw new Error('La IA no devolvió un número válido');
+      if (!matchData) {
+        throw new Error('La IA no pudo calcular el match correctamente');
       }
 
       const updatedApp = await this.prisma.application.update({
         where: { id: applicationId },
-        data: { matchScore: score },
+        data: { 
+          matchScore: matchData.score,
+          matchPros: matchData.pros,
+          matchCons: matchData.cons
+        },
         include: {
           candidate: {
             include: { cvAnalysis: true } // Devolvemos todo el análisis como pidió el requerimiento
@@ -314,8 +355,8 @@ export class ApplicationsService {
       return updatedApp;
 
     } catch (error: any) {
-        console.error('Error calculando Score con Gemini:', error?.message || error);
-        throw new InternalServerErrorException('Error al contactar a la IA Gemini para establecer el Match.');
+        console.error('Error calculando Score con proveedores de IA:', error?.message || error);
+        throw new InternalServerErrorException('Error al contactar a los proveedores de IA para establecer el Match.');
     }
   }
 
@@ -373,24 +414,25 @@ export class ApplicationsService {
     });
 
     // Enviar email asíncronamente si el estado es VIEWED (Entrevista) o REJECTED
+    let mailSent: boolean | null = null;
     if (status === 'VIEWED') {
-      this.mailService.sendApplicationAccepted(
+      mailSent = await this.mailService.sendApplicationAccepted(
         application.candidate.user.fullName || application.candidate.name,
         application.candidate.user.email,
         application.jobOffer.title,
         application.jobOffer.company.companyProfile?.name || 'Empresa',
         application.jobOffer.company.email
-      ).catch(e => console.error(e));
+      );
     } else if (status === 'REJECTED') {
-      this.mailService.sendApplicationRejected(
+      mailSent = await this.mailService.sendApplicationRejected(
         application.candidate.user.fullName || application.candidate.name,
         application.candidate.user.email,
         application.jobOffer.title,
         application.jobOffer.company.companyProfile?.name || 'Empresa'
-      ).catch(e => console.error(e));
+      );
     }
 
-    return updatedApp;
+    return { ...updatedApp, mailSent };
   }
 
   async withdrawByOffer(offerId: string, user: JwtPayload) {

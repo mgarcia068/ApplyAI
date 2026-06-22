@@ -211,7 +211,7 @@
 
   function visualizarCV(nombreCandidato, urlOriginal, rating = '0.0') {
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    const backendOrigin = 'https://applyai-umuw.onrender.com';
+    const backendOrigin = `${window.APP_CONFIG.API_URL}`;
     
     let docUrl = urlOriginal || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
     
@@ -911,7 +911,7 @@
       if (!currentUser || !currentUser.token || currentUser.role !== 'candidato') return;
 
       try {
-        const response = await fetch('https://applyai-umuw.onrender.com/api/users/me', {
+        const response = await fetch(`${window.APP_CONFIG.API_URL}/api/users/me`, {
           headers: { 'Authorization': `Bearer ${currentUser.token}` }
         });
 
@@ -1410,7 +1410,7 @@
             const formData = new FormData();
             formData.append('photo', blob, `photo.${ext}`);
 
-            const uploadRes = await fetch('https://applyai-umuw.onrender.com/api/users/me/photo', {
+            const uploadRes = await fetch(`${window.APP_CONFIG.API_URL}/api/users/me/photo`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${token}` },
               body: formData,

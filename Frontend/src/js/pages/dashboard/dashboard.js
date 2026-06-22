@@ -1,3 +1,5 @@
+const STATUS_UPDATES_IN_PROGRESS = new Set();
+
 function getEstadoBadge(estado) {
   const map = {
     activa:  'badge--success',
@@ -230,7 +232,13 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
         }
 
         return `
-        <div class="applicant-card">
+        <div class="applicant-card ${STATUS_UPDATES_IN_PROGRESS.has(p.id) ? 'applicant-card--updating' : ''}" data-applicant-id="${p.id}">
+          ${STATUS_UPDATES_IN_PROGRESS.has(p.id) ? `
+            <div class="applicant-card__status-loader" aria-live="polite">
+              <span class="applicant-card__spinner" aria-hidden="true"></span>
+              <span>Actualizando estado...</span>
+            </div>
+          ` : ''}
           <div class="card-top-right" style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; align-items: center;">
             <button onclick="abrirModalExplicacionIA('${p.id}')" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: ${ratingBg}; border: 2px solid ${ratingColor}; font-size: 12px; font-weight: 700; color: ${ratingColor}; cursor: pointer; padding: 0;" title="Ver análisis de la IA">
               ${p.rating}
@@ -267,7 +275,7 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
               <select class="form-select cursor-pointer" 
                 style="width: auto; padding: var(--space-1) var(--space-3); font-size: var(--text-xs);"
                 onchange="cambiarEstadoCandidato('${p.id}', this.value, this)"
-                ${p.estado === 'Aceptado' || p.estado === 'Rechazado' ? 'disabled' : ''}>
+                ${p.estado === 'Aceptado' || p.estado === 'Rechazado' || STATUS_UPDATES_IN_PROGRESS.has(p.id) ? 'disabled' : ''}>
                 <option value="Revisión" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Revisión' ? 'selected' : ''} ${p.estado === 'Entrevista' ? 'disabled' : ''}>En revisión</option>
                 <option value="Entrevista" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Entrevista' ? 'selected' : ''}>Entrevista</option>
                 <option value="Aceptado" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Aceptado' ? 'selected' : ''} ${p.estado === 'Revisión' ? 'disabled' : ''}>Aceptado</option>
@@ -379,6 +387,47 @@ function abrirModalExplicacionIA(postulanteId) {
   
   modal.querySelector('#ia-close-btn').onclick = close;
   overlay.onclick = (e) => { if (e.target === overlay) close(); };
+}
+
+function showGlobalLoader(message = 'Procesando...') {
+  let loader = document.getElementById('global-loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.id = 'global-loader';
+    loader.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: inherit;
+      opacity: 0;
+      transition: opacity 0.3s;
+    `;
+    loader.innerHTML = `
+      <div style="width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #3B82F6; border-radius: 50%; animation: global-spin 1s linear infinite; margin-bottom: 16px;"></div>
+      <div id="global-loader-text" style="font-size: 16px; font-weight: 600;">${message}</div>
+      <style>@keyframes global-spin { to { transform: rotate(360deg); } }</style>
+    `;
+    document.body.appendChild(loader);
+  }
+  document.getElementById('global-loader-text').innerText = message;
+  loader.style.display = 'flex';
+  loader.offsetHeight; // Trigger reflow
+  loader.style.opacity = '1';
+}
+
+function hideGlobalLoader() {
+  const loader = document.getElementById('global-loader');
+  if (loader) {
+    loader.style.opacity = '0';
+    setTimeout(() => { loader.style.display = 'none'; }, 300);
+  }
 }
 
 function showToast(title, subtitle = '', type = 'success') {
@@ -503,7 +552,13 @@ function cambiarEstadoCandidato(id, nuevoEstado, selectElement) {
   }
 
   const performChange = async () => {
+    const previousEstado = candidato.estado;
+    STATUS_UPDATES_IN_PROGRESS.add(id);
     if (selectElement) selectElement.disabled = true; // Deshabilitar mientras carga
+    
+    showGlobalLoader('Actualizando estado y notificando al candidato...');
+    applyPostulantesFilters();
+
     try {
       const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
       let backendStatus = 'PENDING';
@@ -511,10 +566,11 @@ function cambiarEstadoCandidato(id, nuevoEstado, selectElement) {
       else if (nuevoEstado === 'Aceptado') backendStatus = 'ACCEPTED';
       else if (nuevoEstado === 'Rechazado') backendStatus = 'REJECTED';
 
-      await axios.post(`https://applyai-umuw.onrender.com/api/applications/${id}/status`, 
+      const response = await axios.post(`${window.APP_CONFIG.API_URL}/api/applications/${id}/status`, 
         { status: backendStatus },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
+      const mailSent = response?.data?.mailSent;
 
       candidato.estado = nuevoEstado;
       if (nuevoEstado === 'Entrevista') {
@@ -524,12 +580,20 @@ function cambiarEstadoCandidato(id, nuevoEstado, selectElement) {
       } else if (nuevoEstado === 'Rechazado') {
         showToast('Candidato Rechazado', `Se envió mail de agradecimiento a ${candidato.nombre}.`, 'error');
       }
+      if ((nuevoEstado === 'Entrevista' || nuevoEstado === 'Rechazado') && mailSent === false) {
+        showToast('Mail no enviado', 'El estado se actualizo, pero el servidor no pudo enviar el mail.', 'error');
+      }
       applyPostulantesFilters(); // recarga
     } catch (err) {
       console.error("Error al actualizar estado", err);
+      candidato.estado = previousEstado;
       showToast("Error", "No se pudo actualizar el estado del candidato", "error");
       if (selectElement) selectElement.disabled = false;
       applyPostulantesFilters(); // recarga original si falla
+    } finally {
+      STATUS_UPDATES_IN_PROGRESS.delete(id);
+      hideGlobalLoader();
+      applyPostulantesFilters();
     }
   };
 
@@ -765,7 +829,7 @@ async function loadDashboardData() {
   // 2. Sincronizar con el Backend en segundo plano
   try {
     // Sincronizar Ofertas
-    const resOffers = await axios.get('https://applyai-umuw.onrender.com/api/jobs/me/offers', {
+    const resOffers = await axios.get(`${window.APP_CONFIG.API_URL}/api/jobs/me/offers`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
@@ -787,7 +851,7 @@ async function loadDashboardData() {
     localStorage.setItem(DASHBOARD_CACHE_KEYS.offers, JSON.stringify(freshOffers));
 
     // Sincronizar Postulantes (para Resumen General)
-    const resApps = await axios.get('https://applyai-umuw.onrender.com/api/applications', {
+    const resApps = await axios.get(`${window.APP_CONFIG.API_URL}/api/applications`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
@@ -830,7 +894,7 @@ async function verPostulantes(ofertaId) {
   // 2. Sincronizar con el Backend
   try {
     const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
-    const res = await axios.get(`https://applyai-umuw.onrender.com/api/applications/offer/${ofertaId}`, {
+    const res = await axios.get(`${window.APP_CONFIG.API_URL}/api/applications/offer/${ofertaId}`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
@@ -926,7 +990,7 @@ async function publicarOferta() {
 
   try {
     const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
-    await axios.post('https://applyai-umuw.onrender.com/api/jobs', payload, {
+    await axios.post(`${window.APP_CONFIG.API_URL}/api/jobs`, payload, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
     
@@ -989,7 +1053,7 @@ function eliminarOferta(id) {
   modal.querySelector('#conf-eliminar').addEventListener('click', async () => {
     try {
       const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
-      await axios.delete(`https://applyai-umuw.onrender.com/api/jobs/${id}`, {
+      await axios.delete(`${window.APP_CONFIG.API_URL}/api/jobs/${id}`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       await loadDashboardData();
@@ -1146,7 +1210,7 @@ async function guardarOferta(ofertaId) {
 
   try {
     const user = JSON.parse(localStorage.getItem('ApplyAI.currentUser'));
-    await axios.post(`https://applyai-umuw.onrender.com/api/jobs/${ofertaId}`, payload, {
+    await axios.post(`${window.APP_CONFIG.API_URL}/api/jobs/${ofertaId}`, payload, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
     
@@ -1164,7 +1228,7 @@ async function guardarOferta(ofertaId) {
 
   async function visualizarCV(nombreCandidato, urlOriginal = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', rating = '0.0') {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
-  const backendOrigin = 'https://applyai-umuw.onrender.com';
+  const backendOrigin = `${window.APP_CONFIG.API_URL}`;
 
   const overlay = document.createElement('div');
   overlay.id = 'cv-preview-overlay';
@@ -1290,4 +1354,3 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
-

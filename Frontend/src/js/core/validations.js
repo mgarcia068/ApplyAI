@@ -148,7 +148,7 @@
         if (role === 'candidato') mappedRole = 'CANDIDATE';
       }
 
-      const res = await axios.post('https://applyai-umuw.onrender.com/api/auth/google', {
+      const res = await axios.post(`${window.APP_CONFIG.API_URL}/api/auth/google`, {
         credential,
         role: mappedRole
       });
@@ -462,7 +462,7 @@
       if (submitBtn) submitBtn.classList.add('is-loading');
 
       try {
-        await axios.post('https://applyai-umuw.onrender.com/api/auth/register', {
+        await axios.post(`${window.APP_CONFIG.API_URL}/api/auth/register`, {
           email: (email?.value || '').trim().toLowerCase(),
           password: password?.value || '',
           fullName: (fullName?.value || '').trim(),
@@ -556,7 +556,7 @@
       if (submitBtn) submitBtn.classList.add('is-loading');
 
       try {
-        const response = await axios.post('https://applyai-umuw.onrender.com/api/auth/login', {
+        const response = await axios.post(`${window.APP_CONFIG.API_URL}/api/auth/login`, {
           email: emailValue,
           password: passwordValue,
         });
