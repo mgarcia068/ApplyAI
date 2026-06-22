@@ -112,6 +112,27 @@
   min-height: 160px;
 }
 
+.profile-about-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+}
+
+.profile-about-actions .btn {
+  flex: 0 0 auto;
+}
+
+.profile-about-hint {
+  flex: 1 1 240px;
+  margin: 0;
+}
+
+.profile-card--about .form-error {
+  margin-top: var(--space-2);
+}
+
 .profile-avatar {
   width: 112px;
   height: 112px;
