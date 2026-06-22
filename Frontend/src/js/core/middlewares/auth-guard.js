@@ -117,7 +117,7 @@
   const isAuthPage = isLogin || isRegister;
   
   // Role checks
-  const isCandidatoPage = path.includes('pages/candidato/') && !path.includes('dashboard-candidato.html');
+  const isCandidatoPage = path.includes('pages/candidato/') && !path.includes('dashboard-candidato.html') && !path.includes('perfil-candidato-publico.html');
   const isEmpresaPage = path.includes('pages/empresa/') && !path.includes('perfil-empresa-publico.html');
 
   if (!isAuth) {
