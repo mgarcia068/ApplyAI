@@ -1,5 +1,6 @@
 (function () {
   const PROFILE_VERSION = 1;
+  const BACKEND = 'https://applyai-umuw.onrender.com';
   const PHOTO_EDITOR_SCALE = 1.18;
   const STORAGE_KEYS = {
     currentUser: 'ApplyAI.currentUser',
@@ -84,7 +85,7 @@
         photoUrl: profile.photoUrl || profile.photoDataUrl || undefined,
       };
 
-      const response = await fetch(`${window.APP_CONFIG.API_URL}/api/users/me`, {
+      const response = await fetch(`${BACKEND}/api/users/me`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -99,6 +100,33 @@
     } catch (error) {
       console.error('Error syncing profile with backend:', error);
     }
+  }
+
+  async function generateSummaryFromCv() {
+    const currentUser = getCurrentUser();
+    if (!currentUser || !currentUser.token || currentUser.role !== 'candidato') {
+      throw new Error('Necesitás iniciar sesión como candidato para generar el resumen.');
+    }
+
+    const response = await fetch(`${BACKEND}/api/cv/analyze/me`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${currentUser.token}`,
+      },
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data?.message || 'No se pudo generar el resumen desde tu CV.');
+    }
+
+    const summary = String(data?.summary || '').trim();
+    if (!summary) {
+      throw new Error('La IA no devolvió un resumen útil.');
+    }
+
+    return summary;
   }
 
   function initialsFromName(name) {
@@ -398,6 +426,8 @@
     const location = document.getElementById('location');
     const phone = document.getElementById('phone');
     const about = document.getElementById('about');
+    const generateAboutBtn = document.getElementById('generateAboutBtn');
+    const generateAboutError = document.getElementById('generateAboutError');
 
     const profileCatalogApi = window.ApplyAI?.profileCatalogApi || null;
 
@@ -839,6 +869,7 @@
 
     const storedProfile = getCandidateProfile(userEmail);
     hydrateTokenFieldsFromProfile(storedProfile);
+    refreshAboutGenerationAvailability(storedProfile || {});
 
     if (storedProfile) {
       setFieldValue('fullName', storedProfile.fullName || userName);
@@ -920,6 +951,7 @@
             setFieldValue('workExperience', merged.workExperience);
             
             hydrateTokenFieldsFromProfile(merged);
+            refreshAboutGenerationAvailability(merged);
           }
         }
       } catch (error) {
@@ -933,6 +965,61 @@
       const value = String(fullName?.value || '').trim();
       setText('profileName', value || userName || '—');
       if (avatarInitials) avatarInitials.textContent = initialsFromName(value || userName);
+    }
+
+    function showAboutGenerationError(message) {
+      if (!generateAboutError) return;
+
+      const text = String(message || '').trim();
+      generateAboutError.textContent = text;
+      generateAboutError.hidden = !text;
+    }
+
+    function setAboutGenerationLoading(isLoading) {
+      if (!generateAboutBtn) return;
+
+      generateAboutBtn.disabled = Boolean(isLoading);
+      generateAboutBtn.setAttribute('aria-busy', String(Boolean(isLoading)));
+      generateAboutBtn.textContent = isLoading ? 'Generando...' : '✨ Generar desde mi CV';
+    }
+
+    function refreshAboutGenerationAvailability(profile) {
+      if (!generateAboutBtn) return;
+
+      const canGenerate = hasCv(profile);
+      generateAboutBtn.disabled = !canGenerate;
+      generateAboutBtn.title = canGenerate
+        ? 'Generar un resumen profesional a partir de tu CV'
+        : 'Primero subí tu CV para poder generar el resumen';
+    }
+
+    function buildProfileSnapshot(overrides = {}) {
+      const existing = getCandidateProfile(userEmail) || {};
+      const photoPan = getPhotoPan(existing);
+      const tokenFields = buildTokenProfileFields();
+
+      return {
+        ...existing,
+        version: PROFILE_VERSION,
+        email: userEmail,
+        fullName: String(fullName?.value || userName || '').trim(),
+        headline: String(headline?.value || '').trim(),
+        academicBackground: String(academicBackground?.value || existing.academicBackground || '').trim(),
+        workExperience: String(workExperience?.value || existing.workExperience || '').trim(),
+        technicalSkills: tokenFields.technicalSkills,
+        technicalSkillsList: tokenFields.technicalSkillsList,
+        languages: tokenFields.languages,
+        languagesList: tokenFields.languagesList,
+        location: String(location?.value || '').trim(),
+        phone: String(phone?.value || '').trim(),
+        about: String(about?.value || '').trim(),
+        photoDataUrl: String(existing.photoDataUrl || ''),
+        photoPanX: photoPan.x,
+        photoPanY: photoPan.y,
+        updatedAt: new Date().toISOString(),
+        createdAt: existing.createdAt || new Date().toISOString(),
+        ...overrides,
+      };
     }
 
     if (fullName) {
@@ -1006,6 +1093,43 @@
 
     if (about) {
       about.addEventListener('blur', function () {
+      });
+    }
+
+    if (generateAboutBtn) {
+      generateAboutBtn.addEventListener('click', async function () {
+        showAboutGenerationError('');
+
+        const currentProfile = getCandidateProfile(userEmail) || {};
+        if (!hasCv(currentProfile)) {
+          showAboutGenerationError('Primero subí tu CV en la sección Mi CV.');
+          refreshAboutGenerationAvailability(currentProfile);
+          return;
+        }
+
+        setAboutGenerationLoading(true);
+
+        try {
+          const summary = await generateSummaryFromCv();
+          const nextProfile = buildProfileSnapshot({ about: summary });
+
+          setFieldValue('about', summary);
+          saveCandidateProfile(userEmail, nextProfile);
+
+          await Promise.all([
+            syncProfileWithBackend(nextProfile),
+            new Promise((resolve) => setTimeout(resolve, 600)),
+          ]);
+
+          if (typeof showToast === 'function') {
+            showToast('Resumen generado', 'La IA completó el campo "Sobre mí" a partir de tu CV.', 'success');
+          }
+        } catch (error) {
+          showAboutGenerationError(error?.message || 'No se pudo generar el resumen desde el CV.');
+        } finally {
+          setAboutGenerationLoading(false);
+          refreshAboutGenerationAvailability(getCandidateProfile(userEmail) || {});
+        }
       });
     }
 
@@ -1334,30 +1458,7 @@
         return;
       }
 
-      const existing = getCandidateProfile(userEmail) || {};
-      const photoPan = getPhotoPan(existing);
-      const tokenFields = buildTokenProfileFields();
-      const nextProfile = {
-        ...existing,
-        version: PROFILE_VERSION,
-        email: userEmail,
-        fullName: String(fullName?.value || userName || '').trim(),
-        headline: String(headline?.value || '').trim(),
-        academicBackground: String(academicBackground?.value || '').trim(),
-        workExperience: String(workExperience?.value || '').trim(),
-        technicalSkills: tokenFields.technicalSkills,
-        technicalSkillsList: tokenFields.technicalSkillsList,
-        languages: tokenFields.languages,
-        languagesList: tokenFields.languagesList,
-        location: String(location?.value || '').trim(),
-        phone: String(phone?.value || '').trim(),
-        about: String(about?.value || '').trim(),
-        photoDataUrl: String(existing.photoDataUrl || ''),
-        photoPanX: photoPan.x,
-        photoPanY: photoPan.y,
-        updatedAt: new Date().toISOString(),
-        createdAt: existing.createdAt || new Date().toISOString(),
-      };
+      const nextProfile = buildProfileSnapshot();
 
       try {
         saveCandidateProfile(userEmail, nextProfile);
@@ -1380,6 +1481,8 @@
       if (typeof updateNavbarActions === 'function') {
         updateNavbarActions();
       }
+
+      refreshAboutGenerationAvailability(nextProfile);
 
       if (typeof showToast === 'function') {
         showToast('¡Perfil guardado!', 'Tus cambios se actualizaron con éxito.', 'success');
