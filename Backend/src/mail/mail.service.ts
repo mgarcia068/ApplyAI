@@ -16,7 +16,7 @@ export class MailService {
   async sendApplicationAccepted(candidateName: string, candidateEmail: string, offerTitle: string, companyName: string, companyEmail: string) {
     if (!this.isMailEnabled()) {
       this.logger.log('Envio de mail deshabilitado por MAIL_ENABLED.');
-      return;
+      return false;
     }
     try {
       await this.mailerService.sendMail({
@@ -33,15 +33,17 @@ export class MailService {
         replyTo: companyEmail, // Permite que el candidato le responda directo a la empresa
       });
       this.logger.log(`Mail de aceptación enviado a ${candidateEmail}`);
+      return true;
     } catch (error) {
       this.logger.error(`Error enviando mail a ${candidateEmail}`, error);
+      return false;
     }
   }
 
   async sendApplicationRejected(candidateName: string, candidateEmail: string, offerTitle: string, companyName: string) {
     if (!this.isMailEnabled()) {
       this.logger.log('Envio de mail deshabilitado por MAIL_ENABLED.');
-      return;
+      return false;
     }
     try {
       await this.mailerService.sendMail({
@@ -56,8 +58,10 @@ export class MailService {
         },
       });
       this.logger.log(`Mail de rechazo enviado a ${candidateEmail}`);
+      return true;
     } catch (error) {
       this.logger.error(`Error enviando mail a ${candidateEmail}`, error);
+      return false;
     }
   }
 

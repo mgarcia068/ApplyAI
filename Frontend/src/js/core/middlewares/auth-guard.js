@@ -1,7 +1,7 @@
 (function () {
   const STORAGE_KEYS = { currentUser: 'ApplyAI.currentUser' };
 
-  const API_BASE_URL = 'https://applyai-umuw.onrender.com/api';
+  const API_BASE_URL = `${window.APP_CONFIG.API_URL}/api`;
 
   function safeJsonParse(value, fallback) {
     try {
