@@ -33,6 +33,28 @@ function buildMatchBar(match) {
   `;
 }
 
+// Nuevas funciones para métricas avanzadas
+window.getTopOfertasVistas = function(limit = 3) {
+  if (!OFERTAS || OFERTAS.length === 0) return [];
+  // Clonar y ordenar por vistas descendente
+  return [...OFERTAS].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, limit);
+};
+
+window.getTopSkills = function(limit = 3) {
+  if (!OFERTAS || OFERTAS.length === 0) return [];
+  const skillsCount = {};
+  OFERTAS.forEach(o => {
+    if (o.skills && Array.isArray(o.skills)) {
+      o.skills.forEach(s => {
+        skillsCount[s] = (skillsCount[s] || 0) + 1;
+      });
+    }
+  });
+  // Convertir a array y ordenar
+  const sorted = Object.entries(skillsCount).sort((a, b) => b[1] - a[1]);
+  return sorted.slice(0, limit).map(item => ({ skill: item[0], count: item[1] }));
+};
+
 function buildAvatarInitials(iniciales) {
   return `<div class="avatar avatar--md">${iniciales}</div>`;
 }
@@ -239,24 +261,23 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
               <span>Actualizando estado...</span>
             </div>
           ` : ''}
-          <div class="card-top-right" style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; align-items: center;">
-            <button onclick="abrirModalExplicacionIA('${p.id}')" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: ${ratingBg}; border: 2px solid ${ratingColor}; font-size: 12px; font-weight: 700; color: ${ratingColor}; cursor: pointer; padding: 0;" title="Ver análisis de la IA">
+          <div class="applicant-card__actions">
+            <button onclick="abrirModalExplicacionIA('${p.id}')" class="applicant-card__ai-btn" style="background: ${ratingBg}; border: 2px solid ${ratingColor}; color: ${ratingColor};" title="Ver análisis de la IA">
               ${p.rating}
             </button>
-            <button class="btn btn--ghost btn--sm cursor-pointer" 
-               style="padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: ${p.favorito ? 'var(--color-primary)' : 'var(--color-text-muted)'}" 
+            <button class="btn btn--ghost btn--sm cursor-pointer applicant-card__fav-btn ${p.favorito ? 'applicant-card__fav-btn--active' : 'applicant-card__fav-btn--inactive'}" 
                onclick="toggleCandidatoFavorito('${p.id}')" title="${p.favorito ? 'Quitar de favoritos' : 'Añadir a favoritos'}">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="${p.favorito ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
             </button>
           </div>
-          <div class="applicant-card__header flex gap-4 items-start mb-4" style="padding-right: 84px;">
-            ${p.photoUrl ? `<img src="${p.photoUrl}" class="avatar avatar--lg" style="width: 56px; height: 56px; border-radius: 12px; object-fit: cover; flex-shrink: 0;" alt="Foto de ${p.nombre}">` : `<div class="avatar avatar--lg" style="width: 56px; height: 56px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--color-surface);">${p.iniciales}</div>`}
+          <div class="applicant-card__header flex gap-4 items-start mb-4 applicant-card__header--spaced">
+            ${p.photoUrl ? `<img src="${p.photoUrl}" class="avatar applicant-card__avatar applicant-card__avatar--img" alt="Foto de ${p.nombre}">` : `<div class="avatar applicant-card__avatar applicant-card__avatar--fallback">${p.iniciales}</div>`}
             <div class="applicant-card__info flex-1 min-w-0">
-              <div class="font-semibold text-base color-text mb-1" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.nombre}">${p.nombre}</div>
-              <div class="text-xs text-muted mb-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;" title="${p.rol}">${p.rol}</div>
-              <div class="flex flex-col text-xs text-muted" style="gap: 2px;">
+              <div class="font-semibold text-base color-text mb-1 applicant-card__name" title="${p.nombre}">${p.nombre}</div>
+              <div class="text-xs text-muted mb-1 applicant-card__role" title="${p.rol}">${p.rol}</div>
+              <div class="flex flex-col text-xs text-muted gap-1">
                 ${p.experiencia ? `<div class="flex items-center gap-1"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg><span>${p.experiencia}</span></div>` : ''}
                 ${p.estudio ? `<div class="flex items-center gap-1"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.825-3.055 12.083 12.083 0 01.665-6.479L12 14z"></path></svg><span>${p.estudio}</span></div>` : ''}
               </div>
@@ -272,14 +293,13 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
             </div>
             <div class="flex items-center gap-2">
               <button class="btn btn--secondary btn--sm cursor-pointer" onclick="visualizarCV('${p.nombre}', '${p.cvUrl}', '${p.cvRating || '0.0'}')">Ver CV</button>
-              <select class="form-select cursor-pointer" 
-                style="width: auto; padding: var(--space-1) var(--space-3); font-size: var(--text-xs);"
+              <select class="form-select cursor-pointer applicant-card__status-select" 
                 onchange="cambiarEstadoCandidato('${p.id}', this.value, this)"
                 ${p.estado === 'Aceptado' || p.estado === 'Rechazado' || STATUS_UPDATES_IN_PROGRESS.has(p.id) ? 'disabled' : ''}>
-                <option value="Revisión" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Revisión' ? 'selected' : ''} ${p.estado === 'Entrevista' ? 'disabled' : ''}>En revisión</option>
-                <option value="Entrevista" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Entrevista' ? 'selected' : ''}>Entrevista</option>
-                <option value="Aceptado" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Aceptado' ? 'selected' : ''} ${p.estado === 'Revisión' ? 'disabled' : ''}>Aceptado</option>
-                <option value="Rechazado" style="background: var(--color-bg, #111827); color: var(--color-text, #fff);" ${p.estado === 'Rechazado' ? 'selected' : ''}>Rechazado</option>
+                <option value="Revisión" class="applicant-card__status-option" ${p.estado === 'Revisión' ? 'selected' : ''} ${p.estado === 'Entrevista' ? 'disabled' : ''}>En revisión</option>
+                <option value="Entrevista" class="applicant-card__status-option" ${p.estado === 'Entrevista' ? 'selected' : ''}>Entrevista</option>
+                <option value="Aceptado" class="applicant-card__status-option" ${p.estado === 'Aceptado' ? 'selected' : ''} ${p.estado === 'Revisión' ? 'disabled' : ''}>Aceptado</option>
+                <option value="Rechazado" class="applicant-card__status-option" ${p.estado === 'Rechazado' ? 'selected' : ''}>Rechazado</option>
               </select>
             </div>
           </div>
@@ -322,50 +342,52 @@ function abrirModalExplicacionIA(postulanteId) {
   }
 
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.3s;';
+  overlay.className = 'sidebar-overlay';
+  overlay.style.cssText = 'z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.3s;';
   
   const modal = document.createElement('div');
-  modal.style.cssText = 'background: var(--color-bg, #fff); color: var(--color-text, #111827); padding: 32px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-width: 600px; width: 90%; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;';
+  modal.className = 'card ai-modal';
+  modal.style.cssText = 'max-width: 600px; width: 90%; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;';
   
-  const prosHtml = (p.strengths || []).map(s => `<li style="margin-bottom: 8px; color: #10B981; display: flex; align-items: flex-start; gap: 6px;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:2px;"><path d="M5 13l4 4L19 7"></path></svg><span>${s}</span></li>`).join('');
-  const contrasHtml = (p.weaknesses || []).map(w => `<li style="margin-bottom: 8px; color: #EF4444; display: flex; align-items: flex-start; gap: 6px;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:2px;"><path d="M6 18L18 6M6 6l12 12"></path></svg><span>${w}</span></li>`).join('');
+  const prosHtml = (p.strengths || []).map(s => `<li class="ai-modal__list-item ai-modal__list-item--pro"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="ai-modal__list-icon"><path d="M5 13l4 4L19 7"></path></svg><span>${s}</span></li>`).join('');
+  const contrasHtml = (p.weaknesses || []).map(w => `<li class="ai-modal__list-item ai-modal__list-item--con"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="ai-modal__list-icon"><path d="M6 18L18 6M6 6l12 12"></path></svg><span>${w}</span></li>`).join('');
 
   modal.innerHTML = `
-    <button id="ia-close-btn" class="btn-close-top-right" style="position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--color-text-muted); cursor: pointer; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='none'">
+    <button id="ia-close-btn" class="ai-modal__close-btn">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
     </button>
-    <div style="display: flex; align-items: center; gap: 16px; mb-24; margin-bottom: 24px;">
-      <div style="width: 56px; height: 56px; border-radius: 50%; background: ${bg}; border: 3px solid ${color}; display: flex; align-items: center; justify-content: center; color: ${color}; font-size: 18px; font-weight: 800; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;">
+    <div class="ai-modal__header">
+      <div class="ai-modal__score-ring" style="background: ${bg}; border: 3px solid ${color}; color: ${color};">
         ${p.rating}
       </div>
       <div>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--color-text, #111827);">Análisis del Match</h3>
-          <span style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">Powered by ApplyAI</span>
+        <div class="ai-modal__title-wrapper">
+          <h3 class="ai-modal__title">Análisis del Match</h3>
+          <span class="ai-modal__badge">Powered by ApplyAI</span>
         </div>
-        <p style="margin: 4px 0 0; color: var(--color-text-muted, #6B7280); font-size: 14px;">Evaluación detallada para ${p.nombre}</p>
+        <p class="ai-modal__subtitle">Evaluación detallada para ${p.nombre}</p>
       </div>
     </div>
     
-    <div style="margin-bottom: 24px; font-size: 15px; line-height: 1.6; color: var(--color-text, #374151);">
+    <div class="ai-modal__content">
       ${explicacion}
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+    <div class="ai-modal__grid">
       <div>
-        <h4 style="margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #10B981; display: flex; align-items: center; gap: 6px;">
+        <h4 class="mb-2 text-base font-semibold flex items-center gap-1" style="color: #10B981;">
           Puntos Fuertes (CV)
         </h4>
-        <ul style="list-style: none; padding: 0; margin: 0; font-size: 14px;">
-          ${prosHtml || '<li style="color: var(--color-text-muted);">No se identificaron puntos fuertes específicos.</li>'}
+        <ul class="ai-modal__list text-sm">
+          ${prosHtml || '<li class="text-muted">No se identificaron puntos fuertes específicos.</li>'}
         </ul>
       </div>
       <div>
-        <h4 style="margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #EF4444; display: flex; align-items: center; gap: 6px;">
+        <h4 class="mb-2 text-base font-semibold flex items-center gap-1" style="color: #EF4444;">
           Áreas de Mejora (CV)
         </h4>
-        <ul style="list-style: none; padding: 0; margin: 0; font-size: 14px;">
-          ${contrasHtml || '<li style="color: var(--color-text-muted);">No se identificaron áreas de mejora críticas.</li>'}
+        <ul class="ai-modal__list text-sm">
+          ${contrasHtml || '<li class="text-muted">No se identificaron áreas de mejora críticas.</li>'}
         </ul>
       </div>
     </div>
@@ -846,6 +868,7 @@ async function loadDashboardData() {
       skills: job.skillsRequired || [],
       estado: job.isActive ? 'activa' : 'cerrada',
       postulantes: job._count?.applications || 0,
+      views: job.views || 0,
       fecha: new Date(job.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
     }));
 
