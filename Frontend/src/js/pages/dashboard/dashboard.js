@@ -251,11 +251,11 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
               </svg>
             </button>
           </div>
-          <div class="applicant-card__header flex gap-4 items-start mb-4">
-            ${p.photoUrl ? `<img src="${p.photoUrl}" class="avatar avatar--lg" style="width: 56px; height: 56px; border-radius: 12px; object-fit: cover;" alt="Foto de ${p.nombre}">` : `<div class="avatar avatar--lg" style="width: 56px; height: 56px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">${p.iniciales}</div>`}
+          <div class="applicant-card__header flex gap-4 items-start mb-4" style="padding-right: 84px;">
+            ${p.photoUrl ? `<img src="${p.photoUrl}" class="avatar avatar--lg" style="width: 56px; height: 56px; border-radius: 12px; object-fit: cover; flex-shrink: 0;" alt="Foto de ${p.nombre}">` : `<div class="avatar avatar--lg" style="width: 56px; height: 56px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--color-surface);">${p.iniciales}</div>`}
             <div class="applicant-card__info flex-1 min-w-0">
-              <div class="font-semibold text-base color-text mb-1">${p.nombre}</div>
-              <div class="text-xs text-muted mb-1">${p.rol}</div>
+              <div class="font-semibold text-base color-text mb-1" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.nombre}">${p.nombre}</div>
+              <div class="text-xs text-muted mb-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;" title="${p.rol}">${p.rol}</div>
               <div class="flex flex-col text-xs text-muted" style="gap: 2px;">
                 ${p.experiencia ? `<div class="flex items-center gap-1"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg><span>${p.experiencia}</span></div>` : ''}
                 ${p.estudio ? `<div class="flex items-center gap-1"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.825-3.055 12.083 12.083 0 01.665-6.479L12 14z"></path></svg><span>${p.estudio}</span></div>` : ''}
@@ -912,7 +912,7 @@ async function verPostulantes(ofertaId) {
         estudio: p.education || 'Sin educación',
         favorito: false,
         estado: app.status === 'PENDING' ? 'Revisión' : app.status === 'ACCEPTED' ? 'Aceptado' : app.status === 'VIEWED' ? 'Entrevista' : 'Rechazado',
-        rating: app.matchScore ? (app.matchScore / 10).toFixed(1) : '0.0',
+        rating: (app.matchScore !== null && app.matchScore !== undefined) ? (app.matchScore / 10).toFixed(1) : '0.0',
         cvRating: p.cvAnalysis?.overallScore ? (p.cvAnalysis.overallScore / 10).toFixed(1) : '0.0',
         cvUrl: p.cvUrl || '',
         photoUrl: p.photoUrl || '',
