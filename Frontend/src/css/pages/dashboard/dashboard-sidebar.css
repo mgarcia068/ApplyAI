@@ -248,6 +248,7 @@
 
 .db-topbar {
   height: var(--topbar-height);
+  flex-shrink: 0;
   border-bottom: 1px solid var(--color-surface);
   background: var(--color-bg);
   display: flex;
@@ -275,13 +276,10 @@
 .db-content {
   padding: var(--space-8);
   flex: 1;
-  overflow-y: auto;
 }
 
 .db-content.dashboard-content-fixed {
   padding-bottom: 0;
-  max-height: calc(100vh - 72px); /* 72px roughly height of topbar */
-  overflow: hidden;
   display: flex !important;
   flex-direction: column;
 }

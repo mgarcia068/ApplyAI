@@ -65,6 +65,31 @@ function navigateTo(seccion, subtitulo) {
 function renderResumen() {
   const content = document.getElementById('db-content');
   syncResumenContentMode();
+  
+  // Obtener top métricas
+  const topOfertas = window.getTopOfertasVistas ? window.getTopOfertasVistas(3) : [];
+  const topSkills = window.getTopSkills ? window.getTopSkills(3) : [];
+
+  let topOfertasHtml = topOfertas.length ? topOfertas.map((o, index) => `
+    <div class="metric-item">
+      <div class="metric-item__left">
+        <span class="metric-item__rank metric-item__rank--blue">#${index + 1}</span>
+        <div class="metric-item__title">${o.titulo}</div>
+      </div>
+      <div class="metric-item__right">${o.views || 0} vistas</div>
+    </div>
+  `).join('') : '<p class="metric-empty">No hay ofertas suficientes.</p>';
+
+  let topSkillsHtml = topSkills.length ? topSkills.map((s, index) => `
+    <div class="metric-item">
+      <div class="metric-item__left">
+        <span class="metric-item__rank metric-item__rank--green">#${index + 1}</span>
+        <div class="metric-item__title">${s.skill}</div>
+      </div>
+      <div class="metric-item__right metric-item__right--small">Buscado en ${s.count} oferta(s)</div>
+    </div>
+  `).join('') : '<p class="metric-empty">No hay datos suficientes.</p>';
+
   content.innerHTML = `
     <div class="dashboard-header-fixed">
       <div class="db-summary-header">
@@ -75,6 +100,18 @@ function renderResumen() {
     </div>
     
     <div class="dashboard-scrollable-content dashboard-scrollable-content--spaced">
+      <!-- NUEVA SECCIÓN DE MÉTRICAS -->
+      <div class="metrics-grid">
+        <div class="card card--no-padding metric-card">
+          <h3 class="metric-card__title">🔥 Ofertas más vistas</h3>
+          <div>${topOfertasHtml}</div>
+        </div>
+        <div class="card card--no-padding metric-card">
+          <h3 class="metric-card__title">🎯 Perfiles más buscados</h3>
+          <div>${topSkillsHtml}</div>
+        </div>
+      </div>
+
       <div class="section-header">
         <div>
           <div class="section-header__title">Ofertas recientes</div>
