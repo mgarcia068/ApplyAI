@@ -1,5 +1,8 @@
 import 'reflect-metadata';
+import * as dns from 'dns';
 
+// Forzar el uso de IPv4 por defecto para evitar problemas de conexión SMTP (ENETUNREACH) en Render
+dns.setDefaultResultOrder('ipv4first');
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
