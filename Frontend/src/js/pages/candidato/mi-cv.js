@@ -313,6 +313,11 @@
 
       syncAiSection(uploaded);
 
+      const generatorCard = document.getElementById('cvGeneratorCard');
+      if (generatorCard) {
+        generatorCard.hidden = uploaded;
+      }
+
       // Si hay evaluación guardada y hay CV, mostrarla
       if (uploaded && profile.cvAiEvaluation) {
         renderCvAiEvaluation(profile.cvAiEvaluation, els);
@@ -539,6 +544,225 @@
       });
     }
 
+    // ── Generador de CV ───────────────────────────────────────────────────────
+    const generateCvBtn = document.getElementById('generateCvBtn');
+    const cvGenValidationError = document.getElementById('cvGenValidationError');
+    const cvGenMissingFields = document.getElementById('cvGenMissingFields');
+
+    if (generateCvBtn) {
+      generateCvBtn.addEventListener('click', async function () {
+        if (!isAllowed) return;
+        
+        // Limpiar errores previos
+        if (cvGenValidationError) cvGenValidationError.hidden = true;
+        if (cvGenMissingFields) cvGenMissingFields.innerHTML = '';
+        clearCvError();
+
+        // Obtener el perfil más reciente
+        const profile = getCandidateProfile(userEmail) || {};
+
+        // Validar información del perfil
+        const missing = [];
+        if (!profile.fullName || !profile.fullName.trim()) missing.push('Nombre completo');
+        if (!profile.headline || !profile.headline.trim()) missing.push('Título profesional / Headline');
+        if (!profile.about || !profile.about.trim()) missing.push('Biografía / Sobre mí');
+        if (!profile.workExperience || !profile.workExperience.trim()) missing.push('Experiencia laboral');
+        if (!profile.academicBackground || !profile.academicBackground.trim()) missing.push('Formación académica');
+        if (!Array.isArray(profile.technicalSkillsList) || profile.technicalSkillsList.length === 0) {
+          missing.push('Habilidades técnicas (al menos una)');
+        }
+
+        if (missing.length > 0) {
+          if (cvGenMissingFields) {
+            cvGenMissingFields.innerHTML = missing.map(m => `<li>${m}</li>`).join('');
+          }
+          if (cvGenValidationError) {
+            cvGenValidationError.hidden = false;
+            cvGenValidationError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+          return;
+        }
+
+        // Si la validación pasa, generamos el PDF
+        generateCvBtn.disabled = true;
+        const originalText = generateCvBtn.textContent;
+        generateCvBtn.textContent = 'Generando y subiendo CV…';
+
+        try {
+          if (!window.jspdf) {
+            throw new Error('La librería PDF no se pudo cargar. Por favor recargá la página.');
+          }
+
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+          });
+
+          let y = 20;
+          const margin = 20;
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const contentWidth = pageWidth - (margin * 2);
+
+          // ─── CABECERA ───
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(24);
+          doc.setTextColor(30, 41, 59); // Slate-800
+          doc.text(profile.fullName, margin, y);
+          y += 10;
+
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(14);
+          doc.setTextColor(74, 127, 165); // Accent color (Steel Blue)
+          doc.text(profile.headline, margin, y);
+          y += 8;
+
+          doc.setFontSize(10);
+          doc.setTextColor(100, 116, 139); // Slate-500
+          const locationStr = profile.location ? ` | ${profile.location}` : '';
+          doc.text(`${userEmail}${locationStr}`, margin, y);
+          y += 10;
+
+          // Separador cabecera
+          doc.setDrawColor(226, 232, 240); // Slate-200
+          doc.setLineWidth(0.5);
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 12;
+
+          // Helper para dibujar secciones
+          function addSectionHeader(title) {
+            if (y > 260) {
+              doc.addPage();
+              y = 20;
+            }
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(13);
+            doc.setTextColor(15, 23, 42); // Slate-900
+            doc.text(title.toUpperCase(), margin, y);
+            y += 5;
+            doc.setDrawColor(74, 127, 165); // Accent Line
+            doc.setLineWidth(0.7);
+            doc.line(margin, y, margin + 25, y);
+            y += 8;
+          }
+
+          // Helper para párrafos
+          function addParagraph(text) {
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(51, 65, 85); // Slate-700
+            
+            const lines = doc.splitTextToSize(text || '', contentWidth);
+            for (const line of lines) {
+              if (y > 275) {
+                doc.addPage();
+                y = 20;
+              }
+              doc.text(line, margin, y);
+              y += 6;
+            }
+            y += 6; // Espacio extra después del bloque
+          }
+
+          // 1. SOBRE MÍ
+          if (profile.about && profile.about.trim()) {
+            addSectionHeader('Sobre Mí');
+            addParagraph(profile.about);
+          }
+
+          // 2. EXPERIENCIA LABORAL
+          if (profile.workExperience && profile.workExperience.trim()) {
+            addSectionHeader('Experiencia Laboral');
+            addParagraph(profile.workExperience);
+          }
+
+          // 3. FORMACIÓN ACADÉMICA
+          if (profile.academicBackground && profile.academicBackground.trim()) {
+            addSectionHeader('Formación Académica');
+            addParagraph(profile.academicBackground);
+          }
+
+          // 4. HABILIDADES E IDIOMAS
+          const skillsList = profile.technicalSkillsList || [];
+          const languagesList = profile.languagesList || [];
+
+          if (skillsList.length > 0 || languagesList.length > 0) {
+            addSectionHeader('Habilidades e Idiomas');
+
+            if (skillsList.length > 0) {
+              if (y > 270) { doc.addPage(); y = 20; }
+              doc.setFont('Helvetica', 'bold');
+              doc.setFontSize(10);
+              doc.setTextColor(15, 23, 42);
+              doc.text('Habilidades:', margin, y);
+              y += 5;
+              addParagraph(skillsList.join(', '));
+            }
+
+            if (languagesList.length > 0) {
+              if (y > 270) { doc.addPage(); y = 20; }
+              doc.setFont('Helvetica', 'bold');
+              doc.setFontSize(10);
+              doc.setTextColor(15, 23, 42);
+              doc.text('Idiomas:', margin, y);
+              y += 5;
+              addParagraph(languagesList.join(', '));
+            }
+          }
+
+          // Convertir PDF generado a Blob
+          const blob = doc.output('blob');
+          const generatedFile = new File([blob], 'CV_Generado.pdf', { type: 'application/pdf' });
+
+          // Subir archivo al backend
+          const formData = new FormData();
+          formData.append('cv', generatedFile);
+
+          showCvError('Subiendo CV generado automáticamente…');
+
+          const response = await fetch(`${BACKEND}/api/cv/upload`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${currentUser.token}` },
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const errBody = await response.json().catch(() => ({}));
+            throw new Error(errBody.message || 'Error al subir el CV generado.');
+          }
+
+          const data = await response.json();
+          const cvUrl = data.cvUrl;
+          const originalName = data.cvOriginalName || 'CV_Generado.pdf';
+
+          const profileToSave = {
+            ...profile,
+            version: PROFILE_VERSION,
+            email: userEmail,
+            cvDataUrl: cvUrl,
+            cvFileName: originalName,
+            cvSize: blob.size,
+            cvUpdatedAt: data.updatedAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          saveCandidateProfile(userEmail, profileToSave);
+          syncCvUi(profileToSave);
+          clearCvError();
+          showCvError('¡CV generado y subido con éxito!');
+          setTimeout(() => clearCvError(), 3000);
+
+        } catch (err) {
+          console.error('[CV Gen Error]:', err);
+          showCvError(err.message || 'Ocurrió un error al generar el CV.');
+        } finally {
+          generateCvBtn.disabled = false;
+          generateCvBtn.textContent = originalText;
+        }
+      });
+    }
+
     // ── Cargar datos del backend ──────────────────────────────────────────────
     async function hydrateFromBackend() {
       try {
@@ -554,11 +778,19 @@
         const existing = getCandidateProfile(userEmail) || {};
         const merged = {
           ...existing,
-          version:    PROFILE_VERSION,
-          email:      userEmail,
-          cvDataUrl:  p.cvUrl  || existing.cvDataUrl,
-          cvFileName: p.cvOriginalName || existing.cvFileName,
-          photoUrl:   p.photoUrl || existing.photoUrl,
+          version:            PROFILE_VERSION,
+          email:              userEmail,
+          fullName:           p.name || userData.fullName || existing.fullName || 'Candidato',
+          headline:           p.headline || existing.headline || '',
+          location:           p.location || existing.location || '',
+          about:              p.bio || existing.about || '',
+          academicBackground: p.education || existing.academicBackground || '',
+          workExperience:     p.experience || existing.workExperience || '',
+          technicalSkillsList: Array.isArray(p.skills) ? p.skills : (existing.technicalSkillsList || []),
+          languagesList:      Array.isArray(p.languages) ? p.languages : (existing.languagesList || []),
+          cvDataUrl:          p.cvUrl || existing.cvDataUrl || '',
+          cvFileName:         p.cvOriginalName || existing.cvFileName || '',
+          photoUrl:           p.photoUrl || existing.photoUrl || '',
         };
 
         if (p.cvAnalysis) {
