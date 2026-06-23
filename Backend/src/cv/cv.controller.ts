@@ -84,6 +84,13 @@ export class CvController {
     return this.cvService.analyze(id);
   }
 
+  @Post('simulate-interview')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.CANDIDATE)
+  generateInterviewQuestions(@CurrentUser() user: JwtPayload) {
+    return this.cvService.generateInterviewQuestions(user.sub);
+  }
+
   @Get('my-cv')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.CANDIDATE)

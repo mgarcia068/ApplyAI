@@ -325,6 +325,12 @@ function ensureNavbarDom() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           <span>Mis postulaciones</span>
         </button>
+        <div class="divider"></div>
+        <button class="user-dropdown__item user-dropdown__item--highlight" id="navbar-simulate-ai-btn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+          <span>Simulador IA</span>
+        </button>
+        <div class="divider"></div>
         <div class="user-dropdown__item theme-toggle-item" id="navbar-theme-toggle-btn">
           <label class="theme-switch-wrapper theme-toggle-label">
             <div class="theme-switch__label">
@@ -505,8 +511,35 @@ function ensureNavbarDom() {
   if (userDropdown && favoritesBtn && applicationsBtn) {
     favoritesBtn.insertAdjacentElement("afterend", applicationsBtn);
   }
-  if (userDropdown && applicationsBtn && themeToggleBtn) {
-    applicationsBtn.insertAdjacentElement("afterend", themeToggleBtn);
+  let simulateAiBtn = document.getElementById("navbar-simulate-ai-btn") || userMenu.querySelector("#navbar-simulate-ai-btn");
+  if (!simulateAiBtn && userDropdown) {
+    simulateAiBtn = document.createElement("button");
+    simulateAiBtn.type = "button";
+    simulateAiBtn.className = "user-dropdown__item user-dropdown__item--highlight";
+    simulateAiBtn.id = "navbar-simulate-ai-btn";
+    simulateAiBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+      <span>Simulador IA</span>
+    `;
+    (applicationsBtn || favoritesBtn || offersBtn || profileBtn)?.insertAdjacentElement("afterend", simulateAiBtn);
+    
+    // Insert divider before it
+    const divider1 = document.createElement("div");
+    divider1.className = "divider";
+    simulateAiBtn.insertAdjacentElement("beforebegin", divider1);
+    
+    // Insert divider after it
+    const divider2 = document.createElement("div");
+    divider2.className = "divider";
+    simulateAiBtn.insertAdjacentElement("afterend", divider2);
+  }
+  ensureButtonLabel(simulateAiBtn, "Simulador IA");
+
+  if (userDropdown && applicationsBtn && simulateAiBtn) {
+    applicationsBtn.insertAdjacentElement("afterend", simulateAiBtn);
+  }
+  if (userDropdown && simulateAiBtn && themeToggleBtn) {
+    simulateAiBtn.insertAdjacentElement("afterend", themeToggleBtn);
   }
 
   let logoutBtn = document.getElementById("navbar-logout-btn") || userMenu.querySelector("#navbar-logout-btn");
@@ -573,12 +606,28 @@ function updateNavbarActions() {
     userMenu.hidden = false;
     
     const isEmpresa = user.role === "empresa";
+    const isCandidate = user.role === "candidato";
     const profileBtn = document.getElementById("navbar-profile-btn");
+    const offersBtn = document.getElementById("navbar-offers-btn");
+    const simulateAiBtn = document.getElementById("navbar-simulate-ai-btn");
+
+    if (profileBtn) profileBtn.onclick = () => window.location.href = isCandidate ? "/Frontend/src/pages/candidato/perfil-candidato.html" : "/Frontend/src/pages/empresa/perfil-empresa.html";
+    if (offersBtn) offersBtn.onclick = () => window.location.href = isCandidate ? "/Frontend/src/pages/candidato/dashboard-candidato.html" : "/Frontend/src/pages/empresa/dashboard-empresa.html";
+    if (simulateAiBtn) simulateAiBtn.onclick = () => window.location.href = "/Frontend/src/pages/candidato/simulador-entrevista.html";
     const cvBtn = document.getElementById("navbar-cv-btn");
     const empresaPanelBtn = document.getElementById("navbar-empresa-panel-btn");
-    const offersBtn = document.getElementById("navbar-offers-btn");
     const favoritesBtn = document.getElementById("navbar-favorites-btn");
     const applicationsBtn = document.getElementById("navbar-applications-btn");
+
+    if (simulateAiBtn) {
+      simulateAiBtn.style.display = isEmpresa ? "none" : "";
+    }
+
+    if (favoritesBtn) {
+      favoritesBtn.style.display = isEmpresa ? "none" : "";
+      ensureButtonLabel(favoritesBtn, "Mis empresas favoritas");
+      favoritesBtn.onclick = () => window.location.href = "/Frontend/src/pages/candidato/mis-empresas-favoritas.html";
+    }
 
     if (profileBtn) {
       profileBtn.style.display = isEmpresa ? "none" : "";

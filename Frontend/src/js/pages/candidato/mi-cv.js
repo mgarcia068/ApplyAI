@@ -585,8 +585,11 @@
   }
 
   // Esperar a que el DOM esté listo
+  // Ejecución de inicialización
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => {
+      init();
+    });
   } else {
     init();
   }

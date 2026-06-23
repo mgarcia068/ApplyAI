@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+  <script src="../../js/core/config.js"></script>
+    <script src="../../js/core/middlewares/auth-guard.js?v=1.2"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador de Entrevista IA — ApplyAI</title>
+    <meta name="description" content="Practica para tus entrevistas laborales con inteligencia artificial basada en tu currículum y habilidades." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="../../css/core/base.css?v=1.1" />
+    <link rel="stylesheet" href="../../css/components/components.css?v=1.1" />
+
+    <style>
+      .micv-shell {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      .micv-header {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+      }
+      .micv-header__icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-lg);
+        background: var(--color-accent-soft);
+        color: var(--color-accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .micv-header__text h1 {
+        font-family: var(--font-display);
+        font-size: var(--text-2xl);
+        font-weight: var(--weight-bold);
+        margin: 0 0 var(--space-1);
+        color: var(--color-text);
+      }
+      .micv-header__text p {
+        font-size: var(--text-sm);
+        color: var(--color-text-muted);
+        margin: 0;
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../../js/services/theme.js?v=1.1"></script>
+    <script src="../../js/core/components.js?v=1.6" defer></script>
+    <script src="../../js/pages/candidato/simulador-entrevista.js" defer></script>
+  </head>
+  <body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="page-wrapper">
+      <section class="section section--sm">
+        <div class="container micv-shell">
+          
+          <div class="micv-header">
+            <div class="micv-header__icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            </div>
+            <div class="micv-header__text">
+              <h1>Simulador de Entrevista IA</h1>
+              <p>Entrénate respondiendo preguntas personalizadas basadas en tu perfil profesional.</p>
+            </div>
+          </div>
+
+          <!-- AI Interview Simulation card -->
+          <div class="card cv-ai-interview mt-6">
+            <header class="card__header mb-4">
+              <div class="flex flex-col gap-1">
+                <span class="label">Preparación</span>
+                <h2 class="card__title">Tus Preguntas de Práctica</h2>
+                <p class="text-sm text-muted">Genera preguntas basadas en tu perfil para practicar para tu próxima entrevista.</p>
+              </div>
+            </header>
+
+            <div class="cv-ai-interview__content">
+              <div id="interviewQuestionsContainer" class="flex flex-col gap-4" hidden>
+                <div id="interviewQuestionsList" class="flex flex-col gap-3"></div>
+                <div id="interviewAdvice" class="alert alert--info mt-2 text-sm"></div>
+              </div>
+
+              <div id="interviewEmptyState" class="flex flex-col items-center justify-center py-8 text-center bg-base rounded-lg border border-base">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-accent mb-4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                </svg>
+                <p class="text-base text-muted max-w-lg mb-2">La Inteligencia Artificial de <strong>ApplyAI</strong> analizará tu perfil y habilidades técnicas.</p>
+                <p class="text-sm text-muted max-w-md">Se crearán 5 preguntas personalizadas (técnicas y conductuales) para que practiques antes de tus entrevistas reales.</p>
+              </div>
+
+              <div id="interviewLoader" class="flex flex-col items-center justify-center py-6" hidden>
+                <div class="spinner mb-3"></div>
+                <p class="text-sm text-muted">Generando simulación de entrevista...</p>
+              </div>
+
+              <footer class="flex justify-end mt-4">
+                <button class="btn btn--primary" id="generateInterviewBtn" type="button">Simular Entrevista</button>
+              </footer>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+  </body>
+</html>
