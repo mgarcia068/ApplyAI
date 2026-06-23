@@ -169,6 +169,21 @@
   color: var(--color-text);
 }
 
+.user-dropdown__item.text-error {
+  color: var(--color-error);
+}
+.user-dropdown__item.text-error svg {
+  color: var(--color-error);
+  opacity: 0.8;
+}
+.user-dropdown__item.text-error:hover {
+  background: var(--color-error-soft);
+  color: var(--color-error);
+}
+.user-dropdown__item.text-error:hover svg {
+  opacity: 1;
+}
+
 /* Avatar img pan support (same crop model as profile editor) */
 #navbar-user-avatar-img,
 #topbar-user-avatar-img,
