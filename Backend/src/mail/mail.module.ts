@@ -16,6 +16,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           host: config.get('MAIL_HOST', 'smtp.gmail.com'),
           secure: true, // TLS
           port: 465,
+          connectionTimeout: 10000, // 10 segundos máximo para conectar
+          greetingTimeout: 10000,
+          socketTimeout: 10000,
           auth: {
             user: config.get('MAIL_USER'),
             pass: config.get('MAIL_PASS'),
