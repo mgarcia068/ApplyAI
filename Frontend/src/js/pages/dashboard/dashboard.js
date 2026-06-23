@@ -573,15 +573,17 @@ function cambiarEstadoCandidato(id, nuevoEstado, selectElement) {
       const mailSent = response?.data?.mailSent;
 
       candidato.estado = nuevoEstado;
-      if (nuevoEstado === 'Entrevista') {
-        showToast('Candidato en Entrevista', `Se notificó por mail a ${candidato.nombre} los pasos a seguir.`, 'info');
-      } else if (nuevoEstado === 'Aceptado') {
-        showToast('¡Candidato Contratado!', `El candidato ${candidato.nombre} fue marcado como aceptado exitosamente.`, 'success');
-      } else if (nuevoEstado === 'Rechazado') {
-        showToast('Candidato Rechazado', `Se envió mail de agradecimiento a ${candidato.nombre}.`, 'error');
-      }
-      if ((nuevoEstado === 'Entrevista' || nuevoEstado === 'Rechazado') && mailSent === false) {
-        showToast('Mail no enviado', 'El estado se actualizo, pero el servidor no pudo enviar el mail.', 'error');
+      
+      if (mailSent === false) {
+        showToast('Atención: Correo no enviado', 'El estado del candidato se actualizó a ' + nuevoEstado + ', pero los servidores de correo están bloqueados y no se pudo notificar.', 'warning');
+      } else {
+        if (nuevoEstado === 'Entrevista') {
+          showToast('Candidato en Entrevista', `Se notificó por mail a ${candidato.nombre} los pasos a seguir.`, 'info');
+        } else if (nuevoEstado === 'Aceptado') {
+          showToast('¡Candidato Contratado!', `El candidato ${candidato.nombre} fue marcado como aceptado exitosamente.`, 'success');
+        } else if (nuevoEstado === 'Rechazado') {
+          showToast('Candidato Rechazado', `Se envió mail de agradecimiento a ${candidato.nombre}.`, 'error');
+        }
       }
       applyPostulantesFilters(); // recarga
     } catch (err) {
