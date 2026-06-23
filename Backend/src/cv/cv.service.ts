@@ -54,7 +54,10 @@ export class CvService {
     if (!this.geminiApiKey) {
       throw new Error('Gemini API key not configured.');
     }
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = this.genAI.getGenerativeModel({ 
+      model: 'gemini-2.0-flash',
+      generationConfig: { responseMimeType: 'application/json' }
+    });
     const result = await model.generateContent(prompt);
     return result.response.text().trim();
   }
@@ -66,7 +69,7 @@ export class CvService {
 
     const result = await this.anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 1500,
+      max_tokens: 4000,
       temperature: 0.2,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -96,9 +99,10 @@ export class CvService {
       apiKey: this.gptApiKey,
       url: 'https://api.openai.com/v1/chat/completions',
       model: 'gpt-4o-mini',
-      maxTokens: 1500,
+      maxTokens: 4000,
       temperature: 0.2,
       prompt,
+      responseFormat: { type: 'json_object' }
     });
   }
 
@@ -112,9 +116,10 @@ export class CvService {
       apiKey: this.xaiApiKey,
       url: 'https://api.x.ai/v1/chat/completions',
       model: 'grok-3-mini',
-      maxTokens: 1500,
+      maxTokens: 4000,
       temperature: 0.2,
       prompt,
+      responseFormat: { type: 'json_object' }
     });
   }
 
@@ -128,9 +133,10 @@ export class CvService {
       apiKey: this.groqApiKey,
       url: 'https://api.groq.com/openai/v1/chat/completions',
       model: 'llama-3.3-70b-versatile',
-      maxTokens: 1500,
+      maxTokens: 4000,
       temperature: 0.2,
       prompt,
+      responseFormat: { type: 'json_object' }
     });
   }
 
@@ -142,6 +148,7 @@ export class CvService {
     maxTokens: number;
     temperature: number;
     prompt: string;
+    responseFormat?: any;
   }): Promise<string> {
     const response = await fetch(options.url, {
       method: 'POST',
@@ -154,6 +161,7 @@ export class CvService {
         messages: [{ role: 'user', content: options.prompt }],
         max_tokens: options.maxTokens,
         temperature: options.temperature,
+        response_format: options.responseFormat
       }),
     });
 
@@ -202,12 +210,14 @@ export class CvService {
       error?.status || error?.statusCode || error?.response?.status || error?.raw?.status,
     );
 
+    if (status === 429 || status === 402) {
+      return true;
+    }
+
     const hints = ['insufficient', 'quota', 'exceeded', 'token', 'billing', 'credit'];
-    const hasHint = hints.some((hint) =>
+    return hints.some((hint) =>
       message.includes(hint) || code.includes(hint) || type.includes(hint),
     );
-
-    return (status === 402 || status === 429) && hasHint;
   }
 
   public async generateTextWithFallback(prompt: string): Promise<string> {
@@ -228,7 +238,16 @@ export class CvService {
 
     for (const attempt of attempts) {
       try {
-        return await attempt.fn();
+        const responseText = await attempt.fn();
+        
+        // Validar que se pueda extraer un JSON antes de aceptarlo como válido
+        try {
+          this.extractJsonFromAiResponse(responseText);
+        } catch (parseError: any) {
+          throw new Error(`Parse failed for ${attempt.name}: ${parseError.message}`);
+        }
+
+        return responseText;
       } catch (error) {
         tokenIssue = tokenIssue || this.isTokensExhausted(error);
         lastError = error;
@@ -319,6 +338,25 @@ export class CvService {
     }
   }
 
+  public extractJsonFromAiResponse(responseText: string): any {
+    let jsonRaw = responseText;
+    const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (jsonMatch) {
+      jsonRaw = jsonMatch[1].trim();
+    } else {
+      const firstBrace = responseText.indexOf('{');
+      const lastBrace = responseText.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonRaw = responseText.substring(firstBrace, lastBrace + 1).trim();
+      }
+    }
+    
+    // Limpiar comas al final de arrays u objetos que pueden romper JSON.parse
+    jsonRaw = jsonRaw.replace(/,(?=\s*[}\]])/g, '');
+    
+    return JSON.parse(jsonRaw);
+  }
+
   async analyzeMyCv(userId: string) {
     const profile = await this.prisma.candidateProfile.findUnique({
       where: { userId },
@@ -386,12 +424,9 @@ export class CvService {
 
       const responseText = await this.generateTextWithFallback(prompt);
       
-      // Limpiar backticks de markdown que suele meter Gemini
-      const jsonRaw = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
-      
       let parsedAiData;
       try {
-        parsedAiData = JSON.parse(jsonRaw);
+        parsedAiData = this.extractJsonFromAiResponse(responseText);
       } catch (parseError) {
         console.error('Error parseando JSON de IA. Raw Response:', responseText);
         throw new InternalServerErrorException('La IA no devolvió un formato JSON válido.');
@@ -408,7 +443,7 @@ export class CvService {
           strengths: parsedAiData.strengths || [],
           weaknesses: parsedAiData.weaknesses || [],
           overallScore: parsedAiData.overallScore || null,
-          rawResponse: jsonRaw,
+          rawResponse: responseText,
         },
         create: {
           candidateId: profile.id,
@@ -419,7 +454,7 @@ export class CvService {
           strengths: parsedAiData.strengths || [],
           weaknesses: parsedAiData.weaknesses || [],
           overallScore: parsedAiData.overallScore || null,
-          rawResponse: jsonRaw,
+          rawResponse: responseText,
         },
       });
 
