@@ -522,16 +522,6 @@ function ensureNavbarDom() {
       <span>Simulador IA</span>
     `;
     (applicationsBtn || favoritesBtn || offersBtn || profileBtn)?.insertAdjacentElement("afterend", simulateAiBtn);
-    
-    // Insert divider before it
-    const divider1 = document.createElement("div");
-    divider1.className = "divider";
-    simulateAiBtn.insertAdjacentElement("beforebegin", divider1);
-    
-    // Insert divider after it
-    const divider2 = document.createElement("div");
-    divider2.className = "divider";
-    simulateAiBtn.insertAdjacentElement("afterend", divider2);
   }
   ensureButtonLabel(simulateAiBtn, "Simulador IA");
 
@@ -555,17 +545,37 @@ function ensureNavbarDom() {
     (themeToggleBtn || applicationsBtn || favoritesBtn || offersBtn || profileBtn)?.insertAdjacentElement("afterend", logoutBtn);
   }
 
-  // Ensure the logout item is visually separated like the company dashboard dropdown.
-  // Some older cached navbar.html versions may not include the divider, so we enforce it here.
   if (userDropdown && logoutBtn) {
-    const existingDividerBeforeLogout = logoutBtn.previousElementSibling?.classList?.contains("divider")
-      ? logoutBtn.previousElementSibling
-      : null;
+    // Clean up all dividers to re-insert them correctly and prevent duplicates
+    const header = userDropdown.querySelector('.user-dropdown__header');
+    Array.from(userDropdown.querySelectorAll('.divider')).forEach(d => {
+      // Keep the very first divider after the header
+      if (d.previousElementSibling !== header) {
+        d.remove();
+      }
+    });
 
-    if (!existingDividerBeforeLogout) {
-      const divider = document.createElement("div");
-      divider.className = "divider";
-      logoutBtn.insertAdjacentElement("beforebegin", divider);
+    // Re-insert exactly 3 dividers:
+    // 1. Before simulateAiBtn (if it exists)
+    if (simulateAiBtn) {
+      const d1 = document.createElement('div');
+      d1.className = 'divider';
+      d1.id = 'navbar-simulate-ai-divider';
+      simulateAiBtn.insertAdjacentElement('beforebegin', d1);
+    }
+
+    // 2. Before theme toggle
+    if (themeToggleBtn) {
+      const d2 = document.createElement('div');
+      d2.className = 'divider';
+      themeToggleBtn.insertAdjacentElement('beforebegin', d2);
+    }
+
+    // 3. Before logout
+    if (logoutBtn) {
+      const d3 = document.createElement('div');
+      d3.className = 'divider';
+      logoutBtn.insertAdjacentElement('beforebegin', d3);
     }
   }
   ensureButtonLabel(logoutBtn, "Cerrar sesión");
@@ -621,6 +631,10 @@ function updateNavbarActions() {
 
     if (simulateAiBtn) {
       simulateAiBtn.style.display = isEmpresa ? "none" : "";
+      const simulateAiDivider = document.getElementById('navbar-simulate-ai-divider');
+      if (simulateAiDivider) {
+        simulateAiDivider.style.display = isEmpresa ? "none" : "";
+      }
     }
 
     if (favoritesBtn) {
