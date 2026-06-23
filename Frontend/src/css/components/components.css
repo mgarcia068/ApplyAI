@@ -429,3 +429,20 @@
   }
 }
 
+/* -- HIGHLIGHT DROPDOWN ITEM -- */
+.user-dropdown__item--highlight {
+  background: linear-gradient(135deg, var(--color-accent), #6b9ac1);
+  background-size: 150% 150%;
+  color: #ffffff !important;
+  font-weight: 600;
+  animation: gradient-shift 8s ease infinite;
+}
+
+.user-dropdown__item--highlight svg {
+  color: #ffffff;
+}
+
+.user-dropdown__item--highlight:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px var(--shadow-accent);
+}

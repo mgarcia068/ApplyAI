@@ -474,4 +474,56 @@ export class CvService {
       );
     }
   }
+
+  async generateInterviewQuestions(userId: string): Promise<any> {
+    const profile = await this.prisma.candidateProfile.findUnique({
+      where: { userId },
+      select: { 
+        id: true, 
+        skills: true, 
+        experience: true, 
+        education: true, 
+        bio: true 
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Candidato no encontrado');
+    }
+
+    const prompt = `
+      Eres un reclutador experto en tecnología. A continuación tienes el perfil de un candidato:
+      - Skills: ${profile.skills?.join(', ') || 'No especificadas'}
+      - Experiencia: ${profile.experience || 'No especificada'}
+      - Educación: ${profile.education || 'No especificada'}
+      - Bio: ${profile.bio || 'No especificada'}
+
+      Genera una simulación de entrevista para este candidato. 
+      Proporciona exactamente 5 preguntas (3 técnicas basadas en sus skills y 2 conductuales basadas en su nivel de experiencia).
+      También incluye un breve consejo sobre cómo prepararse.
+
+      Devuelve ÚNICAMENTE un JSON con esta estructura exacta (sin markdown extra, sin comillas invertidas):
+      {
+        "questions": [
+          {
+            "type": "Technical" | "Behavioral",
+            "question": "texto de la pregunta",
+            "hint": "pista breve para responder"
+          }
+        ],
+        "advice": "texto del consejo"
+      }
+    `;
+
+    try {
+      const responseText = await this.generateTextWithFallback(prompt);
+      const match = responseText.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('No JSON found in response');
+      return JSON.parse(match[0]);
+    } catch (error: any) {
+      console.error('Error generando preguntas de entrevista:', error);
+      throw new InternalServerErrorException('Error al generar las preguntas con IA.');
+    }
+  }
 }
+
