@@ -507,6 +507,42 @@ ${jobs
     throw (lastError || new Error('All AI providers failed.')) as Error;
   }
 
+  async getSkillsRanking(limit = 15): Promise<{ skill: string; count: number; percentage: number }[]> {
+    const jobs = await this.prisma.jobOffer.findMany({
+      where: { isActive: true },
+      select: { skillsRequired: true },
+    });
+
+    const freq = new Map<string, number>();
+
+    for (const job of jobs) {
+      if (!Array.isArray(job.skillsRequired)) continue;
+      for (const raw of job.skillsRequired) {
+        const skill = String(raw || '').trim();
+        if (!skill) continue;
+        const key = skill.toLowerCase();
+        freq.set(key, (freq.get(key) || 0) + 1);
+        // Store canonical casing (first occurrence wins)
+        if (!freq.has(`__canonical__${key}`)) {
+          (freq as any).set(`__canonical__${key}`, skill);
+        }
+      }
+    }
+
+    const sorted = [...freq.entries()]
+      .filter(([key]) => !key.startsWith('__canonical__'))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit);
+
+    const maxCount = sorted[0]?.[1] || 1;
+
+    return sorted.map(([key, count]) => ({
+      skill: (freq as any).get(`__canonical__${key}`) || key,
+      count,
+      percentage: Math.round((count / maxCount) * 100),
+    }));
+  }
+
   async update(id: string, updateJobDto: any, companyId: string): Promise<JobOffer> {
     const job = await this.prisma.jobOffer.findUnique({ where: { id } });
     if (!job) {

@@ -883,6 +883,110 @@ function showToast(title, subtitle = '', type = 'success') {
     }
 
     renderAll();
+
+    // ── Ranking de habilidades ─────────────────────────────────────────────
+    loadSkillsRanking(currentUser);
+  }
+
+  async function loadSkillsRanking(currentUser) {
+    const listEl   = document.getElementById('skillsRankingList');
+    const countEl  = document.getElementById('skillsRankingCount');
+    const legendEl = document.getElementById('skillsRankingLegend');
+    const toggleBtn = document.getElementById('skillsRankingToggle');
+    const bodyEl   = document.getElementById('skillsRankingBody');
+    const ownedCountEl      = document.getElementById('skillsOwnedCount');
+    const ownedCountValueEl = document.getElementById('skillsOwnedCountValue');
+
+    if (!listEl) return;
+
+    // Toggle expand/collapse logic removed
+
+
+    // ── Get candidate's own skills for comparison ─────────────────────────
+    function getCandidateSkillsSet(user) {
+      if (!user?.email) return new Set();
+      const key = `ApplyAI.candidateProfile:${String(user.email || '').trim().toLowerCase()}`;
+      const raw = localStorage.getItem(key);
+      const profile = raw ? safeJsonParse(raw, null) : null;
+      if (!profile) return new Set();
+
+      const skills = [
+        ...(Array.isArray(profile.technicalSkillsList) ? profile.technicalSkillsList : []),
+        ...(Array.isArray(profile.languagesList) ? profile.languagesList : []),
+      ];
+
+      return new Set(
+        skills
+          .map((s) => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))
+          .filter(Boolean),
+      );
+    }
+
+    // ── Fetch & render ────────────────────────────────────────────────────
+    try {
+      const res = await axios.get(`${window.APP_CONFIG.API_URL}/api/jobs/skills-ranking`);
+      const ranking = Array.isArray(res.data) ? res.data : [];
+
+      if (!ranking.length) {
+        listEl.innerHTML = '<div class="skills-ranking-empty">Aún no hay suficientes ofertas para mostrar tendencias.</div>';
+        if (countEl) countEl.textContent = '0';
+        return;
+      }
+
+      if (countEl) countEl.textContent = String(ranking.length);
+
+      const candidateSkills = getCandidateSkillsSet(currentUser);
+
+      function normalizeSkill(value) {
+        return String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      }
+
+      let ownedCount = 0;
+
+      listEl.innerHTML = ranking.map((item, index) => {
+        const skillKey = normalizeSkill(item.skill);
+        const owned    = candidateSkills.has(skillKey);
+        if (owned) ownedCount++;
+
+        // Tier classification based on percentage relative to top skill
+        let tier = 'emerging';
+        if (item.percentage >= 60) tier = 'top';
+        else if (item.percentage >= 30) tier = 'mid';
+
+        const ownedClass = owned ? ' skill-rank-item--owned' : '';
+        const ownedIcon  = owned
+          ? '<span class="skill-rank-owned-icon" title="Ya tenés esta habilidad">✓</span>'
+          : '';
+
+        // Stagger animation delay
+        const delay = (index * 50) + 'ms';
+
+        return `
+          <div class="skill-rank-item skill-rank-item--${tier}${ownedClass}" style="animation-delay: ${delay};">
+            <div class="skill-rank-name" title="${escapeHtml(item.skill)}">
+              ${ownedIcon}
+              ${escapeHtml(item.skill)}
+            </div>
+            <div class="skill-rank-bar-wrap">
+              <div class="skill-rank-fill" style="--target-width: ${item.percentage}%; animation-delay: ${delay};"></div>
+            </div>
+            <span class="skill-rank-badge">${item.count} oferta${item.count === 1 ? '' : 's'}</span>
+          </div>
+        `;
+      }).join('');
+
+      // Show owned count hint
+      if (ownedCount > 0 && ownedCountEl && ownedCountValueEl) {
+        ownedCountValueEl.textContent = String(ownedCount);
+        ownedCountEl.hidden = false;
+      }
+
+      if (legendEl) legendEl.hidden = false;
+
+    } catch (err) {
+      console.error('[SkillsRanking] Error cargando ranking:', err);
+      listEl.innerHTML = '<div class="skills-ranking-empty text-muted">No se pudo cargar el ranking. Intentá más tarde.</div>';
+    }
   }
 
   if (document.readyState === 'loading') {

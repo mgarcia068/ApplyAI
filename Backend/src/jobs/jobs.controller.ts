@@ -32,6 +32,11 @@ export class JobsController {
     return this.jobsService.recommendForCandidate(candidateId);
   }
 
+  @Get('skills-ranking')
+  getSkillsRanking() {
+    return this.jobsService.getSkillsRanking();
+  }
+
   @Get(':id')
   detail(@Param('id') id: string) {
     return this.jobsService.findOne(id);
