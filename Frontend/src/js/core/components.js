@@ -621,9 +621,9 @@ function updateNavbarActions() {
     const offersBtn = document.getElementById("navbar-offers-btn");
     const simulateAiBtn = document.getElementById("navbar-simulate-ai-btn");
 
-    if (profileBtn) profileBtn.onclick = () => window.location.href = isCandidate ? "/Frontend/src/pages/candidato/perfil-candidato.html" : "/Frontend/src/pages/empresa/perfil-empresa.html";
-    if (offersBtn) offersBtn.onclick = () => window.location.href = isCandidate ? "/Frontend/src/pages/candidato/dashboard-candidato.html" : "/Frontend/src/pages/empresa/dashboard-empresa.html";
-    if (simulateAiBtn) simulateAiBtn.onclick = () => window.location.href = "/Frontend/src/pages/candidato/simulador-entrevista.html";
+    if (profileBtn) profileBtn.onclick = () => window.location.href = isCandidate ? resolvePathForContext("pages/candidato/perfil-candidato.html") : resolvePathForContext("pages/empresa/perfil-empresa.html");
+    if (offersBtn) offersBtn.onclick = () => window.location.href = isCandidate ? resolvePathForContext("pages/candidato/dashboard-candidato.html") : resolvePathForContext("pages/empresa/dashboard-empresa.html");
+    if (simulateAiBtn) simulateAiBtn.onclick = () => window.location.href = resolvePathForContext("pages/candidato/simulador-entrevista.html");
     const cvBtn = document.getElementById("navbar-cv-btn");
     const empresaPanelBtn = document.getElementById("navbar-empresa-panel-btn");
     const favoritesBtn = document.getElementById("navbar-favorites-btn");
@@ -640,7 +640,7 @@ function updateNavbarActions() {
     if (favoritesBtn) {
       favoritesBtn.style.display = isEmpresa ? "none" : "";
       ensureButtonLabel(favoritesBtn, "Mis empresas favoritas");
-      favoritesBtn.onclick = () => window.location.href = "/Frontend/src/pages/candidato/mis-empresas-favoritas.html";
+      favoritesBtn.onclick = () => window.location.href = resolvePathForContext("pages/candidato/mis-empresas-favoritas.html");
     }
 
     if (profileBtn) {
