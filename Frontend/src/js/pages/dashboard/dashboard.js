@@ -275,7 +275,12 @@ function renderPostulantes(containerId, ofertaId, finalLista = null) {
           <div class="applicant-card__header flex gap-4 items-start mb-4 applicant-card__header--spaced">
             ${p.photoUrl ? `<img src="${p.photoUrl}" class="avatar applicant-card__avatar applicant-card__avatar--img" alt="Foto de ${p.nombre}">` : `<div class="avatar applicant-card__avatar applicant-card__avatar--fallback">${p.iniciales}</div>`}
             <div class="applicant-card__info flex-1 min-w-0">
-              <div class="font-semibold text-base color-text mb-1 applicant-card__name" title="${p.nombre}">${p.nombre}</div>
+              <div class="flex items-center gap-2 mb-1">
+                <div class="font-semibold text-base color-text applicant-card__name" title="${p.nombre}">${p.nombre}</div>
+                <button class="btn btn--ghost btn--sm cursor-pointer" style="padding: 0.25rem; border-radius: 50%; color: var(--color-primary);" onclick="localStorage.setItem('ApplyAI.return_to_postulantes', '${p.ofertaId}'); window.location.href='../candidato/perfil-candidato-publico.html?candidate=${encodeURIComponent(p.email || '')}'" title="Ver perfil público del candidato">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </button>
+              </div>
               <div class="text-xs text-muted mb-1 applicant-card__role" title="${p.rol}">${p.rol}</div>
               <div class="flex flex-col text-xs text-muted gap-1">
                 ${p.experiencia ? `<div class="flex items-center gap-1"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg><span>${p.experiencia}</span></div>` : ''}
@@ -929,6 +934,7 @@ async function verPostulantes(ofertaId) {
         id: app.id,
         nombre: p.user?.fullName || p.name || 'Desconocido',
         rol: p.bio || 'Sin rol',
+        email: p.user?.email || p.email || '',
         iniciales: (p.user?.fullName || p.name || 'D').substring(0, 2).toUpperCase(),
         skills: p.skills || [],
         match: app.matchScore || 0,

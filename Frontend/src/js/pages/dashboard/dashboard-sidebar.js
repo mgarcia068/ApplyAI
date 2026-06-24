@@ -925,7 +925,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }, 100);
   } else {
-    navigateTo('resumen');
+    const returnToOffer = localStorage.getItem('ApplyAI.return_to_postulantes');
+    if (returnToOffer) {
+      localStorage.removeItem('ApplyAI.return_to_postulantes');
+      // Esperamos un momento a que los datos del dashboard estén listos
+      setTimeout(() => {
+        if (typeof verPostulantes === 'function') {
+          verPostulantes(returnToOffer);
+        } else {
+          navigateTo('resumen');
+        }
+      }, 100);
+    } else {
+      navigateTo('resumen');
+    }
   }
 
   document.getElementById('sidebar-collapse')?.addEventListener('click', () => {

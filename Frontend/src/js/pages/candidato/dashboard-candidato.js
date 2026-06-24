@@ -473,6 +473,10 @@
         if (!id) return;
         selectedOfferId = id;
         renderAll();
+
+        try {
+          axios.get(`${window.APP_CONFIG.API_URL}/api/jobs/${id}`).catch(() => {});
+        } catch(e) {}
       });
     });
   }
@@ -881,6 +885,15 @@ function showToast(title, subtitle = '', type = 'success') {
         renderAll();
       });
     }
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlOfferId = params.get('offerId');
+      if (urlOfferId && OFFERS.some(o => o.id === urlOfferId)) {
+        selectedOfferId = urlOfferId;
+        axios.get(`${window.APP_CONFIG.API_URL}/api/jobs/${urlOfferId}`).catch(() => {});
+      }
+    } catch(e) {}
 
     renderAll();
 

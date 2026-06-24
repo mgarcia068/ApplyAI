@@ -595,7 +595,7 @@
               <span>${offer.date}</span>
             </div>
           </div>
-          <button class="btn btn--secondary btn--sm" aria-label="Ver detalles de la oferta">Ver oferta</button>
+          <button class="btn btn--secondary btn--sm" aria-label="Ver detalles de la oferta" onclick="window.location.href='../candidato/dashboard-candidato.html?offerId=${offer.id}'">Ver oferta</button>
         </header>
       </article>
     `).join('');

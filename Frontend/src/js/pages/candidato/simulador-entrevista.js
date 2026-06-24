@@ -32,6 +32,25 @@
     }
   }
 
+  function renderInterviewData(data, container, list, advice, emptyState, generateBtn) {
+    list.innerHTML = data.questions.map((q, i) => `
+      <div class="card p-4 border border-base bg-base flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <span class="badge badge--${q.type === 'Technical' ? 'primary' : 'secondary'}">${q.type === 'Technical' ? 'Técnica' : 'Conductual'}</span>
+          <strong class="text-sm">Pregunta ${i + 1}</strong>
+        </div>
+        <p class="text-base font-medium mt-1">${q.question}</p>
+        <p class="text-xs text-muted mt-2 border-t pt-2 border-base">💡 <strong>Tip:</strong> ${q.hint}</p>
+      </div>
+    `).join('');
+
+    advice.innerHTML = `<strong>Consejo General:</strong> ${data.advice}`;
+    
+    emptyState.hidden = true;
+    container.hidden = false;
+    generateBtn.textContent = 'Generar nuevas preguntas';
+  }
+
   function initInterviewSimulator() {
     const generateInterviewBtn = document.getElementById('generateInterviewBtn');
     const interviewQuestionsContainer = document.getElementById('interviewQuestionsContainer');
@@ -41,6 +60,15 @@
     const interviewLoader = document.getElementById('interviewLoader');
 
     if (!generateInterviewBtn) return;
+
+    // Cargar datos previos si existen
+    const savedInterviewStr = localStorage.getItem('ApplyAI.savedInterview');
+    if (savedInterviewStr) {
+      const savedData = safeJsonParse(savedInterviewStr, null);
+      if (savedData && savedData.questions && savedData.questions.length > 0) {
+        renderInterviewData(savedData, interviewQuestionsContainer, interviewQuestionsList, interviewAdvice, interviewEmptyState, generateInterviewBtn);
+      }
+    }
 
     generateInterviewBtn.addEventListener('click', async () => {
       const user = getCurrentUser();
@@ -59,22 +87,15 @@
         const data = res.data;
         if (!data || !data.questions) throw new Error('Respuesta inválida de IA');
 
-        interviewQuestionsList.innerHTML = data.questions.map((q, i) => `
-          <div class="card p-4 border border-base bg-base flex flex-col gap-2">
-            <div class="flex items-center gap-2">
-              <span class="badge badge--${q.type === 'Technical' ? 'primary' : 'secondary'}">${q.type === 'Technical' ? 'Técnica' : 'Conductual'}</span>
-              <strong class="text-sm">Pregunta ${i + 1}</strong>
-            </div>
-            <p class="text-base font-medium mt-1">${q.question}</p>
-            <p class="text-xs text-muted mt-2 border-t pt-2 border-base">💡 <strong>Tip:</strong> ${q.hint}</p>
-          </div>
-        `).join('');
+        // Guardar localmente
+        localStorage.setItem('ApplyAI.savedInterview', JSON.stringify({
+          questions: data.questions,
+          advice: data.advice
+        }));
 
-        interviewAdvice.innerHTML = `<strong>Consejo General:</strong> ${data.advice}`;
+        renderInterviewData(data, interviewQuestionsContainer, interviewQuestionsList, interviewAdvice, interviewEmptyState, generateInterviewBtn);
         
         interviewLoader.hidden = true;
-        interviewQuestionsContainer.hidden = false;
-        generateInterviewBtn.textContent = 'Generar nuevas preguntas';
       } catch (err) {
         console.error('Error generando entrevista:', err);
         const errMsg = err.response?.data?.message || 'No se pudo generar la simulación. Asegúrate de tener tu CV subido y de contar con skills en tu perfil.';
