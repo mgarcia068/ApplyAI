@@ -233,6 +233,50 @@ function ensureNavbarDom() {
   const navbar = document.getElementById("navbar");
   if (!navbar) return;
 
+  const backBtn = document.getElementById("navbar-back-btn");
+  if (backBtn) {
+    if (isLanding) {
+      backBtn.style.display = "none";
+    } else {
+      backBtn.style.display = "flex";
+      if (backBtn.dataset.initialized !== "true") {
+        backBtn.dataset.initialized = "true";
+        backBtn.addEventListener("click", () => {
+          const referrer = document.referrer.toLowerCase();
+          const currentPath = window.location.pathname.toLowerCase();
+
+          if (currentPath.includes('/auth/login') || currentPath.includes('/auth/register')) {
+            if (window.history.length > 1 && !referrer.includes('/auth/')) {
+              window.history.back();
+            } else {
+              window.location.href = resolvePathForContext('index.html');
+            }
+            return;
+          }
+
+          if (referrer.includes('/auth/login') || referrer.includes('/auth/register')) {
+            if (currentPath.includes('dashboard')) {
+              window.location.href = resolvePathForContext('index.html');
+            } else {
+              const user = getCurrentUser();
+              if (user) {
+                window.location.href = resolvePathForContext(user.role === 'empresa' ? 'pages/empresa/dashboard-empresa.html' : 'pages/candidato/dashboard-candidato.html');
+              } else {
+                window.location.href = resolvePathForContext('index.html');
+              }
+            }
+          } else {
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.href = resolvePathForContext('index.html');
+            }
+          }
+        });
+      }
+    }
+  }
+
   const actions = navbar.querySelector(".navbar__actions");
   if (!actions) return;
 
