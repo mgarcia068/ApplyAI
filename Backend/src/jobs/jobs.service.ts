@@ -14,6 +14,8 @@ export class JobsService {
   private readonly gptApiKey?: string;
   private readonly xaiApiKey?: string;
   private readonly groqApiKey?: string;
+  private readonly openRouterApiKey?: string;
+  private readonly deepSeekApiKey?: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -29,6 +31,8 @@ export class JobsService {
     this.gptApiKey = this.getOptionalConfig('GPT_API_KEY');
     this.xaiApiKey = this.getOptionalConfig('XAI_API_KEY');
     this.groqApiKey = this.getOptionalConfig('GROQ_API_KEY');
+    this.openRouterApiKey = this.getOptionalConfig('OPENROUTER_API_KEY');
+    this.deepSeekApiKey = this.getOptionalConfig('DEEPSEEK_API_KEY');
   }
 
   private getOptionalConfig(key: string): string | undefined {
@@ -396,6 +400,38 @@ ${jobs
     });
   }
 
+  private async generateTextWithOpenRouter(prompt: string): Promise<string> {
+    if (!this.openRouterApiKey) {
+      throw new Error('OpenRouter API key not configured.');
+    }
+
+    return this.generateTextWithOpenAiCompatible({
+      provider: 'OpenRouter',
+      apiKey: this.openRouterApiKey,
+      url: 'https://openrouter.ai/api/v1/chat/completions',
+      model: 'google/gemini-2.5-flash',
+      maxTokens: 1500,
+      temperature: 0.2,
+      prompt,
+    });
+  }
+
+  private async generateTextWithDeepSeek(prompt: string): Promise<string> {
+    if (!this.deepSeekApiKey) {
+      throw new Error('DeepSeek API key not configured.');
+    }
+
+    return this.generateTextWithOpenAiCompatible({
+      provider: 'DeepSeek',
+      apiKey: this.deepSeekApiKey,
+      url: 'https://api.deepseek.com/chat/completions',
+      model: 'deepseek-chat',
+      maxTokens: 1500,
+      temperature: 0.2,
+      prompt,
+    });
+  }
+
   private async generateTextWithOpenAiCompatible(options: {
     provider: string;
     apiKey: string;
@@ -480,6 +516,8 @@ ${jobs
     if (this.anthropic) attempts.push({ name: 'Anthropic', fn: () => this.generateTextWithAnthropic(prompt) });
     if (this.gptApiKey) attempts.push({ name: 'GPT', fn: () => this.generateTextWithGpt(prompt) });
     if (this.xaiApiKey) attempts.push({ name: 'XAI', fn: () => this.generateTextWithXai(prompt) });
+    if (this.deepSeekApiKey) attempts.push({ name: 'DeepSeek', fn: () => this.generateTextWithDeepSeek(prompt) });
+    if (this.openRouterApiKey) attempts.push({ name: 'OpenRouter', fn: () => this.generateTextWithOpenRouter(prompt) });
 
     if (!attempts.length) {
       throw new Error('No AI providers configured.');
